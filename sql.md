@@ -1,230 +1,229 @@
 -- =============================================
--- 1. 数据库创建
+-- 1. Database Creation
 -- =============================================
 -- CREATE DATABASE IF NOT EXISTS epqas_db
---   CHARACTER SET utf8mb4
+--   CHARACTER SET utf8mb4 
 --   COLLATE utf8mb4_unicode_ci;
---------------------------------
-
+-- 
 -- USE epqas_db;
 
 -- =============================================
--- 2. 用户与权限管理（目标1 & 7）
+-- 2. User & Permission Management (Obj 1 & 7)
 -- =============================================
 
--- 角色表
+-- Roles Table
 CREATE TABLE IF NOT EXISTS roles (
-    role_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '角色唯一标识',
-    role_name VARCHAR(50) NOT NULL UNIQUE COMMENT '角色名称（例如：管理员、出题人）',
-    description VARCHAR(255) COMMENT '该角色关联的权限描述'
-) COMMENT='存储权限管理所需的不同用户角色';
+    role_id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique identifier for the role',
+    role_name VARCHAR(50) NOT NULL UNIQUE COMMENT 'Name of the role (e.g., Administrator, Question Setter)',
+    description VARCHAR(255) COMMENT 'Description of permissions associated with this role'
+) COMMENT='Stores the different user roles for Permission Management';
 
--- 用户表
+-- Users Table
 CREATE TABLE IF NOT EXISTS users (
-    user_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户系统唯一标识',
-    username VARCHAR(50) NOT NULL UNIQUE COMMENT '登录用户名',
-    password_hash VARCHAR(255) NOT NULL COMMENT '加密密码字符串（安全目标7）',
-    real_name VARCHAR(100) COMMENT '用户显示用真实姓名',
-    role_id INT COMMENT '关联用户角色的外键',
-    email VARCHAR(100) COMMENT '联系邮箱',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '账号创建时间',
-    is_active BOOLEAN DEFAULT TRUE COMMENT '用户软删除标识',
+    user_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique system identifier for the user',
+    username VARCHAR(50) NOT NULL UNIQUE COMMENT 'Login username',
+    password_hash VARCHAR(255) NOT NULL COMMENT 'Encrypted password string (Security Obj 7)',
+    real_name VARCHAR(100) COMMENT 'Real name of the user for display',
+    role_id INT COMMENT 'Foreign key linking to the user role',
+    email VARCHAR(100) COMMENT 'Contact email',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation time',
+    is_active BOOLEAN DEFAULT TRUE COMMENT 'Flag to soft-delete users',
     FOREIGN KEY (role_id) REFERENCES roles(role_id)
-) COMMENT='存储所有用户的登录凭证和基础个人资料信息';
+) COMMENT='Stores login credentials and basic profile info for all users';
 
--- 审计日志表
+-- Audit Logs Table
 CREATE TABLE IF NOT EXISTS audit_logs (
-    log_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '日志唯一标识',
-    user_id BIGINT COMMENT '执行操作的用户',
-    action_type VARCHAR(50) COMMENT '操作类型（例如：登录、导出成绩）',
-    target_table VARCHAR(50) COMMENT '受影响的数据库表',
-    target_id BIGINT COMMENT '被访问/修改的记录ID',
-    ip_address VARCHAR(45) COMMENT '安全追踪用IP地址',
-    action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '事件时间戳',
+    log_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique log identifier',
+    user_id BIGINT COMMENT 'The user who performed the action',
+    action_type VARCHAR(50) COMMENT 'Type of action (e.g., LOGIN, EXPORT_GRADES)',
+    target_table VARCHAR(50) COMMENT 'The database table affected',
+    target_id BIGINT COMMENT 'The ID of the record accessed/modified',
+    ip_address VARCHAR(45) COMMENT 'IP address for security tracking',
+    action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp of the event',
     FOREIGN KEY (user_id) REFERENCES users(user_id)
-) COMMENT='安全与可追溯性日志（目标7）';
+) COMMENT='Security and traceability log (Obj 7)';
 
 -- =============================================
--- 3. 学业数据与题库（目标1）
+-- 3. Academic Data & Question Bank (Obj 1)
 -- =============================================
 
--- 课程表
+-- Courses Table
 CREATE TABLE IF NOT EXISTS courses (
-    course_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '课程唯一标识',
-    course_name VARCHAR(100) NOT NULL COMMENT '课程全称',
-    course_code VARCHAR(50) COMMENT '课程的学校编码'
-) COMMENT='存储课程元数据';
+    course_id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique course identifier',
+    course_name VARCHAR(100) NOT NULL COMMENT 'Full name of the course',
+    course_code VARCHAR(50) COMMENT 'University code for the course'
+) COMMENT='Stores course metadata';
 
--- 班级表
+-- Classes Table
 CREATE TABLE IF NOT EXISTS classes (
-    class_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '班级唯一标识',
-    class_name VARCHAR(100) COMMENT '班级名称（例如：计算机2024级A班）',
-    department VARCHAR(100) COMMENT '班级所属院系'
-) COMMENT='学生和考试的组织单元';
+    class_id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique class identifier',
+    class_name VARCHAR(100) COMMENT 'Name of the class (e.g., CS-2024-A)',
+    department VARCHAR(100) COMMENT 'Department the class belongs to'
+) COMMENT='Organizational unit for students and examinations';
 
--- 学生表
+-- Students Table
 CREATE TABLE IF NOT EXISTS students (
-    student_id BIGINT PRIMARY KEY COMMENT '关联users.user_id',
-    class_id INT COMMENT '所属行政班级',
-    student_number VARCHAR(50) UNIQUE COMMENT '官方学号',
+    student_id BIGINT PRIMARY KEY COMMENT 'Links to users.user_id',
+    class_id INT COMMENT 'The administrative class',
+    student_number VARCHAR(50) UNIQUE COMMENT 'Official student roll number',
     FOREIGN KEY (student_id) REFERENCES users(user_id),
     FOREIGN KEY (class_id) REFERENCES classes(class_id)
-) COMMENT='用户表的扩展，存储学生专属属性';
+) COMMENT='Extension of User table for Student attributes';
 
--- 知识点表
+-- Knowledge Points Table
 CREATE TABLE IF NOT EXISTS knowledge_points (
-    point_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '知识点唯一标识',
-    course_id INT COMMENT '所属课程',
-    point_name VARCHAR(200) NOT NULL COMMENT '知识点名称',
-    description TEXT COMMENT '详细说明',
+    point_id INT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique KP identifier',
+    course_id INT COMMENT 'The course context',
+    point_name VARCHAR(200) NOT NULL COMMENT 'Name of the concept',
+    description TEXT COMMENT 'Detailed description',
     FOREIGN KEY (course_id) REFERENCES courses(course_id)
-) COMMENT='用于覆盖率分析的细粒度知识点';
+) COMMENT='Granular knowledge points for Coverage analysis';
 
--- 试题表
+-- Questions Table
 CREATE TABLE IF NOT EXISTS questions (
-    question_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '试题唯一标识',
-    course_id INT COMMENT '所属课程',
-    creator_id BIGINT COMMENT '出题教师',
-    question_content TEXT NOT NULL COMMENT '题干正文',
-    question_type ENUM('选择题', '判断题', '填空题', '简答题') NOT NULL COMMENT '题型',
-    options_json JSON COMMENT '客观题选项（例如 {"A":"..."}）',
-    correct_answer TEXT COMMENT '标准答案',
-    initial_difficulty FLOAT COMMENT '教师预估难度（0-1）',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    question_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique question identifier',
+    course_id INT COMMENT 'Course context',
+    creator_id BIGINT COMMENT 'Teacher who set the question',
+    question_content TEXT NOT NULL COMMENT 'The main text/stem',
+    question_type ENUM('MCQ', 'TrueFalse', 'FillBlank', 'Essay') NOT NULL COMMENT 'Format',
+    options_json JSON COMMENT 'JSON options (e.g. {"A":".."}) for objective questions',
+    correct_answer TEXT COMMENT 'The correct answer key',
+    initial_difficulty FLOAT COMMENT 'Estimated difficulty (0-1) set by teacher',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
     FOREIGN KEY (course_id) REFERENCES courses(course_id),
     FOREIGN KEY (creator_id) REFERENCES users(user_id)
-) COMMENT='核心题库表';
+) COMMENT='The central repository of questions (Question Bank)';
 
--- 试题-知识点关联表
+-- Question-Knowledge Map
 CREATE TABLE IF NOT EXISTS question_knowledge_map (
-    question_id BIGINT COMMENT '试题ID',
-    point_id INT COMMENT '知识点ID',
+    question_id BIGINT COMMENT 'ID of the question',
+    point_id INT COMMENT 'ID of the knowledge point',
     PRIMARY KEY (question_id, point_id),
     FOREIGN KEY (question_id) REFERENCES questions(question_id),
     FOREIGN KEY (point_id) REFERENCES knowledge_points(point_id)
-) COMMENT='试题与知识点的关联映射';
+) COMMENT='Maps questions to knowledge points';
 
 -- =============================================
--- 4. 试卷与考试编制（目标1）
+-- 4. Examination Paper & Exam Construction (Obj 1)
 -- =============================================
 
--- 试卷表（模板）
--- 从test_papers重命名为examination_papers
+-- Examination Papers (Templates)
+-- RENAMED from test_papers to examination_papers
 CREATE TABLE IF NOT EXISTS examination_papers (
-    paper_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '试卷唯一标识',
-    title VARCHAR(200) NOT NULL COMMENT '试卷标题',
-    course_id INT COMMENT '所属课程',
-    setter_id BIGINT COMMENT '命题教师',
-    total_score INT DEFAULT 100 COMMENT '试卷总分',
-    duration_minutes INT COMMENT '考试时长（分钟）',
-    target_difficulty FLOAT COMMENT '预期难度系数',
-    status ENUM('草稿', '已发布', '已归档') DEFAULT '草稿' COMMENT '生命周期状态',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间戳',
+    paper_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique paper identifier',
+    title VARCHAR(200) NOT NULL COMMENT 'Title of the examination paper',
+    course_id INT COMMENT 'Course subject',
+    setter_id BIGINT COMMENT 'Teacher who designed it',
+    total_score INT DEFAULT 100 COMMENT 'Total marks available',
+    duration_minutes INT COMMENT 'Allowed time',
+    target_difficulty FLOAT COMMENT 'Intended difficulty level',
+    status ENUM('Draft', 'Published', 'Archived') DEFAULT 'Draft' COMMENT 'Lifecycle status',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation timestamp',
     FOREIGN KEY (setter_id) REFERENCES users(user_id)
-) COMMENT='存储试卷模板的结构/元数据';
+) COMMENT='Stores structure/metadata of an examination paper template';
 
--- 试卷结构表（试卷中的试题）
+-- Examination Paper Structure (Questions in a Paper)
 CREATE TABLE IF NOT EXISTS examination_paper_questions (
-    paper_id BIGINT COMMENT '试卷ID',
-    question_id BIGINT COMMENT '试题ID',
-    score_value DECIMAL(5,2) COMMENT '该试题在本试卷中的分值',
-    question_order INT COMMENT '试题序号',
+    paper_id BIGINT COMMENT 'ID of the examination paper',
+    question_id BIGINT COMMENT 'ID of the question',
+    score_value DECIMAL(5,2) COMMENT 'Points assigned in this paper',
+    question_order INT COMMENT 'Sequence number',
     PRIMARY KEY (paper_id, question_id),
     FOREIGN KEY (paper_id) REFERENCES examination_papers(paper_id),
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
-) COMMENT='将试题关联到试卷，并指定具体分值';
+) COMMENT='Links questions to examination papers with specific scores';
 
--- 考试表（实例）
--- 班级参加某份试卷考试的实际事件
+-- Examinations (Instances)
+-- The actual event where a class takes an examination paper
 CREATE TABLE IF NOT EXISTS examinations (
-    exam_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '考试实例唯一标识',
-    paper_id BIGINT COMMENT '使用的试卷模板',
-    class_id INT COMMENT '参加考试的班级',
-    exam_date DATETIME COMMENT '考试日期/时间',
-    total_candidates INT COMMENT '预计参考人数',
-    actual_examinees INT COMMENT '实际提交人数',
+    exam_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique examination instance ID',
+    paper_id BIGINT COMMENT 'The examination paper template used',
+    class_id INT COMMENT 'The class taking the examination',
+    exam_date DATETIME COMMENT 'Date/Time of examination',
+    total_candidates INT COMMENT 'Expected student count',
+    actual_examinees INT COMMENT 'Actual submission count',
     FOREIGN KEY (paper_id) REFERENCES examination_papers(paper_id),
     FOREIGN KEY (class_id) REFERENCES classes(class_id)
-) COMMENT='记录考试的实际执行情况';
+) COMMENT='Records actual administration of an examination';
 
 -- =============================================
--- 5. 学生成绩与答题记录（目标6）
+-- 5. Student Grades & Answers (Obj 6)
 -- =============================================
 
--- 考试成绩表
+-- Examination Results
 CREATE TABLE IF NOT EXISTS student_exam_results (
-    result_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '成绩唯一标识',
-    exam_id BIGINT COMMENT '考试实例',
-    student_id BIGINT COMMENT '学生',
-    total_score DECIMAL(5,2) COMMENT '最终得分',
-    is_absent BOOLEAN DEFAULT FALSE COMMENT '缺考标识',
-    submitted_at DATETIME COMMENT '提交时间',
+    result_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique result identifier',
+    exam_id BIGINT COMMENT 'The examination instance',
+    student_id BIGINT COMMENT 'The student',
+    total_score DECIMAL(5,2) COMMENT 'Final score obtained',
+    is_absent BOOLEAN DEFAULT FALSE COMMENT 'Flag if absent',
+    submitted_at DATETIME COMMENT 'Time of submission',
     FOREIGN KEY (exam_id) REFERENCES examinations(exam_id),
     FOREIGN KEY (student_id) REFERENCES students(student_id)
-) COMMENT='学生单次考试的总成绩汇总';
+) COMMENT='Summary results of a student for a specific examination';
 
--- 学生答题记录表（明细）
+-- Student Answers (Detailed)
 CREATE TABLE IF NOT EXISTS student_answers (
-    answer_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '答题记录唯一标识',
-    result_id BIGINT COMMENT '关联成绩主记录',
-    question_id BIGINT COMMENT '作答的试题',
-    student_choice TEXT COMMENT '学生实际选择/填写的内容',
-    score_obtained DECIMAL(5,2) COMMENT '该题得分',
-    is_correct BOOLEAN COMMENT '是否正确的二元标识',
+    answer_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique answer identifier',
+    result_id BIGINT COMMENT 'Link to result header',
+    question_id BIGINT COMMENT 'The question answered',
+    student_choice TEXT COMMENT 'Actual option selected or text written',
+    score_obtained DECIMAL(5,2) COMMENT 'Score awarded',
+    is_correct BOOLEAN COMMENT 'Binary correct/incorrect flag',
     FOREIGN KEY (result_id) REFERENCES student_exam_results(result_id),
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
-) COMMENT='用于分析的详细答题日志';
+) COMMENT='Detailed answer logs for analysis';
 
 -- =============================================
--- 6. 质量分析与指标（目标2, 3, 5）
+-- 6. Quality Analysis & Metrics (Obj 2, 3, 5)
 -- =============================================
 
--- 试卷质量分析表
+-- Examination Paper Quality Analysis
 CREATE TABLE IF NOT EXISTS examination_paper_quality_analysis (
-    analysis_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '分析记录唯一标识',
-    exam_id BIGINT UNIQUE COMMENT '关联考试实例',
-    average_score DECIMAL(5,2) COMMENT '平均分',
-    std_deviation DECIMAL(5,2) COMMENT '标准差',
-    highest_score DECIMAL(5,2) COMMENT '最高分',
-    lowest_score DECIMAL(5,2) COMMENT '最低分',
-    reliability_coefficient FLOAT COMMENT '克朗巴哈系数（信度）',
-    validity_coefficient FLOAT COMMENT '效度系数',
-    knowledge_coverage_rate FLOAT COMMENT '知识点覆盖率',
-    overall_difficulty FLOAT COMMENT '计算得出的实际难度',
-    overall_discrimination FLOAT COMMENT '计算得出的区分度',
-    is_abnormal BOOLEAN DEFAULT FALSE COMMENT '指标超出阈值的异常标识',
-    calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '计算时间',
+    analysis_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique analysis identifier',
+    exam_id BIGINT UNIQUE COMMENT 'Link to examination instance',
+    average_score DECIMAL(5,2) COMMENT 'Mean score',
+    std_deviation DECIMAL(5,2) COMMENT 'Standard deviation',
+    highest_score DECIMAL(5,2) COMMENT 'Max score',
+    lowest_score DECIMAL(5,2) COMMENT 'Min score',
+    reliability_coefficient FLOAT COMMENT 'Cronbachs Alpha',
+    validity_coefficient FLOAT COMMENT 'Validity coeff',
+    knowledge_coverage_rate FLOAT COMMENT 'Percentage of syllabus covered',
+    overall_difficulty FLOAT COMMENT 'Calculated actual difficulty',
+    overall_discrimination FLOAT COMMENT 'Calculated discrimination',
+    is_abnormal BOOLEAN DEFAULT FALSE COMMENT 'Flag if metrics breach thresholds',
+    calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Calculation time',
     FOREIGN KEY (exam_id) REFERENCES examinations(exam_id)
-) COMMENT='整份试卷的计算质量指标';
+) COMMENT='Computed quality indicators for the whole examination paper';
 
--- 试题质量分析表
+-- Question Quality Analysis
 CREATE TABLE IF NOT EXISTS question_quality_analysis (
-    q_analysis_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '分析记录唯一标识',
-    exam_id BIGINT COMMENT '所属考试',
-    question_id BIGINT COMMENT '分析的试题',
-    correct_response_rate FLOAT COMMENT '实际难度（通过率/P值）',
-    discrimination_index FLOAT COMMENT '区分度（高低分组差异）',
-    selection_distribution_json JSON COMMENT '选项选择分布统计',
-    is_too_easy BOOLEAN DEFAULT FALSE COMMENT '易题标识（正确率>90%）',
-    is_low_discrimination BOOLEAN DEFAULT FALSE COMMENT '低区分度标识',
-    diagnosis_tag VARCHAR(100) COMMENT '异常原因说明',
+    q_analysis_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique identifier',
+    exam_id BIGINT COMMENT 'The examination context',
+    question_id BIGINT COMMENT 'The question analyzed',
+    correct_response_rate FLOAT COMMENT 'Actual Difficulty (P-Value)',
+    discrimination_index FLOAT COMMENT 'Difference between high/low groups',
+    selection_distribution_json JSON COMMENT 'Stats on options chosen',
+    is_too_easy BOOLEAN DEFAULT FALSE COMMENT 'Flag if Correct Rate > 90%',
+    is_low_discrimination BOOLEAN DEFAULT FALSE COMMENT 'Flag if D-Index is low',
+    diagnosis_tag VARCHAR(100) COMMENT 'Text reason for anomaly',
     FOREIGN KEY (exam_id) REFERENCES examinations(exam_id),
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
-) COMMENT='单个试题的表现指标';
+) COMMENT='Performance metrics for individual questions';
 
 -- =============================================
--- 7. 智能建议（目标4）
+-- 7. Intelligent Suggestions (Obj 4)
 -- =============================================
 
--- 改进建议表
+-- Improvement Suggestions
 CREATE TABLE IF NOT EXISTS improvement_suggestions (
-    suggestion_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '建议唯一标识',
-    exam_id BIGINT COMMENT '分析的考试',
-    question_id BIGINT NULL COMMENT '特定试题（NULL表示针对整份试卷）',
-    suggestion_type ENUM('试卷结构', '试题内容', '难度调整') COMMENT '建议类别',
-    suggestion_text TEXT NOT NULL COMMENT '可执行的改进建议',
-    generated_rule VARCHAR(100) COMMENT '触发的规则',
-    is_implemented BOOLEAN DEFAULT FALSE COMMENT '反馈闭环：是否已实施',
+    suggestion_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Unique suggestion identifier',
+    exam_id BIGINT COMMENT 'The examination analyzed',
+    question_id BIGINT NULL COMMENT 'Specific question (NULL if for whole paper)',
+    suggestion_type ENUM('Paper_Structure', 'Question_Content', 'Difficulty_Adj') COMMENT 'Category',
+    suggestion_text TEXT NOT NULL COMMENT 'Actionable advice',
+    generated_rule VARCHAR(100) COMMENT 'Rule triggered',
+    is_implemented BOOLEAN DEFAULT FALSE COMMENT 'Feedback loop',
     FOREIGN KEY (exam_id) REFERENCES examinations(exam_id),
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
-) COMMENT='基于AI/规则的改进建议';
+) COMMENT='AI/Rule-based recommendations';
