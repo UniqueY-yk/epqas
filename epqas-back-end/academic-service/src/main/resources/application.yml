@@ -1,9 +1,9 @@
 server:
-  port: 8084
+  port: 8082
 
 spring:
   application:
-    name: exam-service
+    name: academic-service
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/epqas_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8

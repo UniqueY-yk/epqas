@@ -19,7 +19,6 @@ public class ExaminationPaperQualityAnalysis {
     @TableId(type = IdType.AUTO)
     private Long analysisId;
 
-    @Column(unique = true)
     private Long examId;
 
     private BigDecimal averageScore;

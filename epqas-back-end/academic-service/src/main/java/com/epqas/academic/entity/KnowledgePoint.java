@@ -1,4 +1,4 @@
-package com.epqas.exam.entity;
+package com.epqas.academic.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -6,26 +6,21 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.math.BigDecimal;
-
 @Data
 @Entity
-@Table(name = "student_answers")
-@TableName("student_answers")
-public class StudentAnswer {
+@Table(name = "knowledge_points")
+@TableName("knowledge_points")
+public class KnowledgePoint {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long answerId;
+    private Integer pointId;
 
-    private Long resultId;
+    private Integer courseId;
 
-    private Long questionId;
+    @Column(nullable = false)
+    private String pointName;
 
     @Column(columnDefinition = "TEXT")
-    private String studentChoice;
-
-    private BigDecimal scoreObtained;
-
-    private Boolean isCorrect;
+    private String description;
 }

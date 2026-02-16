@@ -16,7 +16,10 @@
         <module>common</module>
         <module>gateway-service</module>
         <module>auth-service</module>
-        <module>core-service</module>
+        <module>academic-service</module>
+        <module>question-service</module>
+        <module>suggestion-service</module>
+        <module>audit-service</module>
         <module>exam-service</module>
         <module>analysis-service</module>
     </modules>

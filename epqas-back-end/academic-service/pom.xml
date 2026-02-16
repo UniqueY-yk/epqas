@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>exam-service</artifactId>
+    <artifactId>academic-service</artifactId>
 
     <dependencies>
         <dependency>

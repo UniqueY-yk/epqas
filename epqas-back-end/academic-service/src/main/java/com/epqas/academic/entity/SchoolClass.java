@@ -1,0 +1,22 @@
+package com.epqas.academic.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.*;
+import lombok.Data;
+
+@Data
+@Entity
+@Table(name = "classes")
+@TableName("classes")
+public class SchoolClass {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
+    private Integer classId;
+
+    private String className;
+
+    private String department;
+}

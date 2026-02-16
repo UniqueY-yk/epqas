@@ -16,24 +16,28 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
-        - id: core-service
-          uri: lb://core-service
+            - Path=/auth/**
+        - id: academic-service
+          uri: lb://academic-service
           predicates:
-            - Path=/api/core/**
-          filters:
-            - StripPrefix=1
+            - Path=/academic/**
+        - id: question-service
+          uri: lb://question-service
+          predicates:
+            - Path=/question/**
         - id: exam-service
           uri: lb://exam-service
           predicates:
-            - Path=/api/exam/**
-          filters:
-            - StripPrefix=1
+            - Path=/exam/**
         - id: analysis-service
           uri: lb://analysis-service
           predicates:
-            - Path=/api/analysis/**
-          filters:
-            - StripPrefix=1
+            - Path=/analysis/**
+        - id: suggestion-service
+          uri: lb://suggestion-service
+          predicates:
+            - Path=/suggestion/**
+        - id: audit-service
+          uri: lb://audit-service
+          predicates:
+            - Path=/audit/**
