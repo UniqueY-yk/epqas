@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 
 @Data
 @Entity
-@Table(name = "student_answers")
-@TableName("student_answers")
+@Table(name = "student_answer")
+@TableName("student_answer")
 public class StudentAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

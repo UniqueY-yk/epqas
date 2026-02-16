@@ -1,0 +1,49 @@
+package com.epqas.academic.controller;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.epqas.academic.entity.Course;
+import com.epqas.academic.service.CourseService;
+import com.epqas.common.result.Result;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/courses")
+public class CourseController {
+
+    @Autowired
+    private CourseService courseService;
+
+    @PostMapping
+    public Result<Boolean> createCourse(@RequestBody Course course) {
+        return Result.success(courseService.save(course));
+    }
+
+    @GetMapping("/{id}")
+    public Result<Course> getCourseById(@PathVariable Integer id) {
+        return Result.success(courseService.getById(id));
+    }
+
+    @PutMapping
+    public Result<Boolean> updateCourse(@RequestBody Course course) {
+        return Result.success(courseService.updateById(course));
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<Boolean> deleteCourse(@PathVariable Integer id) {
+        return Result.success(courseService.removeById(id));
+    }
+
+    @GetMapping("/page")
+    public Result<Page<Course>> getCoursePage(@RequestParam(defaultValue = "1") Integer current,
+                                          @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(courseService.page(new Page<>(current, size)));
+    }
+    
+    @GetMapping
+    public Result<List<Course>> listCourses() {
+        return Result.success(courseService.list());
+    }
+}

@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "examinations")
-@TableName("examinations")
+@Table(name = "examination")
+@TableName("examination")
 public class Examination {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "student_exam_results")
-@TableName("student_exam_results")
+@Table(name = "student_exam_result")
+@TableName("student_exam_result")
 public class StudentExamResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

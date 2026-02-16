@@ -8,8 +8,8 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "improvement_suggestions")
-@TableName("improvement_suggestions")
+@Table(name = "improvement_suggestion")
+@TableName("improvement_suggestion")
 public class ImprovementSuggestion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

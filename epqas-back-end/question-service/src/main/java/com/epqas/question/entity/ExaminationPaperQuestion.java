@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 
 @Data
 @Entity
-@Table(name = "examination_paper_questions")
-@TableName("examination_paper_questions")
+@Table(name = "examination_paper_question")
+@TableName("examination_paper_question")
 @IdClass(ExaminationPaperQuestionId.class)
 public class ExaminationPaperQuestion {
     @Id
