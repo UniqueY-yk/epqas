@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/roles")
+@RequestMapping("/auth/roles")
 public class RoleController {
 
     @Autowired
@@ -38,10 +38,10 @@ public class RoleController {
 
     @GetMapping("/page")
     public Result<Page<Role>> getRolePage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(defaultValue = "10") Integer size) {
         return Result.success(roleService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<Role>> listRoles() {
         return Result.success(roleService.list());

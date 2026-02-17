@@ -13,6 +13,11 @@
         <el-form-item label="Password" prop="password">
           <el-input v-model="loginForm.password" type="password" placeholder="Enter password" show-password></el-input>
         </el-form-item>
+        <el-form-item label="Role" prop="roleId">
+          <el-select v-model="loginForm.roleId" placeholder="Select Identity">
+            <el-option v-for="role in roleList" :key="role.roleId" :label="role.roleName" :value="role.roleId"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleLogin" :loading="loading">Login</el-button>
           <el-button @click="$router.push('/register')">Register</el-button>
@@ -23,24 +28,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance } from 'element-plus'
-import { login } from '../api/auth'
+import { login, getRoles } from '../api/auth'
 
 const router = useRouter()
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
+const roleList = ref<any[]>([])
 
 const loginForm = reactive({
   username: '',
-  password: ''
+  password: '',
+  roleId: null
 })
 
 const rules = {
   username: [{ required: true, message: 'Please input username', trigger: 'blur' }],
-  password: [{ required: true, message: 'Please input password', trigger: 'blur' }]
+  password: [{ required: true, message: 'Please input password', trigger: 'blur' }],
+  roleId: [{ required: true, message: 'Please select role', trigger: 'change' }]
 }
+
+onMounted(async () => {
+    try {
+        const res = await getRoles()
+        roleList.value = res.data
+    } catch (e) {
+        ElMessage.error('Failed to load roles')
+    }
+})
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return
@@ -51,9 +68,8 @@ const handleLogin = async () => {
       try {
         const res = await login({
            username: loginForm.username,
-           passwordHash: loginForm.password // Backend expects 'passwordHash' field matching Entity, OR DTO mapping.
-           // In Controller I used Entity as @RequestBody, so it expects JSON matching User fields.
-           // User entity has 'passwordHash'. Ideally I should change User DTO to just 'password' but for now match entity.
+           passwordHash: loginForm.password,
+           roleId: loginForm.roleId
         })
         localStorage.setItem('token', res.data)
         ElMessage.success('Login successful')

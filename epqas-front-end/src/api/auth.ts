@@ -22,3 +22,10 @@ export function register(data: any) {
         data
     })
 }
+
+export function getRoles() {
+    return request({
+        url: '/auth/roles',
+        method: 'get'
+    })
+}

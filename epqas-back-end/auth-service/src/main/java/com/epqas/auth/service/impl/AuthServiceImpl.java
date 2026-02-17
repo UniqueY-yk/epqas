@@ -6,6 +6,8 @@ import com.epqas.auth.service.AuthService;
 import com.epqas.common.entity.User;
 import com.epqas.common.result.Result;
 import com.epqas.common.utils.JwtUtils;
+import com.epqas.common.entity.Role;
+import com.epqas.auth.mapper.RoleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,14 +27,21 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private JwtUtils jwtUtils;
 
+    @Autowired
+    private RoleMapper roleMapper;
+
     @Override
-    public Result<String> login(String username, String password) {
+    public Result<String> login(String username, String password, Integer roleId) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", username);
         User user = userMapper.selectOne(queryWrapper);
 
         if (user == null) {
             return Result.error("User not found");
+        }
+
+        if (roleId != null && !roleId.equals(user.getRoleId())) {
+            return Result.error("Identity mismatch. Please select the correct role.");
         }
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
@@ -46,7 +55,7 @@ public class AuthServiceImpl implements AuthService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
         claims.put("roleId", user.getRoleId());
-        
+
         String token = jwtUtils.generateToken(username, claims);
         return Result.success(token);
     }
@@ -62,9 +71,14 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         // Default role? Let's say 4 (Student) for now, or require it
         if (user.getRoleId() == null) {
-            user.setRoleId(4); // Default to student
+            Role studentRole = roleMapper.selectOne(new QueryWrapper<Role>().eq("role_name", "Student"));
+            if (studentRole != null) {
+                user.setRoleId(studentRole.getRoleId());
+            } else {
+                throw new RuntimeException("Default role 'Student' not found");
+            }
         }
-        
+
         userMapper.insert(user);
         return Result.success("User registered successfully");
     }

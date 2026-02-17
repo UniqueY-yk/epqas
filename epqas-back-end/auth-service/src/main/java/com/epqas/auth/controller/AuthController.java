@@ -19,7 +19,7 @@ public class AuthController {
     @PostMapping("/login")
     public Result<String> login(@RequestBody User user) {
         // User DTO usually better, but reusing Entity for speed as per requirements
-        return authService.login(user.getUsername(), user.getPasswordHash());
+        return authService.login(user.getUsername(), user.getPasswordHash(), user.getRoleId());
     }
 
     @PostMapping("/register")
