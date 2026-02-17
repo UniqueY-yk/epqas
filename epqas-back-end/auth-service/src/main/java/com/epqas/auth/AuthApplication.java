@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = { "com.epqas.auth", "com.epqas.common" })
 @EnableDiscoveryClient
 @MapperScan("com.epqas.auth.mapper")
 public class AuthApplication {

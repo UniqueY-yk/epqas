@@ -1,7 +1,7 @@
 package com.epqas.auth.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.epqas.auth.entity.Role;
+import com.epqas.common.entity.Role;
 import com.epqas.auth.service.RoleService;
 import com.epqas.common.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;

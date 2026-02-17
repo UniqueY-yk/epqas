@@ -7,8 +7,6 @@ import com.epqas.common.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/classes")
 public class SchoolClassController {
@@ -16,14 +14,15 @@ public class SchoolClassController {
     @Autowired
     private SchoolClassService schoolClassService;
 
+    @GetMapping
+    public Result<Page<SchoolClass>> listClasses(@RequestParam(defaultValue = "1") Integer page,
+                                                 @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(schoolClassService.page(new Page<>(page, size)));
+    }
+
     @PostMapping
     public Result<Boolean> createClass(@RequestBody SchoolClass schoolClass) {
         return Result.success(schoolClassService.save(schoolClass));
-    }
-
-    @GetMapping("/{id}")
-    public Result<SchoolClass> getClassById(@PathVariable Integer id) {
-        return Result.success(schoolClassService.getById(id));
     }
 
     @PutMapping
@@ -34,16 +33,5 @@ public class SchoolClassController {
     @DeleteMapping("/{id}")
     public Result<Boolean> deleteClass(@PathVariable Integer id) {
         return Result.success(schoolClassService.removeById(id));
-    }
-
-    @GetMapping("/page")
-    public Result<Page<SchoolClass>> getClassPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
-        return Result.success(schoolClassService.page(new Page<>(current, size)));
-    }
-    
-    @GetMapping
-    public Result<List<SchoolClass>> listClasses() {
-        return Result.success(schoolClassService.list());
     }
 }

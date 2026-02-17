@@ -3,7 +3,9 @@ package com.epqas.academic.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 
 @Data
@@ -12,15 +14,12 @@ import lombok.Data;
 @TableName("knowledge_point")
 public class KnowledgePoint {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     private Integer pointId;
-
+    
     private Integer courseId;
-
-    @Column(nullable = false)
+    
     private String pointName;
-
-    @Column(columnDefinition = "TEXT")
+    
     private String description;
 }

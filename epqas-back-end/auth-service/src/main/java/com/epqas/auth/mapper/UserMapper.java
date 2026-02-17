@@ -1,7 +1,7 @@
 package com.epqas.auth.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.epqas.auth.entity.User;
+import com.epqas.common.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

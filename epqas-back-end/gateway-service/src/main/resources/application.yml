@@ -17,27 +17,17 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/auth/**
+        - id: auth-service-users
+          uri: lb://auth-service
+          predicates:
+            - Path=/users/**
         - id: academic-service
           uri: lb://academic-service
           predicates:
             - Path=/academic/**
-        - id: question-service
-          uri: lb://question-service
-          predicates:
-            - Path=/question/**
-        - id: exam-service
-          uri: lb://exam-service
-          predicates:
-            - Path=/exam/**
-        - id: analysis-service
-          uri: lb://analysis-service
-          predicates:
-            - Path=/analysis/**
-        - id: suggestion-service
-          uri: lb://suggestion-service
-          predicates:
-            - Path=/suggestion/**
-        - id: audit-service
-          uri: lb://audit-service
-          predicates:
-            - Path=/audit/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"

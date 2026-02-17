@@ -3,7 +3,9 @@ package com.epqas.academic.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 
 @Data
@@ -12,11 +14,8 @@ import lombok.Data;
 @TableName("school_class")
 public class SchoolClass {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
     private Integer classId;
-
     private String className;
-
     private String department;
 }
