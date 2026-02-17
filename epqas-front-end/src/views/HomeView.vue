@@ -1,43 +1,68 @@
 <template>
   <div class="home">
-    <el-container>
-      <el-header>
-        <div class="header-content">
-          <h2>EPQAS Dashboard</h2>
-          <el-button type="danger" @click="logout">Logout</el-button>
-        </div>
-      </el-header>
-      <el-main>
-        <el-card>
-          <h3>Welcome to the Examination Paper Quality Analysis System</h3>
-          <p>Select a module from the menu or use the navigation above.</p>
+    <el-row :gutter="20">
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>Total Users</span>
+            </div>
+          </template>
+          <div class="card-value">1,234</div>
         </el-card>
-      </el-main>
-    </el-container>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>Active Exams</span>
+            </div>
+          </template>
+          <div class="card-value">56</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>Papers Analyzed</span>
+            </div>
+          </template>
+          <div class="card-value">892</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-header">
+                <span>System Status</span>
+            </div>
+          </template>
+          <div class="card-value status-ok">Normal</div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <br/>
+
+    <el-card class="welcome-card">
+      <h3>Welcome to EPQAS</h3>
+      <p>Use the sidebar to navigate to different management modules.</p>
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-
-const router = useRouter()
-
-const logout = () => {
-  localStorage.removeItem('token')
-  ElMessage.success('Logged out successfully')
-  router.push('/login')
-}
 </script>
 
 <style scoped>
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-  background-color: #409EFF;
-  color: white;
-  padding: 0 20px;
+.card-value {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  color: #409EFF;
+}
+.status-ok {
+    color: #67C23A;
 }
 </style>

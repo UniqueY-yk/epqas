@@ -5,9 +5,30 @@ const router = createRouter({
     routes: [
         {
             path: '/',
-            name: 'home',
-            component: () => import('../views/HomeView.vue'),
-            meta: { requiresAuth: true }
+            component: () => import('../layout/MainLayout.vue'),
+            meta: { requiresAuth: true },
+            children: [
+                {
+                    path: '',
+                    name: 'Dashboard',
+                    component: () => import('../views/HomeView.vue')
+                },
+                {
+                    path: 'admin/users',
+                    name: 'UserManagement',
+                    component: () => import('../views/admin/UserManagement.vue')
+                },
+                {
+                    path: 'academic/classes',
+                    name: 'ClassManagement',
+                    component: () => import('../views/academic/ClassManagement.vue')
+                },
+                {
+                    path: 'academic/courses',
+                    name: 'CourseManagement',
+                    component: () => import('../views/academic/CourseManagement.vue')
+                }
+            ]
         },
         {
             path: '/login',
@@ -18,29 +39,11 @@ const router = createRouter({
             path: '/register',
             name: 'register',
             component: () => import('../views/Register.vue')
-        },
-        {
-            path: '/admin/users',
-            name: 'UserManagement',
-            component: () => import('../views/admin/UserManagement.vue'),
-            meta: { requiresAuth: true }
-        },
-        {
-            path: '/academic/classes',
-            name: 'ClassManagement',
-            component: () => import('../views/academic/ClassManagement.vue'),
-            meta: { requiresAuth: true }
-        },
-        {
-            path: '/academic/courses',
-            name: 'CourseManagement',
-            component: () => import('../views/academic/CourseManagement.vue'),
-            meta: { requiresAuth: true }
         }
     ]
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     const token = localStorage.getItem('token')
     if (to.meta.requiresAuth && !token) {
         next('/login')

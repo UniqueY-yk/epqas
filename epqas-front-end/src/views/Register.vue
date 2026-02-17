@@ -1,30 +1,58 @@
 <template>
   <div class="register-container">
-    <el-card class="register-card">
-      <template #header>
-        <div class="card-header">
-          <span>EPQAS Registration</span>
+    <div class="register-box">
+      <div class="register-header">
+        <div class="logo-area">
+          <el-icon :size="40" color="#409EFF"><Platform /></el-icon>
+          <span class="title">Create Account</span>
         </div>
-      </template>
-      <el-form :model="registerForm" :rules="rules" ref="registerFormRef" label-width="100px">
-        <el-form-item label="Username" prop="username">
-          <el-input v-model="registerForm.username" placeholder="Used for login"></el-input>
+        <p class="subtitle">Join EPQAS today</p>
+      </div>
+      
+      <el-form :model="registerForm" :rules="rules" ref="registerFormRef" size="large" class="register-form" label-width="0">
+        <el-form-item prop="username">
+          <el-input 
+            v-model="registerForm.username" 
+            placeholder="Username" 
+            :prefix-icon="User"
+          />
         </el-form-item>
-        <el-form-item label="Password" prop="password">
-          <el-input v-model="registerForm.password" type="password" show-password></el-input>
+        <el-form-item prop="password">
+          <el-input 
+            v-model="registerForm.password" 
+            type="password" 
+            show-password 
+            placeholder="Password"
+            :prefix-icon="Lock"
+          />
         </el-form-item>
-        <el-form-item label="Full Name" prop="realName">
-          <el-input v-model="registerForm.realName" placeholder="Your actual name"></el-input>
+        <el-form-item prop="realName">
+          <el-input 
+            v-model="registerForm.realName" 
+            placeholder="Full Name"
+            :prefix-icon="Avatar"
+          />
         </el-form-item>
-        <el-form-item label="Email" prop="email">
-          <el-input v-model="registerForm.email"></el-input>
+        <el-form-item prop="email">
+          <el-input 
+            v-model="registerForm.email" 
+            placeholder="Email Address"
+            :prefix-icon="Message"
+          />
         </el-form-item>
+        
         <el-form-item>
-          <el-button type="primary" @click="handleRegister" :loading="loading">Register</el-button>
-          <el-button @click="$router.push('/login')">Back to Login</el-button>
+          <el-button type="primary" @click="handleRegister" :loading="loading" class="register-button">
+            Create Account
+          </el-button>
         </el-form-item>
+        
+        <div class="form-footer">
+          <span class="text">Already have an account?</span>
+          <el-button link type="primary" @click="$router.push('/login')">Sign In</el-button>
+        </div>
       </el-form>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -33,6 +61,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance } from 'element-plus'
 import { register } from '../api/auth'
+import { User, Lock, Platform, Avatar, Message } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const registerFormRef = ref<FormInstance>()
@@ -46,9 +75,13 @@ const registerForm = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: 'Required', trigger: 'blur' }],
-  password: [{ required: true, message: 'Required', trigger: 'blur' }],
-  realName: [{ required: true, message: 'Required', trigger: 'blur' }]
+  username: [{ required: true, message: 'Please input username', trigger: 'blur' }],
+  password: [{ required: true, message: 'Please input password', trigger: 'blur' }],
+  realName: [{ required: true, message: 'Please input real name', trigger: 'blur' }],
+  email: [
+      { required: true, message: 'Please input email', trigger: 'blur' },
+      { type: 'email', message: 'Invalid email address', trigger: 'blur' }
+  ]
 }
 
 const handleRegister = async () => {
@@ -82,13 +115,116 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f0f2f5;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background-image: url('https://images.unsplash.com/photo-1497294815431-9365093b7331?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+  background-size: cover;
+  background-position: center;
+  position: relative;
 }
-.register-card {
-  width: 500px;
+
+.register-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85); /* White overlay/tint */
+  backdrop-filter: blur(5px);
 }
-.card-header {
+
+.register-box {
+  width: 450px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+  animation: slideUp 0.6s ease-out;
+}
+
+.register-header {
   text-align: center;
-  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.subtitle {
+  color: #606266;
+  font-size: 14px;
+  margin: 0;
+}
+
+.register-form {
+  margin-top: 20px;
+}
+
+.register-button {
+  width: 100%;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  height: 40px;
+  font-size: 16px;
+  background: linear-gradient(90deg, #409EFF, #3a8ee6);
+  border: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.register-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+}
+
+.form-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 5px;
+}
+
+.text {
+  color: #909399;
+  font-size: 14px;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:deep(.el-input__wrapper) {
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #409EFF inset;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 2px #409EFF inset !important;
+  transform: scale(1.01);
 }
 </style>
