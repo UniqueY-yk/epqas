@@ -15,23 +15,33 @@ public class CourseController {
     private CourseService courseService;
 
     @GetMapping
-    public Result<Page<Course>> listCourses(@RequestParam(defaultValue = "1") Integer page,
-                                            @RequestParam(defaultValue = "10") Integer size) {
-        return Result.success(courseService.page(new Page<>(page, size)));
+    public Result<Page<Course>> listCourses(@RequestHeader("X-Role-Id") Integer roleId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String courseName) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
+        return Result.success(courseService.getCoursesPage(page, size, courseName));
     }
 
     @PostMapping
-    public Result<Boolean> createCourse(@RequestBody Course course) {
+    public Result<Boolean> createCourse(@RequestHeader("X-Role-Id") Integer roleId, @RequestBody Course course) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(courseService.save(course));
     }
 
     @PutMapping
-    public Result<Boolean> updateCourse(@RequestBody Course course) {
+    public Result<Boolean> updateCourse(@RequestHeader("X-Role-Id") Integer roleId, @RequestBody Course course) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(courseService.updateById(course));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteCourse(@PathVariable Integer id) {
+    public Result<Boolean> deleteCourse(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable Integer id) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(courseService.removeById(id));
     }
 }

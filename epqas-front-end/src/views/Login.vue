@@ -65,7 +65,7 @@ const roleList = ref<any[]>([])
 const loginForm = reactive({
   username: '',
   password: '',
-  roleId: null
+  roleId: null as number | null
 })
 
 const rules = {
@@ -96,6 +96,9 @@ const handleLogin = async () => {
            roleId: loginForm.roleId
         })
         localStorage.setItem('token', res.data)
+        if (loginForm.roleId) {
+            localStorage.setItem('roleId', loginForm.roleId.toString())
+        }
         ElMessage.success('Login successful')
         router.push('/')
       } catch (e) {

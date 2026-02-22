@@ -25,6 +25,8 @@ spring:
           uri: lb://academic-service
           predicates:
             - Path=/academic/**
+          filters:
+            - StripPrefix=1
       globalcors:
         cors-configurations:
           '[/**]':

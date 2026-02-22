@@ -15,23 +15,35 @@ public class SchoolClassController {
     private SchoolClassService schoolClassService;
 
     @GetMapping
-    public Result<Page<SchoolClass>> listClasses(@RequestParam(defaultValue = "1") Integer page,
-                                                 @RequestParam(defaultValue = "10") Integer size) {
-        return Result.success(schoolClassService.page(new Page<>(page, size)));
+    public Result<Page<SchoolClass>> listClasses(@RequestHeader("X-Role-Id") Integer roleId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String className) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
+        return Result.success(schoolClassService.getClassesPage(page, size, className));
     }
 
     @PostMapping
-    public Result<Boolean> createClass(@RequestBody SchoolClass schoolClass) {
+    public Result<Boolean> createClass(@RequestHeader("X-Role-Id") Integer roleId,
+            @RequestBody SchoolClass schoolClass) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(schoolClassService.save(schoolClass));
     }
 
     @PutMapping
-    public Result<Boolean> updateClass(@RequestBody SchoolClass schoolClass) {
+    public Result<Boolean> updateClass(@RequestHeader("X-Role-Id") Integer roleId,
+            @RequestBody SchoolClass schoolClass) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(schoolClassService.updateById(schoolClass));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteClass(@PathVariable Integer id) {
+    public Result<Boolean> deleteClass(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable Integer id) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(schoolClassService.removeById(id));
     }
 }

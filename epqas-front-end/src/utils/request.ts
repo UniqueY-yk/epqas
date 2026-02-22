@@ -13,6 +13,10 @@ service.interceptors.request.use(
         if (token) {
             config.headers['Authorization'] = 'Bearer ' + token
         }
+        const roleId = localStorage.getItem('roleId')
+        if (roleId) {
+            config.headers['X-Role-Id'] = roleId
+        }
         return config
     },
     (error) => {

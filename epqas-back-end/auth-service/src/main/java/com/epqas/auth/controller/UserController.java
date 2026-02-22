@@ -1,6 +1,5 @@
 package com.epqas.auth.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.epqas.auth.service.UserService;
 import com.epqas.common.entity.User;
@@ -16,38 +15,40 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    public Result<Page<User>> listUsers(@RequestParam(defaultValue = "1") Integer page,
-                                        @RequestParam(defaultValue = "10") Integer size,
-                                        @RequestParam(required = false) String username) {
-        Page<User> userPage = new Page<>(page, size);
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        if (username != null && !username.isEmpty()) {
-            queryWrapper.like("username", username);
-        }
-        return Result.success(userService.page(userPage, queryWrapper));
+    public Result<Page<User>> listUsers(@RequestHeader("X-Role-Id") Integer roleId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String username) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
+        return Result.success(userService.getUsersPage(page, size, username));
     }
 
     @GetMapping("/{id}")
-    public Result<User> getUser(@PathVariable Long id) {
+    public Result<User> getUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable Long id) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(userService.getById(id));
     }
 
     @PostMapping
-    public Result<Boolean> createUser(@RequestBody User user) {
-        // Should probably hash password here too or reuse AuthService register logic
-        // For simplicity, assuming AuthService handles creation or we duplicate hashing here.
-        // Let's reuse basic save but we need to hash password if it's new.
-        // Doing raw save for now, admin should be careful or we inject PasswordEncoder.
-        return Result.success(userService.save(user));
+    public Result<Boolean> createUser(@RequestHeader("X-Role-Id") Integer roleId, @RequestBody User user) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
+        return Result.success(userService.createUser(user));
     }
 
     @PutMapping
-    public Result<Boolean> updateUser(@RequestBody User user) {
-        return Result.success(userService.updateById(user));
+    public Result<Boolean> updateUser(@RequestHeader("X-Role-Id") Integer roleId, @RequestBody User user) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
+        return Result.success(userService.updateUser(user));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteUser(@PathVariable Long id) {
+    public Result<Boolean> deleteUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable Long id) {
+        if (roleId == null || roleId != 1)
+            return Result.error(403, "Access Denied");
         return Result.success(userService.removeById(id));
     }
 }

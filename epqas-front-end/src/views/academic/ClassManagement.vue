@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>Class Management</span>
-          <el-button type="primary" @click="handleAdd">Add Class</el-button>
+          <el-button type="primary" :icon="Plus" @click="handleAdd">Add Class</el-button>
         </div>
       </template>
 
@@ -13,18 +13,21 @@
           <el-input v-model="searchForm.className" placeholder="Search Class" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchData">Search</el-button>
+          <el-button type="primary" :icon="Search" @click="fetchData">Search</el-button>
         </el-form-item>
       </el-form>
 
-      <el-table :data="tableData" style="width: 100%" v-loading="loading">
+      <el-table :data="tableData" style="width: 100%" v-loading="loading" stripe border>
+        <template #empty>
+          <el-empty description="No Data" />
+        </template>
         <el-table-column prop="classId" label="ID" width="80" />
         <el-table-column prop="className" label="Class Name" />
         <el-table-column prop="department" label="Department" />
         <el-table-column label="Operations" width="180">
           <template #default="scope">
-            <el-button size="small" @click="handleEdit(scope.row)">Edit</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(scope.row)">Delete</el-button>
+            <el-button size="small" :icon="Edit" @click="handleEdit(scope.row)">Edit</el-button>
+            <el-button size="small" type="danger" :icon="Delete" @click="handleDelete(scope.row)">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -41,11 +44,11 @@
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle">
-      <el-form :model="form" label-width="120px">
-        <el-form-item label="Class Name">
+      <el-form :model="form" label-width="120px" :rules="rules" ref="classFormRef">
+        <el-form-item label="Class Name" prop="className">
           <el-input v-model="form.className" />
         </el-form-item>
-        <el-form-item label="Department">
+        <el-form-item label="Department" prop="department">
           <el-input v-model="form.department" />
         </el-form-item>
       </el-form>
@@ -60,9 +63,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { getClasses, addClass, updateClass, deleteClass } from '@/api/academic'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Plus, Edit, Delete } from '@element-plus/icons-vue'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -74,12 +78,26 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('Add Class')
 const form = reactive({ classId: null, className: '', department: '' })
 
+const classFormRef = ref()
+const rules = reactive({
+  className: [
+    { required: true, message: 'Please input class name', trigger: 'blur' },
+    { min: 2, message: 'Class name must be at least 2 characters', trigger: 'blur' }
+  ],
+  department: [
+    { required: true, message: 'Please input department', trigger: 'blur' }
+  ]
+})
+
 const fetchData = async () => {
   loading.value = true
   try {
-    // Note: Backend Controller currently ignores search params logic (just page/size)
-    // We should implement generic search later. For now just list.
-    const res = await getClasses({ page: currentPage.value, size: pageSize.value })
+    // Calling the API with search param
+    const res = await getClasses({ 
+      page: currentPage.value, 
+      size: pageSize.value,
+      className: searchForm.className
+    })
     tableData.value = res.data.records
     total.value = res.data.total
   } finally {
@@ -96,12 +114,14 @@ const handleAdd = () => {
   dialogTitle.value = 'Add Class'
   Object.assign(form, { classId: null, className: '', department: '' })
   dialogVisible.value = true
+  nextTick(() => { classFormRef.value?.clearValidate() })
 }
 
 const handleEdit = (row: any) => {
   dialogTitle.value = 'Edit Class'
   Object.assign(form, row)
   dialogVisible.value = true
+  nextTick(() => { classFormRef.value?.clearValidate() })
 }
 
 const handleDelete = (row: any) => {
@@ -114,16 +134,21 @@ const handleDelete = (row: any) => {
 }
 
 const submitForm = async () => {
-  try {
-    if (form.classId) {
-      await updateClass(form)
-    } else {
-      await addClass(form)
+  if (!classFormRef.value) return
+  await classFormRef.value.validate(async (valid: boolean) => {
+    if (valid) {
+      try {
+        if (form.classId) {
+          await updateClass(form)
+        } else {
+          await addClass(form)
+        }
+        ElMessage.success('Success')
+        dialogVisible.value = false
+        fetchData()
+      } catch (e) {}
     }
-    ElMessage.success('Success')
-    dialogVisible.value = false
-    fetchData()
-  } catch (e) {}
+  })
 }
 
 onMounted(() => fetchData())

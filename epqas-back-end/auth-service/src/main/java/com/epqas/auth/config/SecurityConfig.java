@@ -30,8 +30,7 @@ public class SecurityConfig {
                     return corsConfiguration;
                 }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() // Allow login/register
-                        .anyRequest().authenticated() // Protect other endpoints
+                        .anyRequest().permitAll() // Allow all, gateway handles auth
                 );
         return http.build();
     }
