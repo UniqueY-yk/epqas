@@ -33,7 +33,20 @@ public class RoleController {
 
     @DeleteMapping("/{id}")
     public Result<Boolean> deleteRole(@PathVariable Integer id) {
-        return Result.success(roleService.removeById(id));
+        if (id != null && id <= 4) {
+            return Result.error(400, "System default roles cannot be deleted.");
+        }
+        try {
+            boolean success = roleService.removeById(id);
+            if (!success) {
+                return Result.error(404, "Role not found.");
+            }
+            return Result.success(true);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return Result.error(400, "Cannot delete role: it is currently assigned to one or more users.");
+        } catch (Exception e) {
+            return Result.error(500, "Failed to delete role.");
+        }
     }
 
     @GetMapping("/page")

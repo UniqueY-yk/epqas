@@ -21,6 +21,12 @@ const router = createRouter({
                     meta: { requiresAdmin: true }
                 },
                 {
+                    path: 'admin/roles',
+                    name: 'RoleManagement',
+                    component: () => import('../views/admin/RoleManagement.vue'),
+                    meta: { requiresAdmin: true }
+                },
+                {
                     path: 'academic/classes',
                     name: 'ClassManagement',
                     component: () => import('../views/academic/ClassManagement.vue'),

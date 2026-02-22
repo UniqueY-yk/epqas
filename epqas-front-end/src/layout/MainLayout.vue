@@ -23,6 +23,11 @@
           <el-icon><User /></el-icon>
           <template #title>User Management</template>
         </el-menu-item>
+        
+        <el-menu-item index="/admin/roles">
+          <el-icon><Filter /></el-icon>
+          <template #title>Role Management</template>
+        </el-menu-item>
 
         <el-sub-menu index="/academic">
           <template #title>
@@ -77,7 +82,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Platform, Odometer, User, School, Expand, Fold, ArrowDown } from '@element-plus/icons-vue'
+import { Platform, Odometer, User, School, Expand, Fold, ArrowDown, Filter } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
