@@ -24,7 +24,7 @@
         <el-table-column prop="userId" label="ID" width="80" />
         <el-table-column prop="username" label="Username" width="180" />
         <el-table-column prop="realName" label="Real Name" width="180" />
-        <el-table-column prop="roleId" label="Role" width="100">
+        <el-table-column prop="roleId" label="Role" width="180">
           <template #default="scope">
             <el-tag :type="getRoleTagType(scope.row.roleId)">{{ getRoleName(scope.row.roleId) }}</el-tag>
           </template>
@@ -140,9 +140,9 @@ const getRoleTagType = (roleId: number) => {
 
 const getRoleName = (roleId: number) => {
   switch(roleId) {
-    case 1: return 'Admin'
-    case 2: return 'Teacher'
-    case 3: return 'Leader'
+    case 1: return 'Administrator'
+    case 2: return 'Question Setter'
+    case 3: return 'Course Instructor'
     case 4: return 'Student'
     default: return 'Unknown'
   }

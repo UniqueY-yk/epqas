@@ -29,6 +29,7 @@
             <el-icon><School /></el-icon>
             <span>Academic</span>
           </template>
+          <el-menu-item index="/academic/students">Student Management</el-menu-item>
           <el-menu-item index="/academic/classes">Class Management</el-menu-item>
           <el-menu-item index="/academic/courses">Course Management</el-menu-item>
         </el-sub-menu>

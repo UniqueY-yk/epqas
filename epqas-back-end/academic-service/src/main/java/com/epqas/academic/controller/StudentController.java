@@ -5,6 +5,8 @@ import com.epqas.academic.entity.Student;
 import com.epqas.academic.service.StudentService;
 import com.epqas.common.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.epqas.academic.dto.StudentDTO;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,14 +18,20 @@ public class StudentController {
 
     @GetMapping
     public Result<Page<Student>> listStudents(@RequestParam(defaultValue = "1") Integer page,
-                                              @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(defaultValue = "10") Integer size) {
         return Result.success(studentService.page(new Page<>(page, size)));
     }
 
     @PostMapping
-    public Result<Boolean> createStudent(@RequestBody Student student) {
-        // Note: Realistically should create User first or handle distributed transaction
-        return Result.success(studentService.save(student));
+    public Result<Boolean> createStudent(@RequestBody StudentDTO studentDTO) {
+        studentService.createStudentWithUser(studentDTO);
+        return Result.success(true);
+    }
+
+    @PostMapping("/import")
+    public Result<Boolean> importStudents(@RequestParam("file") MultipartFile file) {
+        studentService.importStudents(file);
+        return Result.success(true);
     }
 
     @PutMapping

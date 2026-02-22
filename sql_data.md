@@ -8,7 +8,7 @@
 INSERT INTO role (role_id, role_name, description) VALUES 
 (1, 'Administrator', 'System maintenance and global access'),
 (2, 'Question Setter', 'Responsible for designing questions and papers'),
-(3, 'Instructor', 'Classroom teacher, views reports'),
+(3, 'Course Instructor', 'Classroom teacher, views reports'),
 (4, 'Student', 'Takes exams and views own grades');
 
 -- Insert Users (Password is '123456' hashed - dummy placeholder)

@@ -27,11 +27,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public boolean createUser(User user) {
+    public Long createUser(User user) {
         if (user.getPasswordHash() != null && !user.getPasswordHash().isEmpty()) {
             user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         }
-        return this.save(user);
+        this.save(user); // Mybatis plus automatically sets the ID on the entity
+        return user.getUserId();
     }
 
     @Override

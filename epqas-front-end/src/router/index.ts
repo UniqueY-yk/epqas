@@ -31,6 +31,12 @@ const router = createRouter({
                     name: 'CourseManagement',
                     component: () => import('../views/academic/CourseManagement.vue'),
                     meta: { requiresAdmin: true }
+                },
+                {
+                    path: 'academic/students',
+                    name: 'StudentManagement',
+                    component: () => import('../views/academic/StudentManagement.vue'),
+                    meta: { requiresAdmin: true }
                 }
             ]
         },

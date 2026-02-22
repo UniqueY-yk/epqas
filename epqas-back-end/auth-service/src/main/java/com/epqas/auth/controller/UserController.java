@@ -32,7 +32,7 @@ public class UserController {
     }
 
     @PostMapping
-    public Result<Boolean> createUser(@RequestHeader("X-Role-Id") Integer roleId, @RequestBody User user) {
+    public Result<Long> createUser(@RequestHeader("X-Role-Id") Integer roleId, @RequestBody User user) {
         if (roleId == null || roleId != 1)
             return Result.error(403, "Access Denied");
         return Result.success(userService.createUser(user));
