@@ -10,7 +10,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackages = { "com.epqas.common.feign" })
 @MapperScan("com.epqas.academic.mapper")
 @ComponentScan(basePackages = { "com.epqas.academic", "com.epqas.common" })
 public class AcademicApplication {

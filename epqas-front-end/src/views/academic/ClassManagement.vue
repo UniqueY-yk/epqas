@@ -3,31 +3,31 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>Class Management</span>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">Add Class</el-button>
+          <span>班级管理</span>
+          <el-button type="primary" :icon="Plus" @click="handleAdd">新增班级</el-button>
         </div>
       </template>
 
       <el-form :inline="true" :model="searchForm">
-        <el-form-item label="Class Name">
-          <el-input v-model="searchForm.className" placeholder="Search Class" />
+        <el-form-item label="班级名称">
+          <el-input v-model="searchForm.className" placeholder="按班级名称搜索" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :icon="Search" @click="fetchData">Search</el-button>
+          <el-button type="primary" :icon="Search" @click="fetchData">搜索</el-button>
         </el-form-item>
       </el-form>
 
       <el-table :data="tableData" style="width: 100%" v-loading="loading" stripe border>
         <template #empty>
-          <el-empty description="No Data" />
+          <el-empty description="暂无数据" />
         </template>
         <el-table-column prop="classId" label="ID" width="80" />
-        <el-table-column prop="className" label="Class Name" />
-        <el-table-column prop="department" label="Department" />
-        <el-table-column label="Operations" width="180">
+        <el-table-column prop="className" label="班级名称" />
+        <el-table-column prop="department" label="学院" />
+        <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button size="small" :icon="Edit" @click="handleEdit(scope.row)">Edit</el-button>
-            <el-button size="small" type="danger" :icon="Delete" @click="handleDelete(scope.row)">Delete</el-button>
+            <el-button size="small" :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button size="small" type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -45,17 +45,17 @@
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle">
       <el-form :model="form" label-width="120px" :rules="rules" ref="classFormRef">
-        <el-form-item label="Class Name" prop="className">
+        <el-form-item label="班级名称" prop="className">
           <el-input v-model="form.className" />
         </el-form-item>
-        <el-form-item label="Department" prop="department">
+        <el-form-item label="学院" prop="department">
           <el-input v-model="form.department" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="submitForm">Confirm</el-button>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitForm">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -75,24 +75,23 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const searchForm = reactive({ className: '' })
 const dialogVisible = ref(false)
-const dialogTitle = ref('Add Class')
+const dialogTitle = ref('新增班级')
 const form = reactive({ classId: null, className: '', department: '' })
 
 const classFormRef = ref()
 const rules = reactive({
   className: [
-    { required: true, message: 'Please input class name', trigger: 'blur' },
-    { min: 2, message: 'Class name must be at least 2 characters', trigger: 'blur' }
+    { required: true, message: '请输入班级名称', trigger: 'blur' },
+    { min: 2, message: '班级名称至少2个字', trigger: 'blur' }
   ],
   department: [
-    { required: true, message: 'Please input department', trigger: 'blur' }
+    { required: true, message: '请输入学院', trigger: 'blur' }
   ]
 })
 
 const fetchData = async () => {
   loading.value = true
   try {
-    // Calling the API with search param
     const res = await getClasses({ 
       page: currentPage.value, 
       size: pageSize.value,
@@ -111,24 +110,24 @@ const handleCurrentChange = (val: number) => {
 }
 
 const handleAdd = () => {
-  dialogTitle.value = 'Add Class'
+  dialogTitle.value = '新增班级'
   Object.assign(form, { classId: null, className: '', department: '' })
   dialogVisible.value = true
   nextTick(() => { classFormRef.value?.clearValidate() })
 }
 
 const handleEdit = (row: any) => {
-  dialogTitle.value = 'Edit Class'
+  dialogTitle.value = '编辑班级'
   Object.assign(form, row)
   dialogVisible.value = true
   nextTick(() => { classFormRef.value?.clearValidate() })
 }
 
 const handleDelete = (row: any) => {
-  ElMessageBox.confirm('Delete this class?', 'Warning', { type: 'warning' })
+  ElMessageBox.confirm('确定删除该班级吗？', '提示', { type: 'warning' })
     .then(async () => {
       await deleteClass(row.classId)
-      ElMessage.success('Deleted')
+      ElMessage.success('删除成功')
       fetchData()
     })
 }
@@ -143,7 +142,7 @@ const submitForm = async () => {
         } else {
           await addClass(form)
         }
-        ElMessage.success('Success')
+        ElMessage.success('操作成功')
         dialogVisible.value = false
         fetchData()
       } catch (e) {}

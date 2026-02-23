@@ -4,16 +4,16 @@
       <div class="login-header">
         <div class="logo-area">
           <el-icon :size="40" color="#409EFF"><Platform /></el-icon>
-          <span class="title">EPQAS Login</span>
+          <span class="title">题析登录</span>
         </div>
-        <p class="subtitle">Examination Paper Quality Analysis System</p>
+        <p class="subtitle">题析</p>
       </div>
       
       <el-form :model="loginForm" :rules="rules" ref="loginFormRef" size="large" class="login-form">
         <el-form-item prop="username">
           <el-input 
             v-model="loginForm.username" 
-            placeholder="Username" 
+            placeholder="用户名" 
             :prefix-icon="User"
           />
         </el-form-item>
@@ -21,13 +21,13 @@
           <el-input 
             v-model="loginForm.password" 
             type="password" 
-            placeholder="Password" 
+            placeholder="密码" 
             show-password 
             :prefix-icon="Lock"
           />
         </el-form-item>
         <el-form-item prop="roleId">
-          <el-select v-model="loginForm.roleId" placeholder="Select Identity" style="width: 100%">
+          <el-select v-model="loginForm.roleId" placeholder="选择身份" style="width: 100%">
             <template #prefix>
               <el-icon><UserFilled /></el-icon>
             </template>
@@ -37,13 +37,13 @@
         
         <el-form-item>
           <el-button type="primary" @click="handleLogin" :loading="loading" class="login-button">
-            Sign In
+            登录
           </el-button>
         </el-form-item>
         
         <div class="form-footer">
-          <span class="text">Don't have an account?</span>
-          <el-button link type="primary" @click="$router.push('/register')">Register Now</el-button>
+          <span class="text">没有账号？</span>
+          <el-button link type="primary" @click="$router.push('/register')">立即注册</el-button>
         </div>
       </el-form>
     </div>
@@ -69,9 +69,9 @@ const loginForm = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: 'Please input username', trigger: 'blur' }],
-  password: [{ required: true, message: 'Please input password', trigger: 'blur' }],
-  roleId: [{ required: true, message: 'Please select role', trigger: 'change' }]
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  roleId: [{ required: true, message: '请选择身份', trigger: 'change' }]
 }
 
 onMounted(async () => {
@@ -79,7 +79,7 @@ onMounted(async () => {
         const res = await getRoles()
         roleList.value = res.data
     } catch (e) {
-        ElMessage.error('Failed to load roles')
+        ElMessage.error('角色加载失败')
     }
 })
 
@@ -99,7 +99,7 @@ const handleLogin = async () => {
         if (loginForm.roleId) {
             localStorage.setItem('roleId', loginForm.roleId.toString())
         }
-        ElMessage.success('Login successful')
+        ElMessage.success('登录成功')
         router.push('/')
       } catch (e) {
         // Error handled in interceptor

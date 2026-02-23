@@ -4,16 +4,16 @@
       <div class="register-header">
         <div class="logo-area">
           <el-icon :size="40" color="#409EFF"><Platform /></el-icon>
-          <span class="title">Create Account</span>
+          <span class="title">创建账号</span>
         </div>
-        <p class="subtitle">Join EPQAS today</p>
+        <p class="subtitle">加入题析</p>
       </div>
       
       <el-form :model="registerForm" :rules="rules" ref="registerFormRef" size="large" class="register-form" label-width="0">
         <el-form-item prop="username">
           <el-input 
             v-model="registerForm.username" 
-            placeholder="Username" 
+            placeholder="用户名" 
             :prefix-icon="User"
           />
         </el-form-item>
@@ -22,34 +22,34 @@
             v-model="registerForm.password" 
             type="password" 
             show-password 
-            placeholder="Password"
+            placeholder="密码"
             :prefix-icon="Lock"
           />
         </el-form-item>
         <el-form-item prop="realName">
           <el-input 
             v-model="registerForm.realName" 
-            placeholder="Full Name"
+            placeholder="真实姓名"
             :prefix-icon="Avatar"
           />
         </el-form-item>
         <el-form-item prop="email">
           <el-input 
             v-model="registerForm.email" 
-            placeholder="Email Address"
+            placeholder="邮箱"
             :prefix-icon="Message"
           />
         </el-form-item>
         
         <el-form-item>
           <el-button type="primary" @click="handleRegister" :loading="loading" class="register-button">
-            Create Account
+            创建账号
           </el-button>
         </el-form-item>
         
         <div class="form-footer">
-          <span class="text">Already have an account?</span>
-          <el-button link type="primary" @click="$router.push('/login')">Sign In</el-button>
+          <span class="text">已有账号？</span>
+          <el-button link type="primary" @click="$router.push('/login')">去登录</el-button>
         </div>
       </el-form>
     </div>
@@ -75,12 +75,12 @@ const registerForm = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: 'Please input username', trigger: 'blur' }],
-  password: [{ required: true, message: 'Please input password', trigger: 'blur' }],
-  realName: [{ required: true, message: 'Please input real name', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
   email: [
-      { required: true, message: 'Please input email', trigger: 'blur' },
-      { type: 'email', message: 'Invalid email address', trigger: 'blur' }
+      { required: true, message: '请输入邮箱', trigger: 'blur' },
+      { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
   ]
 }
 
@@ -97,7 +97,7 @@ const handleRegister = async () => {
           realName: registerForm.realName,
           email: registerForm.email
         })
-        ElMessage.success('Registration successful, please login')
+        ElMessage.success('注册成功，请登录')
         router.push('/login')
       } catch (e) {
         // Handled by request interceptor

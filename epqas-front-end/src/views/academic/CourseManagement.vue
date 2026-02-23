@@ -3,31 +3,31 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>Course Management</span>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">Add Course</el-button>
+          <span>课程管理</span>
+          <el-button type="primary" :icon="Plus" @click="handleAdd">新增课程</el-button>
         </div>
       </template>
 
       <el-form :inline="true" :model="searchForm">
-        <el-form-item label="Course Name">
-          <el-input v-model="searchForm.courseName" placeholder="Search Course" />
+        <el-form-item label="课程名称">
+          <el-input v-model="searchForm.courseName" placeholder="按课程名称搜索" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :icon="Search" @click="fetchData">Search</el-button>
+          <el-button type="primary" :icon="Search" @click="fetchData">搜索</el-button>
         </el-form-item>
       </el-form>
 
       <el-table :data="tableData" style="width: 100%" v-loading="loading" stripe border>
         <template #empty>
-          <el-empty description="No Data" />
+          <el-empty description="暂无数据" />
         </template>
         <el-table-column prop="courseId" label="ID" width="80" />
-        <el-table-column prop="courseName" label="Course Name" />
-        <el-table-column prop="courseCode" label="Code" />
-        <el-table-column label="Operations" width="180">
+        <el-table-column prop="courseName" label="课程名称" />
+        <el-table-column prop="courseCode" label="课程代码" />
+        <el-table-column label="操作" width="180">
           <template #default="scope">
-            <el-button size="small" :icon="Edit" @click="handleEdit(scope.row)">Edit</el-button>
-            <el-button size="small" type="danger" :icon="Delete" @click="handleDelete(scope.row)">Delete</el-button>
+            <el-button size="small" :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button size="small" type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -44,17 +44,17 @@
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle">
       <el-form :model="form" label-width="120px" :rules="rules" ref="courseFormRef">
-        <el-form-item label="Course Name" prop="courseName">
+        <el-form-item label="课程名称" prop="courseName">
           <el-input v-model="form.courseName" />
         </el-form-item>
-        <el-form-item label="Course Code" prop="courseCode">
+        <el-form-item label="课程代码" prop="courseCode">
           <el-input v-model="form.courseCode" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="submitForm">Confirm</el-button>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitForm">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -74,17 +74,17 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const searchForm = reactive({ courseName: '' })
 const dialogVisible = ref(false)
-const dialogTitle = ref('Add Course')
+const dialogTitle = ref('新增课程')
 const form = reactive({ courseId: null, courseName: '', courseCode: '' })
 
 const courseFormRef = ref()
 const rules = reactive({
   courseName: [
-    { required: true, message: 'Please input course name', trigger: 'blur' },
-    { min: 2, message: 'Course name must be at least 2 characters', trigger: 'blur' }
+    { required: true, message: '请输入课程名称', trigger: 'blur' },
+    { min: 2, message: '课程名称至少2个字', trigger: 'blur' }
   ],
   courseCode: [
-    { required: true, message: 'Please input course code', trigger: 'blur' }
+    { required: true, message: '请输入课程代码', trigger: 'blur' }
   ]
 })
 
@@ -109,24 +109,24 @@ const handleCurrentChange = (val: number) => {
 }
 
 const handleAdd = () => {
-  dialogTitle.value = 'Add Course'
+  dialogTitle.value = '新增课程'
   Object.assign(form, { courseId: null, courseName: '', courseCode: '' })
   dialogVisible.value = true
   nextTick(() => { courseFormRef.value?.clearValidate() })
 }
 
 const handleEdit = (row: any) => {
-  dialogTitle.value = 'Edit Course'
+  dialogTitle.value = '编辑课程'
   Object.assign(form, row)
   dialogVisible.value = true
   nextTick(() => { courseFormRef.value?.clearValidate() })
 }
 
 const handleDelete = (row: any) => {
-  ElMessageBox.confirm('Delete this course?', 'Warning', { type: 'warning' })
+  ElMessageBox.confirm('确定删除该课程吗？', '提示', { type: 'warning' })
     .then(async () => {
       await deleteCourse(row.courseId)
-      ElMessage.success('Deleted')
+      ElMessage.success('删除成功')
       fetchData()
     })
 }
@@ -141,7 +141,7 @@ const submitForm = async () => {
         } else {
           await addCourse(form)
         }
-        ElMessage.success('Success')
+        ElMessage.success('操作成功')
         dialogVisible.value = false
         fetchData()
       } catch (e) {}

@@ -5,7 +5,7 @@
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>Total Users</span>
+              <span>用户总数</span>
             </div>
           </template>
           <div class="card-value">1,234</div>
@@ -15,7 +15,7 @@
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>Active Exams</span>
+              <span>活跃考试数</span>
             </div>
           </template>
           <div class="card-value">56</div>
@@ -25,7 +25,7 @@
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>Papers Analyzed</span>
+              <span>已分析试卷数</span>
             </div>
           </template>
           <div class="card-value">892</div>
@@ -35,10 +35,10 @@
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
-                <span>System Status</span>
+                <span>系统状态</span>
             </div>
           </template>
-          <div class="card-value status-ok">Normal</div>
+          <div class="card-value status-ok">正常</div>
         </el-card>
       </el-col>
     </el-row>
@@ -46,8 +46,8 @@
     <br/>
 
     <el-card class="welcome-card">
-      <h3>Welcome to EPQAS</h3>
-      <p>Use the sidebar to navigate to different management modules.</p>
+      <h3>欢迎来到EPQAS</h3>
+      <p>使用侧边栏导航到不同的管理模块。</p>
     </el-card>
   </div>
 </template>
