@@ -22,7 +22,7 @@ public class ExaminationPaperController {
     }
 
     @GetMapping("/{id}")
-    public Result<ExaminationPaper> getExaminationPaperById(@PathVariable Long id) {
+    public Result<ExaminationPaper> getExaminationPaperById(@PathVariable("id") Long id) {
         return Result.success(examinationPaperService.getById(id));
     }
 
@@ -32,16 +32,17 @@ public class ExaminationPaperController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteExaminationPaper(@PathVariable Long id) {
+    public Result<Boolean> deleteExaminationPaper(@PathVariable("id") Long id) {
         return Result.success(examinationPaperService.removeById(id));
     }
 
     @GetMapping("/page")
-    public Result<Page<ExaminationPaper>> getExaminationPaperPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<ExaminationPaper>> getExaminationPaperPage(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(examinationPaperService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<ExaminationPaper>> listExaminationPapers() {
         return Result.success(examinationPaperService.list());

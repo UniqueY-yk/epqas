@@ -22,7 +22,7 @@ public class QuestionController {
     }
 
     @GetMapping("/{id}")
-    public Result<Question> getQuestionById(@PathVariable Long id) {
+    public Result<Question> getQuestionById(@PathVariable("id") Long id) {
         return Result.success(questionService.getById(id));
     }
 
@@ -32,16 +32,16 @@ public class QuestionController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteQuestion(@PathVariable Long id) {
+    public Result<Boolean> deleteQuestion(@PathVariable("id") Long id) {
         return Result.success(questionService.removeById(id));
     }
 
     @GetMapping("/page")
-    public Result<Page<Question>> getQuestionPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<Question>> getQuestionPage(@RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(questionService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<Question>> listQuestions() {
         return Result.success(questionService.list());

@@ -16,16 +16,16 @@ public class UserController {
 
     @GetMapping
     public Result<Page<User>> listUsers(@RequestHeader("X-Role-Id") Integer roleId,
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String username) {
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "username", required = false) String username) {
         if (roleId == null || roleId != 1)
             return Result.error(403, "Access Denied");
         return Result.success(userService.getUsersPage(page, size, username));
     }
 
     @GetMapping("/{id}")
-    public Result<User> getUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable Long id) {
+    public Result<User> getUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable("id") Long id) {
         if (roleId == null || roleId != 1)
             return Result.error(403, "Access Denied");
         return Result.success(userService.getById(id));
@@ -46,7 +46,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable Long id) {
+    public Result<Boolean> deleteUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable("id") Long id) {
         if (roleId == null || roleId != 1)
             return Result.error(403, "Access Denied");
         return Result.success(userService.removeById(id));

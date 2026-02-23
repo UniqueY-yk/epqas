@@ -22,7 +22,7 @@ public class RoleInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("Checking default roles...");
 
-        List<String> defaultRoles = Arrays.asList("Administrator", "Question Setter", "Course Instructor", "Student");
+        List<String> defaultRoles = Arrays.asList("系统管理员", "命题教师", "任课教师", "学生");
 
         for (String roleName : defaultRoles) {
             QueryWrapper<Role> queryWrapper = new QueryWrapper<>();
@@ -30,14 +30,14 @@ public class RoleInitializer implements CommandLineRunner {
             if (roleMapper.selectCount(queryWrapper) == 0) {
                 Role role = new Role();
                 role.setRoleName(roleName);
-                if ("Administrator".equals(roleName)) {
-                    role.setDescription("System maintenance and global access");
-                } else if ("Question Setter".equals(roleName)) {
-                    role.setDescription("Responsible for designing questions and papers");
-                } else if ("Course Instructor".equals(roleName)) {
-                    role.setDescription("Classroom teacher, views reports");
+                if ("系统管理员".equals(roleName)) {
+                    role.setDescription("系统维护与全局访问权限");
+                } else if ("命题教师".equals(roleName)) {
+                    role.setDescription("负责设计试题和试卷");
+                } else if ("任课教师".equals(roleName)) {
+                    role.setDescription("班级教师，查看报告");
                 } else {
-                    role.setDescription("Takes exams and views own grades");
+                    role.setDescription("参加考试并查看自己的成绩");
                 }
                 roleMapper.insert(role);
                 log.info("Initialized role: {}", roleName);

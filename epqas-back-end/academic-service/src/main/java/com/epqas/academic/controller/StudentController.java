@@ -17,8 +17,8 @@ public class StudentController {
     private StudentService studentService;
 
     @GetMapping
-    public Result<Page<Student>> listStudents(@RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<Student>> listStudents(@RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(studentService.page(new Page<>(page, size)));
     }
 
@@ -40,7 +40,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteStudent(@PathVariable Long id) {
+    public Result<Boolean> deleteStudent(@PathVariable("id") Long id) {
         return Result.success(studentService.removeById(id));
     }
 }

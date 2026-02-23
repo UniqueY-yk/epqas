@@ -22,7 +22,7 @@ public class RoleController {
     }
 
     @GetMapping("/{id}")
-    public Result<Role> getRoleById(@PathVariable Integer id) {
+    public Result<Role> getRoleById(@PathVariable("id") Integer id) {
         return Result.success(roleService.getById(id));
     }
 
@@ -32,7 +32,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteRole(@PathVariable Integer id) {
+    public Result<Boolean> deleteRole(@PathVariable("id") Integer id) {
         if (id != null && id <= 4) {
             return Result.error(400, "System default roles cannot be deleted.");
         }
@@ -50,8 +50,8 @@ public class RoleController {
     }
 
     @GetMapping("/page")
-    public Result<Page<Role>> getRolePage(@RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<Role>> getRolePage(@RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(roleService.page(new Page<>(current, size)));
     }
 

@@ -22,7 +22,7 @@ public class QuestionQualityAnalysisController {
     }
 
     @GetMapping("/{id}")
-    public Result<QuestionQualityAnalysis> getAnalysisById(@PathVariable Long id) {
+    public Result<QuestionQualityAnalysis> getAnalysisById(@PathVariable("id") Long id) {
         return Result.success(analysisService.getById(id));
     }
 
@@ -32,16 +32,17 @@ public class QuestionQualityAnalysisController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteAnalysis(@PathVariable Long id) {
+    public Result<Boolean> deleteAnalysis(@PathVariable("id") Long id) {
         return Result.success(analysisService.removeById(id));
     }
 
     @GetMapping("/page")
-    public Result<Page<QuestionQualityAnalysis>> getAnalysisPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<QuestionQualityAnalysis>> getAnalysisPage(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(analysisService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<QuestionQualityAnalysis>> listAnalysis() {
         return Result.success(analysisService.list());

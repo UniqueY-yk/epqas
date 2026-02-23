@@ -16,9 +16,9 @@ public class SchoolClassController {
 
     @GetMapping
     public Result<Page<SchoolClass>> listClasses(@RequestHeader("X-Role-Id") Integer roleId,
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String className) {
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "className", required = false) String className) {
         if (roleId == null || roleId != 1)
             return Result.error(403, "Access Denied");
         return Result.success(schoolClassService.getClassesPage(page, size, className));
@@ -41,7 +41,7 @@ public class SchoolClassController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteClass(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable Integer id) {
+    public Result<Boolean> deleteClass(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable("id") Integer id) {
         if (roleId == null || roleId != 1)
             return Result.error(403, "Access Denied");
         return Result.success(schoolClassService.removeById(id));

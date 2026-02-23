@@ -22,7 +22,7 @@ public class ExaminationController {
     }
 
     @GetMapping("/{id}")
-    public Result<Examination> getExaminationById(@PathVariable Long id) {
+    public Result<Examination> getExaminationById(@PathVariable("id") Long id) {
         return Result.success(examinationService.getById(id));
     }
 
@@ -32,16 +32,17 @@ public class ExaminationController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteExamination(@PathVariable Long id) {
+    public Result<Boolean> deleteExamination(@PathVariable("id") Long id) {
         return Result.success(examinationService.removeById(id));
     }
 
     @GetMapping("/page")
-    public Result<Page<Examination>> getExaminationPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<Examination>> getExaminationPage(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(examinationService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<Examination>> listExaminations() {
         return Result.success(examinationService.list());

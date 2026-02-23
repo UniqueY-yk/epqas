@@ -15,8 +15,9 @@ public class KnowledgePointController {
     private KnowledgePointService knowledgePointService;
 
     @GetMapping
-    public Result<Page<KnowledgePoint>> listKnowledgePoints(@RequestParam(defaultValue = "1") Integer page,
-                                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<KnowledgePoint>> listKnowledgePoints(
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(knowledgePointService.page(new Page<>(page, size)));
     }
 
@@ -31,7 +32,7 @@ public class KnowledgePointController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteKnowledgePoint(@PathVariable Integer id) {
+    public Result<Boolean> deleteKnowledgePoint(@PathVariable("id") Integer id) {
         return Result.success(knowledgePointService.removeById(id));
     }
 }

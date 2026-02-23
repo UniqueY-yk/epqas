@@ -22,7 +22,7 @@ public class AuditLogController {
     }
 
     @GetMapping("/{id}")
-    public Result<AuditLog> getAuditLogById(@PathVariable Long id) {
+    public Result<AuditLog> getAuditLogById(@PathVariable("id") Long id) {
         return Result.success(auditLogService.getById(id));
     }
 
@@ -32,16 +32,16 @@ public class AuditLogController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteAuditLog(@PathVariable Long id) {
+    public Result<Boolean> deleteAuditLog(@PathVariable("id") Long id) {
         return Result.success(auditLogService.removeById(id));
     }
 
     @GetMapping("/page")
-    public Result<Page<AuditLog>> getAuditLogPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<AuditLog>> getAuditLogPage(@RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(auditLogService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<AuditLog>> listAuditLogs() {
         return Result.success(auditLogService.list());

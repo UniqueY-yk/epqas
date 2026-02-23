@@ -22,7 +22,7 @@ public class ExaminationPaperQualityAnalysisController {
     }
 
     @GetMapping("/{id}")
-    public Result<ExaminationPaperQualityAnalysis> getAnalysisById(@PathVariable Long id) {
+    public Result<ExaminationPaperQualityAnalysis> getAnalysisById(@PathVariable("id") Long id) {
         return Result.success(analysisService.getById(id));
     }
 
@@ -32,16 +32,17 @@ public class ExaminationPaperQualityAnalysisController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteAnalysis(@PathVariable Long id) {
+    public Result<Boolean> deleteAnalysis(@PathVariable("id") Long id) {
         return Result.success(analysisService.removeById(id));
     }
 
     @GetMapping("/page")
-    public Result<Page<ExaminationPaperQualityAnalysis>> getAnalysisPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<ExaminationPaperQualityAnalysis>> getAnalysisPage(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(analysisService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<ExaminationPaperQualityAnalysis>> listAnalysis() {
         return Result.success(analysisService.list());

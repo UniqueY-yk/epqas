@@ -22,7 +22,7 @@ public class ImprovementSuggestionController {
     }
 
     @GetMapping("/{id}")
-    public Result<ImprovementSuggestion> getSuggestionById(@PathVariable Long id) {
+    public Result<ImprovementSuggestion> getSuggestionById(@PathVariable("id") Long id) {
         return Result.success(suggestionService.getById(id));
     }
 
@@ -32,16 +32,17 @@ public class ImprovementSuggestionController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Boolean> deleteSuggestion(@PathVariable Long id) {
+    public Result<Boolean> deleteSuggestion(@PathVariable("id") Long id) {
         return Result.success(suggestionService.removeById(id));
     }
 
     @GetMapping("/page")
-    public Result<Page<ImprovementSuggestion>> getSuggestionPage(@RequestParam(defaultValue = "1") Integer current,
-                                          @RequestParam(defaultValue = "10") Integer size) {
+    public Result<Page<ImprovementSuggestion>> getSuggestionPage(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return Result.success(suggestionService.page(new Page<>(current, size)));
     }
-    
+
     @GetMapping
     public Result<List<ImprovementSuggestion>> listSuggestions() {
         return Result.success(suggestionService.list());
