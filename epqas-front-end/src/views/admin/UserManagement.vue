@@ -113,8 +113,15 @@
                 <el-form-item label="邮箱" prop="email">
                     <el-input v-model="form.email" />
                 </el-form-item>
-                <el-form-item label="角色ID" prop="roleId">
-                    <el-input v-model.number="form.roleId" type="number" />
+                <el-form-item label="角色" prop="roleId">
+                    <el-select v-model="form.roleId" placeholder="请选择角色" style="width: 100%">
+                        <el-option
+                            v-for="role in roles"
+                            :key="role.roleId"
+                            :label="role.roleName"
+                            :value="role.roleId"
+                        />
+                    </el-select>
                 </el-form-item>
                 <el-form-item label="启用">
                     <el-switch v-model="form.isActive" />
@@ -135,6 +142,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from "vue";
 import { getUsers, addUser, updateUser, deleteUser } from "@/api/user";
+import { getAllRoles } from "@/api/role";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search, Plus, Edit, Delete } from "@element-plus/icons-vue";
 
@@ -145,6 +153,7 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const searchForm = reactive({ username: "" });
 
+const roles = ref<any[]>([]);
 const dialogVisible = ref(false);
 const dialogTitle = ref("新增用户");
 const form = reactive({
@@ -174,7 +183,7 @@ const rules = reactive({
             trigger: ["blur", "change"],
         },
     ],
-    roleId: [{ required: true, message: "请输入角色ID", trigger: "blur" }],
+    roleId: [{ required: true, message: "请选择角色", trigger: "change" }],
 });
 
 const getRoleTagType = (roleId: number) => {
@@ -193,18 +202,8 @@ const getRoleTagType = (roleId: number) => {
 };
 
 const getRoleName = (roleId: number) => {
-    switch (roleId) {
-        case 1:
-            return "管理员";
-        case 2:
-            return "命题教师";
-        case 3:
-            return "任课教师";
-        case 4:
-            return "学生";
-        default:
-            return "未知";
-    }
+    const role = roles.value.find(r => r.roleId === roleId);
+    return role ? role.roleName : "未知";
 };
 
 const fetchUsers = async () => {
@@ -285,7 +284,17 @@ const submitForm = async () => {
     });
 };
 
+const fetchAllRoles = async () => {
+    try {
+        const res = await getAllRoles();
+        roles.value = res.data;
+    } catch (e) {
+        console.error("Failed to fetch roles", e);
+    }
+};
+
 onMounted(() => {
+    fetchAllRoles();
     fetchUsers();
 });
 </script>
