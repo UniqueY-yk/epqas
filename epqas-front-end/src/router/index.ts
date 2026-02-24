@@ -55,6 +55,12 @@ const router = createRouter({
                     name: '题库管理',
                     component: () => import('../views/question/QuestionManagement.vue'),
                     meta: { roles: [1, 2] }
+                },
+                {
+                    path: 'proposition/papers',
+                    name: '试卷模板管理',
+                    component: () => import('../views/proposition/ExaminationPaperManagement.vue'),
+                    meta: { roles: [1, 2] }
                 }
             ]
         },
