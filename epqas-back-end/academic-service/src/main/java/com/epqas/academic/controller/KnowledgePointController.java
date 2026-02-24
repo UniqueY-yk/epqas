@@ -17,8 +17,10 @@ public class KnowledgePointController {
     @GetMapping
     public Result<Page<KnowledgePoint>> listKnowledgePoints(
             @RequestParam(value = "page", defaultValue = "1") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        return Result.success(knowledgePointService.page(new Page<>(page, size)));
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "courseId", required = false) Integer courseId,
+            @RequestParam(value = "pointName", required = false) String pointName) {
+        return Result.success(knowledgePointService.getKnowledgePointsPage(page, size, courseId, pointName));
     }
 
     @PostMapping

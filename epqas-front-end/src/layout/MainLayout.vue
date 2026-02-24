@@ -43,6 +43,9 @@
                     <el-menu-item index="/academic/courses"
                         >课程管理</el-menu-item
                     >
+                    <el-menu-item index="/academic/knowledge-points"
+                        >知识点管理</el-menu-item
+                    >
                 </el-sub-menu>
             </el-menu>
         </el-aside>
