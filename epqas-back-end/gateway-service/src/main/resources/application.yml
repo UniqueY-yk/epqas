@@ -27,6 +27,12 @@ spring:
             - Path=/academic/**
           filters:
             - StripPrefix=1
+        - id: question-service
+          uri: lb://question-service
+          predicates:
+            - Path=/question/**
+          filters:
+            - StripPrefix=1
       globalcors:
         cors-configurations:
           '[/**]':

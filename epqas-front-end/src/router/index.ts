@@ -18,37 +18,43 @@ const router = createRouter({
                     path: 'admin/users',
                     name: '用户管理',
                     component: () => import('../views/admin/UserManagement.vue'),
-                    meta: { requiresAdmin: true }
+                    meta: { roles: [1] }
                 },
                 {
                     path: 'admin/roles',
                     name: '角色管理',
                     component: () => import('../views/admin/RoleManagement.vue'),
-                    meta: { requiresAdmin: true }
+                    meta: { roles: [1] }
                 },
                 {
                     path: 'academic/classes',
                     name: '班级管理',
                     component: () => import('../views/academic/ClassManagement.vue'),
-                    meta: { requiresAdmin: true }
+                    meta: { roles: [1] }
                 },
                 {
                     path: 'academic/courses',
                     name: '课程管理',
                     component: () => import('../views/academic/CourseManagement.vue'),
-                    meta: { requiresAdmin: true }
+                    meta: { roles: [1] }
                 },
                 {
                     path: 'academic/students',
                     name: '学生管理',
                     component: () => import('../views/academic/StudentManagement.vue'),
-                    meta: { requiresAdmin: true }
+                    meta: { roles: [1] }
                 },
                 {
                     path: 'academic/knowledge-points',
                     name: '知识点管理',
                     component: () => import('../views/academic/KnowledgePointManagement.vue'),
-                    meta: { requiresAdmin: true }
+                    meta: { roles: [1] }
+                },
+                {
+                    path: 'question/bank',
+                    name: '题库管理',
+                    component: () => import('../views/question/QuestionManagement.vue'),
+                    meta: { roles: [1, 2] }
                 }
             ]
         },
@@ -67,12 +73,12 @@ const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
     const token = localStorage.getItem('token')
-    const roleId = localStorage.getItem('roleId')
+    const roleId = Number(localStorage.getItem('roleId'))
 
     if (to.meta.requiresAuth && !token) {
         next('/login')
-    } else if (to.meta.requiresAdmin && roleId !== '1') {
-        ElMessage.error('Access Denied. Administrator privileges required.')
+    } else if (to.meta.roles && !(to.meta.roles as number[]).includes(roleId)) {
+        ElMessage.error('Access Denied. Insufficient privileges.')
         next('/')
     } else if (to.path === '/login' && token) {
         next('/')

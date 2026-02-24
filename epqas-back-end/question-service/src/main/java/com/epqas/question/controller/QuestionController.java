@@ -1,6 +1,7 @@
 package com.epqas.question.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.epqas.question.dto.QuestionDTO;
 import com.epqas.question.entity.Question;
 import com.epqas.question.service.QuestionService;
 import com.epqas.common.result.Result;
@@ -17,18 +18,20 @@ public class QuestionController {
     private QuestionService questionService;
 
     @PostMapping
-    public Result<Boolean> createQuestion(@RequestBody Question question) {
-        return Result.success(questionService.save(question));
+    public Result<Boolean> createQuestion(@RequestBody QuestionDTO dto) {
+        questionService.createQuestionWithPoints(dto);
+        return Result.success(true);
     }
 
     @GetMapping("/{id}")
-    public Result<Question> getQuestionById(@PathVariable("id") Long id) {
-        return Result.success(questionService.getById(id));
+    public Result<QuestionDTO> getQuestionById(@PathVariable("id") Long id) {
+        return Result.success(questionService.getQuestionById(id));
     }
 
     @PutMapping
-    public Result<Boolean> updateQuestion(@RequestBody Question question) {
-        return Result.success(questionService.updateById(question));
+    public Result<Boolean> updateQuestion(@RequestBody QuestionDTO dto) {
+        questionService.updateQuestionWithPoints(dto);
+        return Result.success(true);
     }
 
     @DeleteMapping("/{id}")
@@ -37,9 +40,13 @@ public class QuestionController {
     }
 
     @GetMapping("/page")
-    public Result<Page<Question>> getQuestionPage(@RequestParam(value = "current", defaultValue = "1") Integer current,
-            @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        return Result.success(questionService.page(new Page<>(current, size)));
+    public Result<Page<Question>> getQuestionPage(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "courseId", required = false) Integer courseId,
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "keyword", required = false) String keyword) {
+        return Result.success(questionService.getQuestionPage(current, size, courseId, type, keyword));
     }
 
     @GetMapping

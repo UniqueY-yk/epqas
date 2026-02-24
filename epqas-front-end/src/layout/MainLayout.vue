@@ -19,17 +19,17 @@
                     <template #title>仪表盘</template>
                 </el-menu-item>
 
-                <el-menu-item index="/admin/users">
+                <el-menu-item index="/admin/users" v-if="isAdmin">
                     <el-icon><User /></el-icon>
                     <template #title>用户管理</template>
                 </el-menu-item>
 
-                <el-menu-item index="/admin/roles">
+                <el-menu-item index="/admin/roles" v-if="isAdmin">
                     <el-icon><Filter /></el-icon>
                     <template #title>角色管理</template>
                 </el-menu-item>
 
-                <el-sub-menu index="/academic">
+                <el-sub-menu index="/academic" v-if="isAdmin">
                     <template #title>
                         <el-icon><School /></el-icon>
                         <span>教务管理</span>
@@ -45,6 +45,16 @@
                     >
                     <el-menu-item index="/academic/knowledge-points"
                         >知识点管理</el-menu-item
+                    >
+                </el-sub-menu>
+
+                <el-sub-menu index="/proposition" v-if="isAdmin || isSetter">
+                    <template #title>
+                        <el-icon><Document /></el-icon>
+                        <span>命题管理</span>
+                    </template>
+                    <el-menu-item index="/question/bank"
+                        >题库管理</el-menu-item
                     >
                 </el-sub-menu>
             </el-menu>
@@ -110,11 +120,16 @@ import {
     Fold,
     ArrowDown,
     Filter,
+    Document
 } from "@element-plus/icons-vue";
 
 const route = useRoute();
 const router = useRouter();
 const isCollapse = ref(false);
+
+const roleId = Number(localStorage.getItem('roleId') || '0');
+const isAdmin = computed(() => roleId === 1);
+const isSetter = computed(() => roleId === 2);
 
 const activeMenu = computed(() => route.path);
 const currentRouteName = computed(() => route.name);
