@@ -55,6 +55,19 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right" align="center">
+            <template #default="scope">
+                <el-button 
+                    link 
+                    type="primary" 
+                    size="small" 
+                    @click="handleCalculate(scope.row)"
+                    :loading="calcLoading === scope.row.examId"
+                >
+                    执行重新计算
+                </el-button>
+            </template>
+        </el-table-column>
       </el-table>
 
       <!-- Pagination -->
@@ -77,15 +90,16 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getMyPaperAnalyses, type PaperAnalysisVO } from '../../api/analysis'
+import { getMyPaperAnalyses, calculateExamIndicators, type PaperAnalysisVO } from '../../api/analysis'
 import dayjs from 'dayjs'
 
 // --- State ---
 const loading = ref(false)
+const calcLoading = ref<number | null>(null)
 const tableData = ref<PaperAnalysisVO[]>([])
 const total = ref(0)
 // For mock purposes or setter role logic, read from storage.
-const setterId = Number(localStorage.getItem('userId')) || 2
+const setterId = Number(localStorage.getItem('userId')) || 3
 
 const searchQuery = reactive({
   current: 1,
@@ -139,6 +153,23 @@ const getDiscriminationClass = (val: number) => {
     if (val < 0.2) return 'text-danger' // Poor discrimination
     if (val >= 0.4) return 'text-success' // Excellent
     return 'text-normal'
+}
+
+const handleCalculate = async (row: PaperAnalysisVO) => {
+    if (!row.examId) {
+        ElMessage.warning('Exam ID is missing.')
+        return
+    }
+    calcLoading.value = row.examId
+    try {
+        await calculateExamIndicators(row.examId)
+        ElMessage.success('计算完成，指标已更新！')
+        loadData()
+    } catch (error: any) {
+        ElMessage.error(error.message || '计算失败，请检查是否已关联考生成绩数据。')
+    } finally {
+        calcLoading.value = null
+    }
 }
 
 </script>

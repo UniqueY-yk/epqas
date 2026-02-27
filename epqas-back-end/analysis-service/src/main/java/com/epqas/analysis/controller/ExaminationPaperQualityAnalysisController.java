@@ -5,6 +5,7 @@ import com.epqas.analysis.entity.ExaminationPaperQualityAnalysis;
 import com.epqas.analysis.service.ExaminationPaperQualityAnalysisService;
 import com.epqas.analysis.dto.PaperAnalysisVO;
 import com.epqas.common.result.Result;
+import com.epqas.analysis.service.AnalysisComputationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,15 @@ public class ExaminationPaperQualityAnalysisController {
 
     @Autowired
     private ExaminationPaperQualityAnalysisService analysisService;
+
+    @Autowired
+    private AnalysisComputationService computationService;
+
+    @PostMapping("/calculate/{examId}")
+    public Result<Boolean> calculateExamIndicators(@PathVariable("examId") Long examId) {
+        computationService.calculateExamIndicators(examId);
+        return Result.success(true);
+    }
 
     @PostMapping
     public Result<Boolean> createAnalysis(@RequestBody ExaminationPaperQualityAnalysis analysis) {

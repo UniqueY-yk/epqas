@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.epqas.analysis.mapper.ExamMetricsComputeMapper">
+
+    <select id="selectExamResults" resultType="com.epqas.analysis.dto.compute.ComputeExamResultDTO">
+        SELECT 
+            result_id, exam_id, student_id, total_score, is_absent
+        FROM 
+            student_exam_result
+        WHERE 
+            exam_id = #{examId} AND is_absent = 0
+    </select>
+
+    <select id="selectStudentAnswers" resultType="com.epqas.analysis.dto.compute.ComputeStudentAnswerDTO">
+        SELECT 
+            a.answer_id, a.result_id, a.question_id, r.student_id, a.score_obtained, a.is_correct, a.student_choice
+        FROM 
+            student_answer a
+        INNER JOIN 
+            student_exam_result r ON a.result_id = r.result_id
+        WHERE 
+            r.exam_id = #{examId} AND r.is_absent = 0
+    </select>
+
+    <select id="selectPaperQuestions" resultType="com.epqas.analysis.dto.compute.ComputePaperQuestionDTO">
+        SELECT 
+            eq.paper_id, eq.question_id, eq.score_value, eq.question_order, q.initial_difficulty
+        FROM 
+            examination_paper_question eq
+        INNER JOIN 
+            examination e ON eq.paper_id = e.paper_id
+        INNER JOIN 
+            question q ON eq.question_id = q.question_id
+        WHERE 
+            e.exam_id = #{examId}
+    </select>
+
+    <select id="countCourseKnowledgePoints" resultType="java.lang.Integer">
+        SELECT COUNT(point_id) FROM knowledge_point WHERE course_id = #{courseId}
+    </select>
+
+    <select id="countPaperKnowledgePoints" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT qkm.point_id)
+        FROM examination_paper_question epq
+        INNER JOIN question_knowledge_map qkm ON epq.question_id = qkm.question_id
+        WHERE epq.paper_id = #{paperId}
+    </select>
+
+    <select id="findPendingExamIdsForAnalysis" resultType="java.lang.Long">
+        SELECT DISTINCT e.exam_id
+        FROM examination e
+        INNER JOIN student_exam_result r ON e.exam_id = r.exam_id
+        LEFT JOIN examination_paper_quality_analysis a ON e.exam_id = a.exam_id
+        WHERE a.exam_id IS NULL
+    </select>
+</mapper>

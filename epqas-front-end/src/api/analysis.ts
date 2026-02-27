@@ -25,3 +25,10 @@ export const getMyPaperAnalyses = (params: any) => {
         params
     })
 }
+
+export const calculateExamIndicators = (examId: number) => {
+    return request({
+        url: `/analysis/paper-analysis/calculate/${examId}`,
+        method: 'post'
+    })
+}
