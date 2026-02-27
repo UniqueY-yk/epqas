@@ -59,6 +59,9 @@
                     <el-menu-item index="/proposition/papers"
                         >试卷模板管理</el-menu-item
                     >
+                    <el-menu-item index="/proposition/diagnosis"
+                        >试卷质量诊断</el-menu-item
+                    >
                 </el-sub-menu>
             </el-menu>
         </el-aside>

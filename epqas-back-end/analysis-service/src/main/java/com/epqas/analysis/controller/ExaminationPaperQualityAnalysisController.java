@@ -3,6 +3,7 @@ package com.epqas.analysis.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.epqas.analysis.entity.ExaminationPaperQualityAnalysis;
 import com.epqas.analysis.service.ExaminationPaperQualityAnalysisService;
+import com.epqas.analysis.dto.PaperAnalysisVO;
 import com.epqas.common.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -46,5 +47,14 @@ public class ExaminationPaperQualityAnalysisController {
     @GetMapping
     public Result<List<ExaminationPaperQualityAnalysis>> listAnalysis() {
         return Result.success(analysisService.list());
+    }
+
+    @GetMapping("/my-papers")
+    public Result<Page<PaperAnalysisVO>> getMyPapers(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "setterId") Long setterId) {
+        // In a real application, setterId should be derived from the user context/token
+        return Result.success(analysisService.getPageBySetterId(current, size, setterId));
     }
 }

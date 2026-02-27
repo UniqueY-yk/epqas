@@ -57,6 +57,12 @@ const router = createRouter({
                     meta: { roles: [1, 2] }
                 },
                 {
+                    path: 'proposition/diagnosis',
+                    name: '试卷质量诊断',
+                    component: () => import('../views/proposition/PaperQualityDiagnosis.vue'),
+                    meta: { roles: [1, 2] }
+                },
+                {
                     path: 'proposition/papers',
                     name: '试卷模板管理',
                     component: () => import('../views/proposition/ExaminationPaperManagement.vue'),

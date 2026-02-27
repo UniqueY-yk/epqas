@@ -39,6 +39,12 @@ spring:
             - Path=/exam/**
           filters:
             - StripPrefix=1
+        - id: analysis-service
+          uri: lb://analysis-service
+          predicates:
+            - Path=/analysis/**
+          filters:
+            - StripPrefix=1
       globalcors:
         cors-configurations:
           '[/**]':
