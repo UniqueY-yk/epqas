@@ -29,7 +29,7 @@ public class ExaminationPaperController {
     }
 
     @GetMapping("/{id}")
-    public Result getPaper(@PathVariable Long id) {
+    public Result getPaper(@PathVariable("id") Long id) {
         ExaminationPaperDTO dto = paperService.getPaperWithQuestions(id);
         if (dto != null) {
             return Result.success(dto);
@@ -38,7 +38,7 @@ public class ExaminationPaperController {
     }
 
     @DeleteMapping("/{id}")
-    public Result deletePaper(@PathVariable Long id) {
+    public Result deletePaper(@PathVariable("id") Long id) {
         // Could also physically delete questions mapping, but leaving it simple for now
         paperService.removeById(id);
         return Result.success("Paper deleted successfully");
@@ -46,10 +46,10 @@ public class ExaminationPaperController {
 
     @GetMapping("/page")
     public Result getPaperPage(
-            @RequestParam(defaultValue = "1") Integer current,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Integer courseId,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "courseId", required = false) Integer courseId,
+            @RequestParam(value = "keyword", required = false) String keyword) {
         Page<ExaminationPaper> page = paperService.getPaperPage(current, size, courseId, keyword);
         return Result.success(page);
     }

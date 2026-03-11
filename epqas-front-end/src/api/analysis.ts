@@ -32,3 +32,23 @@ export const calculateExamIndicators = (examId: number) => {
         method: 'post'
     })
 }
+
+// Question Analysis Data for Charting
+export interface QuestionAnalysisVO {
+    questionId: number;
+    stem: string;
+    questionType: string;
+    correctResponseRate: number; // Difficulty (X Axis)
+    discriminationIndex: number; // Discrimination (Y Axis)
+    isTooEasy: boolean;
+    isLowDiscrimination: boolean;
+    diagnosisTag: string;
+    isAbnormal: boolean;
+}
+
+export const getQuestionAnalysisByExamId = (examId: number) => {
+    return request<QuestionAnalysisVO[]>({
+        url: `/analysis/question-analysis/exam/${examId}`,
+        method: 'get'
+    })
+}

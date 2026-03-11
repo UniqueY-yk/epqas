@@ -53,4 +53,21 @@
         LEFT JOIN examination_paper_quality_analysis a ON e.exam_id = a.exam_id
         WHERE a.exam_id IS NULL
     </select>
+
+    <select id="getQuestionAnalysisDetailsByExamId" resultType="com.epqas.analysis.dto.QuestionAnalysisDTO">
+        SELECT 
+            qa.question_id as questionId,
+            q.question_content as stem,
+            q.question_type as questionType,
+            qa.correct_response_rate as correctResponseRate,
+            qa.discrimination_index as discriminationIndex,
+
+            qa.is_too_easy as isTooEasy,
+            qa.is_low_discrimination as isLowDiscrimination,
+            qa.diagnosis_tag as diagnosisTag,
+            (qa.is_too_easy = 1 OR qa.is_low_discrimination = 1) as isAbnormal
+        FROM question_quality_analysis qa
+        INNER JOIN question q ON qa.question_id = q.question_id
+        WHERE qa.exam_id = #{examId}
+    </select>
 </mapper>

@@ -55,11 +55,19 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right" align="center">
+        <el-table-column label="操作" width="200" fixed="right" align="center">
             <template #default="scope">
                 <el-button 
                     link 
                     type="primary" 
+                    size="small" 
+                    @click="handleAnalysisDetails(scope.row)"
+                >
+                    试题异动诊断
+                </el-button>
+                <el-button 
+                    link 
+                    type="warning" 
                     size="small" 
                     @click="handleCalculate(scope.row)"
                     :loading="calcLoading === scope.row.examId"
@@ -84,6 +92,9 @@
         />
       </div>
     </el-card>
+
+    <!-- Question Analysis Scatter Plot Dialog -->
+    <PaperQuestionDiagnosis ref="questionDiagnosisRef" />
   </div>
 </template>
 
@@ -92,6 +103,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMyPaperAnalyses, calculateExamIndicators, type PaperAnalysisVO } from '../../api/analysis'
 import dayjs from 'dayjs'
+import PaperQuestionDiagnosis from './PaperQuestionDiagnosis.vue'
 
 // --- State ---
 const loading = ref(false)
@@ -170,6 +182,16 @@ const handleCalculate = async (row: PaperAnalysisVO) => {
     } finally {
         calcLoading.value = null
     }
+}
+
+const questionDiagnosisRef = ref<InstanceType<typeof PaperQuestionDiagnosis> | null>(null)
+
+const handleAnalysisDetails = (row: PaperAnalysisVO) => {
+    if (!row.examId) {
+        ElMessage.warning('正在后台计算指标中，请稍后再试。')
+        return
+    }
+    questionDiagnosisRef.value?.openDialog(row.examId, row.paperTitle)
 }
 
 </script>

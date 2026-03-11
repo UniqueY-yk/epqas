@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.epqas.analysis.entity.QuestionQualityAnalysis;
 import com.epqas.analysis.service.QuestionQualityAnalysisService;
 import com.epqas.common.result.Result;
+import com.epqas.analysis.dto.QuestionAnalysisDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,11 @@ public class QuestionQualityAnalysisController {
 
     @Autowired
     private QuestionQualityAnalysisService analysisService;
+
+    @GetMapping("/exam/{examId}")
+    public Result<List<QuestionAnalysisDTO>> getQuestionAnalysisByExamId(@PathVariable("examId") Long examId) {
+        return Result.success(analysisService.getQuestionAnalysisDetailsByExamId(examId));
+    }
 
     @PostMapping
     public Result<Boolean> createAnalysis(@RequestBody QuestionQualityAnalysis analysis) {

@@ -3,6 +3,7 @@ package com.epqas.analysis.mapper;
 import com.epqas.analysis.dto.compute.ComputeExamResultDTO;
 import com.epqas.analysis.dto.compute.ComputePaperQuestionDTO;
 import com.epqas.analysis.dto.compute.ComputeStudentAnswerDTO;
+import com.epqas.analysis.dto.QuestionAnalysisDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -30,4 +31,10 @@ public interface ExamMetricsComputeMapper {
      * analysis yet.
      */
     List<Long> findPendingExamIdsForAnalysis();
+
+    /**
+     * Retrieves detailed question-level quality analysis combined with question
+     * text.
+     */
+    List<QuestionAnalysisDTO> getQuestionAnalysisDetailsByExamId(@Param("examId") Long examId);
 }
