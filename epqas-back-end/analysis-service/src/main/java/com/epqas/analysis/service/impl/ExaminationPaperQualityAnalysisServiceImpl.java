@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.epqas.analysis.dto.PaperAnalysisVO;
 
+import java.util.List;
+
 @Service
 public class ExaminationPaperQualityAnalysisServiceImpl
         extends ServiceImpl<ExaminationPaperQualityAnalysisMapper, ExaminationPaperQualityAnalysis>
@@ -18,5 +20,10 @@ public class ExaminationPaperQualityAnalysisServiceImpl
     public Page<PaperAnalysisVO> getPageBySetterId(Integer current, Integer size, Long setterId) {
         Page<PaperAnalysisVO> page = new Page<>(current, size);
         return baseMapper.selectPageBySetterId(page, setterId);
+    }
+
+    @Override
+    public List<PaperAnalysisVO> getTrendAnalysisBySetterId(Long setterId) {
+        return baseMapper.selectTrendBySetterId(setterId);
     }
 }

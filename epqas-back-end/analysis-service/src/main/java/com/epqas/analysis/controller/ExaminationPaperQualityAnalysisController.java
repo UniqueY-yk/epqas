@@ -67,4 +67,10 @@ public class ExaminationPaperQualityAnalysisController {
         // In a real application, setterId should be derived from the user context/token
         return Result.success(analysisService.getPageBySetterId(current, size, setterId));
     }
+
+    @GetMapping("/trend")
+    public Result<List<PaperAnalysisVO>> getTrendAnalysis(
+            @RequestParam(value = "setterId") Long setterId) {
+        return Result.success(analysisService.getTrendAnalysisBySetterId(setterId));
+    }
 }

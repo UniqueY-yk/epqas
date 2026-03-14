@@ -62,6 +62,9 @@
                     <el-menu-item index="/proposition/diagnosis"
                         >试卷质量诊断</el-menu-item
                     >
+                    <el-menu-item index="/proposition/trend"
+                        >历史命题趋势</el-menu-item
+                    >
                 </el-sub-menu>
             </el-menu>
         </el-aside>
@@ -85,7 +88,7 @@
                 <div class="header-right">
                     <el-dropdown @command="handleCommand">
                         <span class="el-dropdown-link">
-                            管理员
+                            {{ roleName }}
                             <el-icon class="el-icon--right"
                                 ><arrow-down
                             /></el-icon>
@@ -139,6 +142,16 @@ const isSetter = computed(() => roleId === 2);
 
 const activeMenu = computed(() => route.path);
 const currentRouteName = computed(() => route.name);
+
+const roleName = computed(() => {
+    switch (roleId) {
+        case 1: return '系统管理员';
+        case 2: return '命题教师';
+        case 3: return '任课教师';
+        case 4: return '学生';
+        default: return '未知角色';
+    }
+});
 
 const toggleCollapse = () => {
     isCollapse.value = !isCollapse.value;

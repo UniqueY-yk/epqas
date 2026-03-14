@@ -63,6 +63,12 @@ const router = createRouter({
                     meta: { roles: [1, 2] }
                 },
                 {
+                    path: 'proposition/trend',
+                    name: '历史命题趋势',
+                    component: () => import('../views/proposition/PropositionTrendAnalysis.vue'),
+                    meta: { roles: [1, 2] }
+                },
+                {
                     path: 'proposition/papers',
                     name: '试卷模板管理',
                     component: () => import('../views/proposition/ExaminationPaperManagement.vue'),
