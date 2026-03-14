@@ -44,11 +44,37 @@ export interface QuestionAnalysisVO {
     isLowDiscrimination: boolean;
     diagnosisTag: string;
     isAbnormal: boolean;
+    selectionDistributionJson?: string;
+    suggestions?: string[];
 }
 
 export const getQuestionAnalysisByExamId = (examId: number) => {
     return request<QuestionAnalysisVO[]>({
         url: `/analysis/question-analysis/exam/${examId}`,
         method: 'get'
+    })
+}
+
+// Improvement Suggestions
+export interface ImprovementSuggestion {
+    suggestionId: number;
+    examId: number;
+    questionId: number;
+    suggestionType: string;
+    suggestionText: string;
+    generatedRule: string;
+    isImplemented: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export const getSuggestionsByExamId = (examId: number, questionId?: number) => {
+    return request<ImprovementSuggestion[]>({
+        url: '/suggestions',
+        method: 'get',
+        params: {
+            examId,
+            questionId
+        }
     })
 }

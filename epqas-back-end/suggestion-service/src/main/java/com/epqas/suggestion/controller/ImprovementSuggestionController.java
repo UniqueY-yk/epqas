@@ -44,7 +44,9 @@ public class ImprovementSuggestionController {
     }
 
     @GetMapping
-    public Result<List<ImprovementSuggestion>> listSuggestions() {
-        return Result.success(suggestionService.list());
+    public Result<List<ImprovementSuggestion>> listSuggestions(
+            @RequestParam(required = false) Long examId,
+            @RequestParam(required = false) Long questionId) {
+        return Result.success(suggestionService.getSuggestionsByExamAndQuestion(examId, questionId));
     }
 }

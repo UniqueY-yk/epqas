@@ -16,6 +16,7 @@
         class="scatter-chart"
         :option="chartOption"
         autoresize
+        @click="handleChartClick"
       />
     </div>
     
@@ -35,6 +36,8 @@
       </span>
     </template>
   </el-dialog>
+  
+  <PaperSuggestionsDrawer ref="suggestionsDrawerRef" />
 </template>
 
 <script setup lang="ts">
@@ -46,6 +49,7 @@ import { TitleComponent, TooltipComponent, GridComponent, DatasetComponent, Grap
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { getQuestionAnalysisByExamId, type QuestionAnalysisVO } from '../../api/analysis'
+import PaperSuggestionsDrawer from './PaperSuggestionsDrawer.vue'
 
 // Register ECharts core components
 use([
@@ -63,6 +67,7 @@ const loading = ref(false)
 const examId = ref<number>(0)
 const examTitle = ref<string>('')
 const chartData = ref<QuestionAnalysisVO[]>([])
+const suggestionsDrawerRef = ref<InstanceType<typeof PaperSuggestionsDrawer> | null>(null)
 
 // Expose open method to parent component
 const openDialog = (id: number, title: string) => {
@@ -94,19 +99,56 @@ const chartOption = computed(() => {
             textStyle: { fontSize: 16 }
         },
         tooltip: {
+            enterable: true,
+            extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-radius: 8px; padding: 12px;',
             // Display rich HTML tag for scatter plot dots
             formatter: function (params: any) {
                 const data: QuestionAnalysisVO = params.data.rawData;
+                
+                let suggestionHtml = '';
+                if (data.suggestions && data.suggestions.length > 0) {
+                    suggestionHtml = `
+                        <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #e4e7ed;" />
+                        <div style="color: #E6A23C; font-weight: bold; margin-bottom: 4px;">💡 AI 教学优化建议:</div>
+                        <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #E6A23C; line-height: 1.5;">
+                            ${data.suggestions.map((s: string) => `<li style="margin-bottom: 2px;">${s}</li>`).join('')}
+                        </ul>
+                    `;
+                }
+
+                let distributionHtml = '';
+                if (data.selectionDistributionJson) {
+                    try {
+                        const dist = JSON.parse(data.selectionDistributionJson);
+                        const keys = Object.keys(dist).sort();
+                        if (keys.length > 0) {
+                            distributionHtml = `
+                                <hr style="margin: 8px 0; border: 0; border-top: 1px solid #e4e7ed;" />
+                                <div style="margin-bottom: 6px;"><b>📊 选项分布:</b></div>
+                                <div style="font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px;">
+                                    ${keys.map(k => `<span style="background: #f0f2f5; padding: 3px 8px; border-radius: 4px; color: #606266; font-weight: 500;">${k}: <b style="color: #409EFF;">${dist[k]}</b></span>`).join('')}
+                                </div>
+                            `;
+                        }
+                    } catch(e) {}
+                }
+
                 return `
-                    <div style="max-width:300px; white-space:normal;">
-                        <b>[题目${data.questionId}]</b> <br/>
-                        ${data.stem || '暂无题目内容'} <br/>
-                        <hr style="margin: 5px 0; border: 0; border-top: 1px solid #ccc;" />
-                        难度 (答对率): ${data.correctResponseRate?.toFixed(2)} <br/>
-                        区分度: ${data.discriminationIndex?.toFixed(2)} <br/>
-                        状态: <strong style="color:${data.isAbnormal ? '#F56C6C' : '#67C23A'}">
-                                ${data.isAbnormal ? '异动警告' : '达标'}
-                              </strong>
+                    <div style="max-width:360px; white-space:normal;">
+                        <b style="font-size: 15px; color: #303133;">📖 [题目${data.questionId}]</b> <br/>
+                        <div style="color: #606266; margin-top: 8px; margin-bottom: 8px; line-height: 1.4;">${data.stem || '暂无题目内容'}</div>
+                        <hr style="margin: 8px 0; border: 0; border-top: 1px solid #e4e7ed;" />
+                        <div style="display: flex; justify-content: space-between; margin-top: 6px; margin-bottom: 6px; font-size: 13px;">
+                            <span style="color: #606266;">难度 (答对率): <b style="color: #303133;">${data.correctResponseRate?.toFixed(2)}</b></span>
+                            <span style="color: #606266;">区分度: <b style="color: #303133;">${data.discriminationIndex?.toFixed(2)}</b></span>
+                        </div>
+                        <div style="font-size: 13px; margin-bottom: 4px;">
+                            状态标签: <strong style="background: ${data.isAbnormal ? '#fef0f0' : '#f0f9eb'}; color: ${data.isAbnormal ? '#F56C6C' : '#67C23A'}; padding: 2px 6px; border-radius: 4px; font-size: 12px; border: 1px solid ${data.isAbnormal ? '#fde2e2' : '#e1f3d8'};">
+                                    ${data.isAbnormal ? '🔴 异动警告' : '🟢 运行达标'}
+                                  </strong>
+                        </div>
+                        ${distributionHtml}
+                        ${suggestionHtml}
                     </div>
                 `
             }
@@ -155,6 +197,15 @@ const chartOption = computed(() => {
         ]
     }
 })
+
+const handleChartClick = (params: any) => {
+    if (params.componentType === 'series' && params.seriesType === 'scatter') {
+        const questionId = params.data?.rawData?.questionId
+        if (questionId && examId.value) {
+            suggestionsDrawerRef.value?.openDrawer(examId.value, questionId)
+        }
+    }
+}
 </script>
 
 <style scoped>

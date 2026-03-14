@@ -45,6 +45,10 @@ spring:
             - Path=/analysis/**
           filters:
             - StripPrefix=1
+        - id: suggestion-service
+          uri: lb://suggestion-service
+          predicates:
+            - Path=/suggestions/**
       globalcors:
         cors-configurations:
           '[/**]':

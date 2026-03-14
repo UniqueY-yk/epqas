@@ -65,6 +65,9 @@
             qa.is_too_easy as isTooEasy,
             qa.is_low_discrimination as isLowDiscrimination,
             qa.diagnosis_tag as diagnosisTag,
+            qa.selection_distribution_json as selectionDistributionJson,
+            q.options_json as optionsJson,
+            q.correct_answer as correctAnswer,
             (qa.is_too_easy = 1 OR qa.is_low_discrimination = 1) as isAbnormal
         FROM question_quality_analysis qa
         INNER JOIN question q ON qa.question_id = q.question_id

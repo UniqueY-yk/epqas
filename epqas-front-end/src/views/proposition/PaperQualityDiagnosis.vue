@@ -55,7 +55,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right" align="center">
+        <el-table-column label="操作" width="260" fixed="right" align="center">
             <template #default="scope">
                 <el-button 
                     link 
@@ -64,6 +64,14 @@
                     @click="handleAnalysisDetails(scope.row)"
                 >
                     试题异动诊断
+                </el-button>
+                <el-button 
+                    link 
+                    type="success" 
+                    size="small" 
+                    @click="handleViewSuggestions(scope.row)"
+                >
+                    查看优化建议
                 </el-button>
                 <el-button 
                     link 
@@ -95,6 +103,9 @@
 
     <!-- Question Analysis Scatter Plot Dialog -->
     <PaperQuestionDiagnosis ref="questionDiagnosisRef" />
+    
+    <!-- AI Suggestions Drawer -->
+    <PaperSuggestionsDrawer ref="suggestionsDrawerRef" />
   </div>
 </template>
 
@@ -104,6 +115,7 @@ import { ElMessage } from 'element-plus'
 import { getMyPaperAnalyses, calculateExamIndicators, type PaperAnalysisVO } from '../../api/analysis'
 import dayjs from 'dayjs'
 import PaperQuestionDiagnosis from './PaperQuestionDiagnosis.vue'
+import PaperSuggestionsDrawer from './PaperSuggestionsDrawer.vue'
 
 // --- State ---
 const loading = ref(false)
@@ -185,6 +197,7 @@ const handleCalculate = async (row: PaperAnalysisVO) => {
 }
 
 const questionDiagnosisRef = ref<InstanceType<typeof PaperQuestionDiagnosis> | null>(null)
+const suggestionsDrawerRef = ref<InstanceType<typeof PaperSuggestionsDrawer> | null>(null)
 
 const handleAnalysisDetails = (row: PaperAnalysisVO) => {
     if (!row.examId) {
@@ -192,6 +205,14 @@ const handleAnalysisDetails = (row: PaperAnalysisVO) => {
         return
     }
     questionDiagnosisRef.value?.openDialog(row.examId, row.paperTitle)
+}
+
+const handleViewSuggestions = (row: PaperAnalysisVO) => {
+    if (!row.examId) {
+        ElMessage.warning('正在后台计算指标中，请稍后再试。')
+        return
+    }
+    suggestionsDrawerRef.value?.openDrawer(row.examId)
 }
 
 </script>

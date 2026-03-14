@@ -13,4 +13,8 @@ public class QuestionAnalysisDTO {
     private Boolean isLowDiscrimination;
     private String diagnosisTag;
     private Boolean isAbnormal;
+    private String selectionDistributionJson;
+    private String optionsJson;
+    private String correctAnswer;
+    private java.util.List<String> suggestions;
 }

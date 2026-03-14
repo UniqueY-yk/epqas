@@ -9,6 +9,8 @@ import com.epqas.analysis.mapper.ExamMetricsComputeMapper;
 import com.epqas.analysis.service.AnalysisComputationService;
 import com.epqas.analysis.service.ExaminationPaperQualityAnalysisService;
 import com.epqas.analysis.service.QuestionQualityAnalysisService;
+import com.epqas.analysis.dto.QuestionAnalysisDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Service
@@ -201,6 +204,21 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             float rRate = N > 0 ? (float) correctCount / N : 0f;
             itemQa.setCorrectResponseRate(rRate);
 
+            // Compute Selection Distribution
+            Map<String, Integer> choiceCounts = new HashMap<>();
+            for (ComputeStudentAnswerDTO a : qAns) {
+                String choice = a.getStudentChoice();
+                if (choice != null && !choice.trim().isEmpty()) {
+                    choiceCounts.put(choice, choiceCounts.getOrDefault(choice, 0) + 1);
+                }
+            }
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                itemQa.setSelectionDistributionJson(mapper.writeValueAsString(choiceCounts));
+            } catch (Exception e) {
+                log.error("Failed to serialize choice distribution for question {}", q.getQuestionId(), e);
+            }
+
             // Item Discrimination: (CH - CL) / (N/2 roughly) based on groups
             long highCorrect = qAns.stream()
                     .filter(a -> highGroupIds.contains(a.getStudentId()) && Boolean.TRUE.equals(a.getIsCorrect()))
@@ -228,7 +246,104 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             questionAnalysisService.saveBatch(qAnalyses);
         }
 
+        // 10. Generate and Persist Improvement Suggestions (in Chinese)
+        jdbcTemplate.update("DELETE FROM improvement_suggestion WHERE exam_id = ?", examId);
+        List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByExamId(examId);
+        ObjectMapper mapper = new ObjectMapper();
+
+        for (QuestionAnalysisDTO dto : dtos) {
+            // Rule 1: Difficulty Check
+            if (dto.getCorrectResponseRate() != null) {
+                if (dto.getCorrectResponseRate() < 0.3f) {
+                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj", "题目难度过高，建议修改题干或干扰项。");
+
+                    // Negative keyword check
+                    if (dto.getStem() != null && (dto.getStem().toUpperCase().contains("NOT") ||
+                            dto.getStem().toUpperCase().contains("EXCEPT") ||
+                            dto.getStem().contains("不") ||
+                            dto.getStem().contains("除了"))) {
+                        saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                                "这是一道难度较高的否定形式题目。建议在题干中加粗或高亮否定词 (如 'NOT', 'EXCEPT', '不', '除了')，以提醒学生。");
+                    }
+                } else if (dto.getCorrectResponseRate() > 0.9f) {
+                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj", "题目过于简单，请检查正确答案是否过于明显。");
+                }
+            }
+
+            // Rule 2: Discrimination Check
+            if (dto.getDiscriminationIndex() != null && dto.getDiscriminationIndex() < 0.2f) {
+                saveSuggestion(examId, dto.getQuestionId(), "Question_Content", "区分度较低。高分学生可能会被模棱两可的选项迷惑，建议优化选项。");
+            }
+
+            // Parse Options JSON for detailed checks
+            Map<String, String> optionsMap = null;
+            if (dto.getOptionsJson() != null && !dto.getOptionsJson().isEmpty() &&
+                    ("SingleChoice".equals(dto.getQuestionType()) || "MultipleChoice".equals(dto.getQuestionType()))) {
+                try {
+                    optionsMap = mapper.readValue(dto.getOptionsJson(), new TypeReference<Map<String, String>>() {
+                    });
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
+
+            // Rule 3: Option Distribution
+            if (dto.getSelectionDistributionJson() != null && !dto.getSelectionDistributionJson().isEmpty() &&
+                    "SingleChoice".equals(dto.getQuestionType())) {
+                try {
+                    Map<String, Integer> distribution = mapper.readValue(dto.getSelectionDistributionJson(),
+                            new TypeReference<Map<String, Integer>>() {
+                            });
+
+                    String[] standardOptions = { "A", "B", "C", "D" };
+                    for (String opt : standardOptions) {
+                        if (!distribution.containsKey(opt) || distribution.get(opt) == 0) {
+                            String optText = (optionsMap != null && optionsMap.containsKey(opt))
+                                    ? " ('" + optionsMap.get(opt) + "')"
+                                    : "";
+                            saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                                    "选项 " + opt + optText + " 极少或从未被选过。建议将其替换为更有迷惑性的干扰项。");
+                        }
+                    }
+                } catch (Exception e) {
+                    // Ignore error
+                }
+            }
+
+            // Rule 4: Length Bias Check
+            if (optionsMap != null && dto.getCorrectAnswer() != null && "SingleChoice".equals(dto.getQuestionType())) {
+                String correctOptKey = dto.getCorrectAnswer().trim();
+                String correctText = optionsMap.get(correctOptKey);
+                if (correctText != null) {
+                    int correctLen = correctText.length();
+                    boolean isSignificantlyLonger = true;
+                    int validDistractors = 0;
+
+                    for (Map.Entry<String, String> entry : optionsMap.entrySet()) {
+                        if (!entry.getKey().equals(correctOptKey) && entry.getValue() != null) {
+                            validDistractors++;
+                            if (correctLen <= entry.getValue().length() * 1.5) {
+                                isSignificantlyLonger = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (validDistractors > 0 && isSignificantlyLonger) {
+                        saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                                "潜在长度偏差：正确答案 (" + correctOptKey + ") 明显长于其他干扰项。学生可能会根据长度猜测答案。");
+                    }
+                }
+            }
+        }
+
         log.info("Finished indicator computation for examId: {}", examId);
+    }
+
+    private void saveSuggestion(Long examId, Long questionId, String type, String text) {
+        jdbcTemplate.update(
+                "INSERT INTO improvement_suggestion (exam_id, question_id, suggestion_type, suggestion_text, generated_rule, is_implemented) VALUES (?, ?, ?, ?, ?, ?)",
+                examId, questionId, type, text, text, false);
     }
 
     private double calculateStdDev(List<BigDecimal> data, BigDecimal mean) {
