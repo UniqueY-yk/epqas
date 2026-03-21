@@ -26,4 +26,12 @@ public interface UserFeignClient {
      */
     @org.springframework.web.bind.annotation.GetMapping("/users/{id}")
     Result<User> getUserById(@RequestHeader("X-Role-Id") Integer roleId, @org.springframework.web.bind.annotation.PathVariable("id") Long id);
+
+    /**
+     * Fetches a paginated list of users from the auth service.
+     */
+    @org.springframework.web.bind.annotation.GetMapping("/users")
+    Result listUsers(@RequestHeader("X-Role-Id") Integer roleId,
+                     @org.springframework.web.bind.annotation.RequestParam(value = "page", defaultValue = "1") Integer page,
+                     @org.springframework.web.bind.annotation.RequestParam(value = "size", defaultValue = "100") Integer size);
 }

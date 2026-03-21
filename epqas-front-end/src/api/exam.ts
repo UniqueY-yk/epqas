@@ -11,12 +11,19 @@ export interface ExaminationPaperDTO {
     title: string;
     courseId: number;
     setterId?: number;
+    setterName?: string;
     totalScore: number;
     durationMinutes: number;
     targetDifficulty: number;
     status?: string;
     createdAt?: string;
     questions: PaperQuestionDTO[];
+}
+
+export interface SetterInfo {
+    userId: number;
+    realName: string;
+    username: string;
 }
 
 export const getPapers = (params: any) => {
@@ -54,5 +61,12 @@ export const deletePaper = (id: number) => {
     return request({
         url: `/exam/papers/${id}`,
         method: 'delete'
+    })
+}
+
+export const getSetters = () => {
+    return request({
+        url: '/exam/papers/setters',
+        method: 'get'
     })
 }

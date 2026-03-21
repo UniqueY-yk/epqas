@@ -31,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private RoleMapper roleMapper;
 
     @Override
-    public Result<String> login(String username, String password, Integer roleId) {
+    public Result<Map<String, Object>> login(String username, String password, Integer roleId) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", username);
         User user = userMapper.selectOne(queryWrapper);
@@ -57,7 +57,12 @@ public class AuthServiceImpl implements AuthService {
         claims.put("roleId", user.getRoleId());
 
         String token = jwtUtils.generateToken(username, claims);
-        return Result.success(token);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+        result.put("userId", user.getUserId());
+        result.put("realName", user.getRealName());
+        return Result.success(result);
     }
 
     @Override

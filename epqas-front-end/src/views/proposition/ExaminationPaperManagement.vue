@@ -50,7 +50,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="setterName" label="出卷人" width="120" align="center" />
+        <el-table-column prop="setterName" label="命题教师" width="120" align="center" />
         <el-table-column prop="totalScore" label="总分" width="100" align="center">
           <template #default="scope">
             <span class="score-text">{{ scope.row.totalScore }} 分</span>
@@ -129,6 +129,26 @@
                 <el-form-item label="所属科目" prop="courseId">
                 <el-select v-model="form.courseId" placeholder="选择科目" style="width: 100%">
                     <el-option v-for="c in courses" :key="c.courseId" :label="c.courseName" :value="c.courseId" />
+                </el-select>
+                </el-form-item>
+            </el-col>
+            </el-row>
+
+            <el-row :gutter="20">
+            <el-col :span="16">
+                <el-form-item label="命题教师" prop="setterId">
+                <el-select
+                    v-model="form.setterId"
+                    placeholder="选择命题教师"
+                    style="width: 100%"
+                    :disabled="currentRoleId !== 1"
+                >
+                    <el-option
+                        v-for="s in setterOptions"
+                        :key="s.userId"
+                        :label="s.realName"
+                        :value="s.userId"
+                    />
                 </el-select>
                 </el-form-item>
             </el-col>
@@ -253,7 +273,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Search, Plus, Edit, Delete, RefreshRight, Document, Grid } from '@element-plus/icons-vue'
-import { getPapers, getPaperById, addPaper, updatePaper, deletePaper, type ExaminationPaperDTO, type PaperQuestionDTO } from '../../api/exam'
+import { getPapers, getPaperById, addPaper, updatePaper, deletePaper, getSetters, type ExaminationPaperDTO, type PaperQuestionDTO, type SetterInfo } from '../../api/exam'
 import { getCourses } from '../../api/academic'
 import { getQuestions } from '../../api/question'
 import dayjs from 'dayjs'
@@ -264,6 +284,10 @@ const submitLoading = ref(false)
 const tableData = ref<ExaminationPaperDTO[]>([])
 const total = ref(0)
 const courses = ref<any[]>([])
+const setterOptions = ref<SetterInfo[]>([])
+const currentRoleId = ref<number>(Number(localStorage.getItem('roleId') || '1'))
+const currentUserId = ref<number>(Number(localStorage.getItem('userId') || '0'))
+const currentRealName = ref<string>(localStorage.getItem('realName') || '')
 
 const searchQuery = reactive({
   current: 1,
@@ -279,6 +303,7 @@ const formRef = ref<FormInstance>()
 const form = reactive<ExaminationPaperDTO>({
   title: '',
   courseId: undefined as any,
+  setterId: undefined as any,
   totalScore: 0,
   durationMinutes: 120,
   targetDifficulty: 0.5,
@@ -289,7 +314,8 @@ const form = reactive<ExaminationPaperDTO>({
 const rules = {
   title: [{ required: true, message: '请输入试卷标题', trigger: 'blur' }],
   courseId: [{ required: true, message: '请选择所属科目', trigger: 'change' }],
-  durationMinutes: [{ required: true, message: '请输入考试时长', trigger: 'blur' }]
+  durationMinutes: [{ required: true, message: '请输入考试时长', trigger: 'blur' }],
+  setterId: [{ required: true, message: '请选择试卷命题教师', trigger: 'change' }],
 }
 
 // Question Selector
@@ -319,6 +345,7 @@ const computedTotalScore = computed(() => {
 // --- Methods ---
 onMounted(async () => {
     await fetchCourses()
+    await fetchSetters()
     loadData()
 })
 
@@ -328,6 +355,26 @@ const fetchCourses = async () => {
     courses.value = res.data.records
   } catch (e) {
     console.error(e)
+  }
+}
+
+const fetchSetters = async () => {
+  try {
+    const res = await getSetters()
+    setterOptions.value = res.data || []
+    // If teacher is not in the list, add themselves
+    if (currentRoleId.value === 2) {
+      const exists = setterOptions.value.some(s => s.userId === currentUserId.value)
+      if (!exists && currentUserId.value) {
+        setterOptions.value.push({
+          userId: currentUserId.value,
+          realName: currentRealName.value || '当前教师',
+          username: ''
+        })
+      }
+    }
+  } catch (e) {
+    console.error('Failed to fetch setters', e)
   }
 }
 
@@ -397,6 +444,12 @@ const openDialog = async (row?: ExaminationPaperDTO) => {
     form.targetDifficulty = 0.5
     form.status = 'Draft'
     form.questions = []
+    // Auto-assign setterId for non-admin roles
+    if (currentRoleId.value !== 1) {
+      form.setterId = currentUserId.value
+    } else {
+      form.setterId = undefined as any
+    }
   }
 }
 

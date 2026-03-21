@@ -95,7 +95,15 @@ const handleLogin = async () => {
            passwordHash: loginForm.password,
            roleId: loginForm.roleId
         })
-        localStorage.setItem('token', res.data)
+        // res.data is now { token, userId, realName }
+        const loginData = res.data
+        localStorage.setItem('token', loginData.token || loginData)
+        if (loginData.userId) {
+            localStorage.setItem('userId', loginData.userId.toString())
+        }
+        if (loginData.realName) {
+            localStorage.setItem('realName', loginData.realName)
+        }
         if (loginForm.roleId) {
             localStorage.setItem('roleId', loginForm.roleId.toString())
         }
