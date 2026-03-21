@@ -20,4 +20,10 @@ public interface UserFeignClient {
      */
     @PostMapping("/users")
     Result<Long> createUser(@RequestHeader("X-Role-Id") Integer roleId, @RequestBody User user);
+
+    /**
+     * Fetches an existing user from the auth service by ID.
+     */
+    @org.springframework.web.bind.annotation.GetMapping("/users/{id}")
+    Result<User> getUserById(@RequestHeader("X-Role-Id") Integer roleId, @org.springframework.web.bind.annotation.PathVariable("id") Long id);
 }

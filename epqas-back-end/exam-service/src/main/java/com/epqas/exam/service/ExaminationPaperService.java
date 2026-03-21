@@ -13,5 +13,5 @@ public interface ExaminationPaperService extends IService<ExaminationPaper> {
 
     ExaminationPaperDTO getPaperWithQuestions(Long paperId);
 
-    Page<ExaminationPaper> getPaperPage(Integer current, Integer size, Integer courseId, String keyword);
+    Page<ExaminationPaperDTO> getPaperPage(Integer current, Integer size, Integer courseId, String keyword);
 }

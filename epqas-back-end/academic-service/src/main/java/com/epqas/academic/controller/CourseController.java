@@ -19,8 +19,8 @@ public class CourseController {
             @RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "courseName", required = false) String courseName) {
-        if (roleId == null || roleId != 1)
-            return Result.error(403, "Access Denied");
+        if (roleId == null)
+            return Result.error(401, "Unauthorized");
         return Result.success(courseService.getCoursesPage(page, size, courseName));
     }
 

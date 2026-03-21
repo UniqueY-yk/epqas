@@ -3,7 +3,6 @@ package com.epqas.exam.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.epqas.common.result.Result;
 import com.epqas.exam.dto.ExaminationPaperDTO;
-import com.epqas.exam.entity.ExaminationPaper;
 import com.epqas.exam.service.ExaminationPaperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +49,7 @@ public class ExaminationPaperController {
             @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "courseId", required = false) Integer courseId,
             @RequestParam(value = "keyword", required = false) String keyword) {
-        Page<ExaminationPaper> page = paperService.getPaperPage(current, size, courseId, keyword);
+        Page<ExaminationPaperDTO> page = paperService.getPaperPage(current, size, courseId, keyword);
         return Result.success(page);
     }
 }

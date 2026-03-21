@@ -50,6 +50,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="setterName" label="出卷人" width="120" align="center" />
         <el-table-column prop="totalScore" label="总分" width="100" align="center">
           <template #default="scope">
             <span class="score-text">{{ scope.row.totalScore }} 分</span>

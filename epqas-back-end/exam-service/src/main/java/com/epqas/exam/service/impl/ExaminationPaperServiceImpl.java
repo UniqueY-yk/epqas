@@ -10,6 +10,9 @@ import com.epqas.exam.entity.ExaminationPaperQuestion;
 import com.epqas.exam.mapper.ExaminationPaperMapper;
 import com.epqas.exam.mapper.ExaminationPaperQuestionMapper;
 import com.epqas.exam.service.ExaminationPaperService;
+import com.epqas.common.feign.UserFeignClient;
+import com.epqas.common.entity.User;
+import com.epqas.common.result.Result;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,9 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
 
     @Autowired
     private ExaminationPaperQuestionMapper paperQuestionMapper;
+
+    @Autowired
+    private UserFeignClient userFeignClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -107,7 +113,7 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
     }
 
     @Override
-    public Page<ExaminationPaper> getPaperPage(Integer current, Integer size, Integer courseId, String keyword) {
+    public Page<ExaminationPaperDTO> getPaperPage(Integer current, Integer size, Integer courseId, String keyword) {
         Page<ExaminationPaper> page = new Page<>(current, size);
         LambdaQueryWrapper<ExaminationPaper> queryWrapper = new LambdaQueryWrapper<>();
 
@@ -121,6 +127,28 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
 
         queryWrapper.orderByDesc(ExaminationPaper::getCreatedAt);
 
-        return this.page(page, queryWrapper);
+        Page<ExaminationPaper> resultPage = this.page(page, queryWrapper);
+
+        Page<ExaminationPaperDTO> dtoPage = new Page<>(resultPage.getCurrent(), resultPage.getSize(), resultPage.getTotal());
+        List<ExaminationPaperDTO> dtoList = new ArrayList<>();
+
+        for (ExaminationPaper paper : resultPage.getRecords()) {
+            ExaminationPaperDTO dto = new ExaminationPaperDTO();
+            BeanUtils.copyProperties(paper, dto);
+            try {
+                if (paper.getSetterId() != null) {
+                    Result<User> userResult = userFeignClient.getUserById(1, paper.getSetterId());
+                    if (userResult.getCode() == 200 && userResult.getData() != null) {
+                        dto.setSetterName(userResult.getData().getRealName());
+                    }
+                }
+            } catch (Exception e) {
+                // Safe ignore if feign fails for a user
+            }
+            dtoList.add(dto);
+        }
+        
+        dtoPage.setRecords(dtoList);
+        return dtoPage;
     }
 }
