@@ -1,15 +1,38 @@
 <template>
-  <div class="trend-analysis-container">
-    <el-card class="box-card">
-      <template #header>
-        <div class="card-header">
-          <span>命题质量历史趋势</span>
-          <el-button type="primary" size="small" @click="loadTrendData" :loading="loading">
-            刷新趋势数据
+  <div class="trend-analysis-container examination-paper-management">
+    <div class="page-header">
+      <h2>历史命题趋势</h2>
+      <p class="subtitle">追踪和分析历次考试命题各项质量指标的变化曲线</p>
+    </div>
+
+    <!-- Toolbar -->
+    <el-card class="toolbar-card" shadow="hover">
+      <div class="toolbar" style="justify-content: flex-start;">
+        <div class="search-area">
+          <el-select 
+            v-if="isAdmin" 
+            v-model="selectedSetterId" 
+            placeholder="请选择命题教师" 
+            clearable
+            class="search-input"
+            @change="handleSetterChange"
+          >
+            <el-option
+              v-for="setter in setterOptions"
+              :key="setter.userId"
+              :label="setter.username + (setter.realName ? ' (' + setter.realName + ')' : '')"
+              :value="setter.userId"
+            />
+          </el-select>
+          <el-button type="primary" @click="loadTrendData" :loading="loading" :disabled="isAdmin && !selectedSetterId">
+            <el-icon><RefreshRight /></el-icon> 刷新趋势数据
           </el-button>
         </div>
-      </template>
+      </div>
+    </el-card>
 
+    <!-- Main Content -->
+    <el-card shadow="hover" class="table-card">
       <div v-loading="loading">
         <template v-if="trendData.length > 0">
           <div class="chart-wrapper">
@@ -33,7 +56,7 @@
             </el-alert>
           </div>
         </template>
-        <el-empty v-else-if="!loading" description="暂无历史命题分析数据，请先前往 [试卷质量诊断] 完成考试结算计算。" />
+        <el-empty v-else-if="!loading" :description="isAdmin && !selectedSetterId ? '请在右上角选择一位命题教师，查看其历史命题趋势' : '暂无历史命题分析数据，请先前往 [试卷质量诊断] 完成考试结算计算。'" />
       </div>
     </el-card>
   </div>
@@ -42,7 +65,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { RefreshRight } from '@element-plus/icons-vue'
 import { getPropositionTrend, type PaperAnalysisVO } from '../../api/analysis'
+import { getSetters, type SetterInfo } from '../../api/exam'
 
 // Register ECharts core components manually if not globally registered
 import { use } from 'echarts/core'
@@ -65,21 +90,38 @@ use([
 
 const loading = ref(false)
 const trendData = ref<PaperAnalysisVO[]>([])
+const currentRoleId = Number(localStorage.getItem('roleId') || '1')
+const isAdmin = currentRoleId === 1
+
+const selectedSetterId = ref<number | undefined>(undefined)
+const setterOptions = ref<SetterInfo[]>([])
 
 const loadTrendData = async () => {
+    // If admin and no setter selected, just clear data
+    if (isAdmin && !selectedSetterId.value) {
+        trendData.value = []
+        return
+    }
+
     loading.value = true
     try {
-        // Fetch setterId from local storage
-        const userIdStr = localStorage.getItem('userId')
-        const setterId = userIdStr ? Number(userIdStr) : 2 // Fallback to setter1 ID
+        if (!isAdmin) {
+            // Setter: fetch only their own trend
+            const userIdStr = localStorage.getItem('userId')
+            const setterId = userIdStr ? Number(userIdStr) : 0
 
-        if (!setterId) {
-            ElMessage.error('无法获取当前命题教师身份信息')
-            return
+            if (!setterId) {
+                ElMessage.error('无法获取当前命题教师身份信息')
+                return
+            }
+
+            const res = await getPropositionTrend(setterId)
+            trendData.value = res.data || []
+        } else {
+            // Admin: fetch selected setter's trend
+            const res = await getPropositionTrend(selectedSetterId.value)
+            trendData.value = res.data || []
         }
-
-        const res = await getPropositionTrend(setterId)
-        trendData.value = res.data || []
     } catch (error: any) {
         ElMessage.error(error.message || '获取命题趋势数据失败')
     } finally {
@@ -87,8 +129,21 @@ const loadTrendData = async () => {
     }
 }
 
-onMounted(() => {
+const handleSetterChange = () => {
     loadTrendData()
+}
+
+onMounted(async () => {
+    if (isAdmin) {
+        try {
+            const res = await getSetters()
+            setterOptions.value = res.data || []
+        } catch (error: any) {
+            ElMessage.error('获取命题教师列表失败')
+        }
+    } else {
+        loadTrendData()
+    }
 })
 
 const chartOption = computed(() => {
@@ -146,7 +201,10 @@ const chartOption = computed(() => {
         },
         yAxis: {
             type: 'value',
-            min: -0.2, // Allow discrimination to show negatives
+            min: (value: any) => {
+                // Ensure data points don't hit the absolute bottom margin
+                return (Math.floor(value.min * 10) / 10 - 0.1).toFixed(1)
+            },
             max: 1.0,
             interval: 0.2,
             axisLabel: {
@@ -249,15 +307,21 @@ const chartOption = computed(() => {
 </script>
 
 <style scoped>
-.trend-analysis-container {
-    padding: 20px;
+.examination-paper-management {
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 60px);
 }
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-}
+
+.page-header { margin-bottom: 24px; }
+.page-header h2 { margin: 0; font-size: 24px; color: #303133; font-weight: 600; }
+.subtitle { margin: 8px 0 0; color: #909399; font-size: 14px; }
+.toolbar-card { margin-bottom: 16px; border-radius: 8px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.search-area { display: flex; gap: 12px; align-items: center; }
+.search-input { width: 200px; }
+.table-card { border-radius: 8px; }
+
 .chart-wrapper {
     height: 500px;
     width: 100%;

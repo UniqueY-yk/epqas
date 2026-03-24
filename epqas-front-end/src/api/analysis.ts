@@ -80,12 +80,10 @@ export const getSuggestionsByExamId = (examId: number, questionId?: number) => {
 }
 
 // Trend Analysis
-export const getPropositionTrend = (setterId: number) => {
+export const getPropositionTrend = (setterId?: number) => {
     return request<PaperAnalysisVO[]>({
         url: '/analysis/paper-analysis/trend',
         method: 'get',
-        params: {
-            setterId
-        }
+        params: setterId ? { setterId } : {}
     })
 }

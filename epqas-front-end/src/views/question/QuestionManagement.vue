@@ -1,16 +1,15 @@
 <template>
   <div class="question-management">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>题目管理</span>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新增题目</el-button>
-        </div>
-      </template>
+    <div class="page-header">
+      <h2>题库管理</h2>
+      <p class="subtitle">创建、分类和管理系统中的所有考试题目</p>
+    </div>
 
-      <el-form :inline="true" :model="searchForm">
-        <el-form-item label="所属课程">
-          <el-select v-model="searchForm.courseId" placeholder="请选择课程" clearable @change="fetchData" filterable>
+    <!-- Toolbar -->
+    <el-card class="toolbar-card" shadow="hover">
+      <div class="toolbar">
+        <div class="search-area">
+          <el-select v-model="searchForm.courseId" placeholder="选择课程过滤" clearable @change="fetchData" filterable class="search-input">
             <el-option
               v-for="course in courses"
               :key="course.courseId"
@@ -18,108 +17,144 @@
               :value="course.courseId"
             />
           </el-select>
-        </el-form-item>
-        <el-form-item label="题目类型">
-          <el-select v-model="searchForm.type" placeholder="所有类型" clearable @change="fetchData">
+          <el-select v-model="searchForm.type" placeholder="所有题型" clearable @change="fetchData" class="search-input">
             <el-option label="单选题" value="SingleChoice" />
             <el-option label="多选题" value="MultipleChoice" />
             <el-option label="判断题" value="TrueFalse" />
             <el-option label="填空题" value="FillBlank" />
-            <el-option label="简答题" value="ShortAnswer" />    
+            <el-option label="简答题" value="ShortAnswer" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="关键词">
-          <el-input v-model="searchForm.keyword" placeholder="搜索题目内容" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="fetchData">搜索</el-button>
-        </el-form-item>
-      </el-form>
+          <el-input 
+            v-model="searchForm.keyword" 
+            placeholder="搜索题目内容..." 
+            clearable
+            class="search-input-long"
+            @keyup.enter="fetchData"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+          <el-button type="primary" @click="fetchData">
+            <el-icon><Search /></el-icon> 查询
+          </el-button>
+        </div>
+        <div class="action-area">
+          <el-button type="success" @click="handleAdd">
+            <el-icon><Plus /></el-icon> 新增题目
+          </el-button>
+        </div>
+      </div>
+    </el-card>
 
-      <el-table :data="tableData" style="width: 100%" v-loading="loading" stripe border>
+    <!-- Table -->
+    <el-card shadow="hover" class="table-card">
+      <el-table :data="tableData" style="width: 100%" v-loading="loading" stripe max-height="600px">
         <template #empty>
           <el-empty description="暂无数据" />
         </template>
-        <el-table-column prop="questionId" label="ID" width="80" />
-        <el-table-column prop="questionContent" label="题目内容" show-overflow-tooltip />
+        <el-table-column prop="questionId" label="ID" width="80" align="center" />
+        <el-table-column prop="questionContent" label="题目内容" show-overflow-tooltip min-width="250" />
         <el-table-column prop="courseId" label="所属课程" width="150">
           <template #default="scope">
-             {{ getCourseName(scope.row.courseId) }}
+             <el-tag type="info" effect="plain">{{ getCourseName(scope.row.courseId) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="questionType" label="题型" width="100">
+        <el-table-column prop="questionType" label="题型" width="100" align="center">
            <template #default="scope">
              <el-tag :type="getTypeTag(scope.row.questionType)">{{ getTypeName(scope.row.questionType) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="initialDifficulty" label="初始难度" width="100" />
-        <el-table-column label="操作" width="180">
+        <el-table-column prop="initialDifficulty" label="难度" width="100" align="center">
           <template #default="scope">
-            <el-button size="small" :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
+             <el-rate
+                :model-value="scope.row.initialDifficulty * 5"
+                disabled
+                show-score
+                text-color="#ff9900"
+                score-template="{value}"
+              />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160" fixed="right">
+          <template #default="scope">
+            <el-button-group>
+              <el-button size="small" type="primary" plain :icon="Edit" @click="handleEdit(scope.row)" />
+              <el-popconfirm title="确定删除该题目吗？" @confirm="handleDelete(scope.row)">
+                <template #reference>
+                  <el-button size="small" type="danger" plain :icon="Delete" />
+                </template>
+              </el-popconfirm>
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
       
-      <el-pagination
-        v-if="total > 0"
-        background
-        layout="prev, pager, next"
-        :total="total"
-        v-model:current-page="currentPage"
-        @current-change="handleCurrentChange"
-        class="pagination"
-      />
+      <!-- Pagination -->
+      <div class="pagination-container" v-if="total > 0">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+          :page-sizes="[10, 20, 50, 100]"
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px" destroy-on-close>
-      <el-form :model="form" label-width="100px" :rules="rules" ref="qFormRef">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px" class="paper-dialog" destroy-on-close>
+      <el-form :model="form" label-width="100px" :rules="rules" ref="qFormRef" class="paper-form">
         
-        <el-row :gutter="20">
-            <el-col :span="12">
-                <el-form-item label="所属课程" prop="courseId">
-                  <el-select v-model="form.courseId" placeholder="请选择课程" @change="onCourseChange" filterable style="width: 100%;">
-                    <el-option
-                      v-for="course in courses"
-                      :key="course.courseId"
-                      :label="course.courseName"
-                      :value="course.courseId"
-                    />
-                  </el-select>
-                </el-form-item>
-            </el-col>
-            <el-col :span="12">
-                 <el-form-item label="知识点标签" prop="pointIds">
-                  <el-select v-model="form.pointIds" multiple placeholder="请选择知识点" :disabled="!form.courseId" style="width: 100%;">
-                    <el-option
-                      v-for="kp in knowledgePoints"
-                      :key="kp.pointId"
-                      :label="kp.pointName"
-                      :value="kp.pointId"
-                    />
-                  </el-select>
-                </el-form-item>
-            </el-col>
-        </el-row>
+        <div class="form-header-section">
+            <el-row :gutter="20">
+                <el-col :span="12">
+                    <el-form-item label="所属课程" prop="courseId">
+                      <el-select v-model="form.courseId" placeholder="请选择课程" @change="onCourseChange" filterable style="width: 100%;">
+                        <el-option
+                          v-for="course in courses"
+                          :key="course.courseId"
+                          :label="course.courseName"
+                          :value="course.courseId"
+                        />
+                      </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                     <el-form-item label="知识点标签" prop="pointIds">
+                      <el-select v-model="form.pointIds" multiple placeholder="请选择知识点" :disabled="!form.courseId" style="width: 100%;">
+                        <el-option
+                          v-for="kp in knowledgePoints"
+                          :key="kp.pointId"
+                          :label="kp.pointName"
+                          :value="kp.pointId"
+                        />
+                      </el-select>
+                    </el-form-item>
+                </el-col>
+            </el-row>
 
-        <el-row :gutter="20">
-            <el-col :span="12">
-                <el-form-item label="题目类型" prop="questionType">
-                  <el-select v-model="form.questionType" placeholder="请选择题型" style="width: 100%;">
-                    <el-option label="单项选择题" value="SingleChoice" />
-                    <el-option label="多项选择题" value="MultipleChoice" />
-                    <el-option label="判断题" value="TrueFalse" />
-                    <el-option label="填空题" value="FillBlank" />
-                    <el-option label="简答题" value="ShortAnswer" />
-                  </el-select>
-                </el-form-item>
-            </el-col>
-            <el-col :span="12">
-                 <el-form-item label="预估难度" prop="initialDifficulty">
-                   <el-slider v-model="form.initialDifficulty" :step="0.1" :max="1" :marks="{0: '易', 1: '难'}" />
-                </el-form-item>
-            </el-col>
-        </el-row>
+            <el-row :gutter="20">
+                <el-col :span="12">
+                    <el-form-item label="题目类型" prop="questionType">
+                      <el-select v-model="form.questionType" placeholder="请选择题型" style="width: 100%;">
+                        <el-option label="单项选择题" value="SingleChoice" />
+                        <el-option label="多项选择题" value="MultipleChoice" />
+                        <el-option label="判断题" value="TrueFalse" />
+                        <el-option label="填空题" value="FillBlank" />
+                        <el-option label="简答题" value="ShortAnswer" />
+                      </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                     <el-form-item label="预估难度" prop="initialDifficulty">
+                       <el-slider v-model="form.initialDifficulty" :step="0.1" :max="1" :marks="{0: '易', 1: '难'}" />
+                    </el-form-item>
+                </el-col>
+            </el-row>
+        </div>
 
         <el-form-item label="题目内容" prop="questionContent">
           <el-input v-model="form.questionContent" type="textarea" :rows="5" placeholder="请输入题干内容..." />
@@ -273,6 +308,12 @@ const handleCurrentChange = (val: number) => {
     fetchData()
 }
 
+const handleSizeChange = (val: number) => {
+    pageSize.value = val
+    currentPage.value = 1
+    fetchData()
+}
+
 const handleAdd = () => {
   dialogTitle.value = '新增题目'
   Object.assign(form, { 
@@ -375,8 +416,24 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.pagination { margin-top: 20px; justify-content: flex-end; }
+.question-management {
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 60px);
+}
+.page-header { margin-bottom: 24px; }
+.page-header h2 { margin: 0; font-size: 24px; color: #303133; font-weight: 600; }
+.subtitle { margin: 8px 0 0; color: #909399; font-size: 14px; }
+.toolbar-card { margin-bottom: 16px; border-radius: 8px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.search-area { display: flex; gap: 12px; align-items: center; }
+.search-input { width: 160px; }
+.search-input-long { width: 240px; }
+.table-card { border-radius: 8px; }
+.pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; }
+.paper-dialog :deep(.el-dialog__body) { padding-top: 10px; }
+.form-header-section { background: #f8f9fc; padding: 20px 20px 5px 20px; border-radius: 8px; margin-bottom: 20px; }
+
 .option-item {
     display: flex;
     align-items: center;

@@ -51,7 +51,11 @@
         INNER JOIN examination e ON eqa.exam_id = e.exam_id
         INNER JOIN examination_paper ep ON e.paper_id = ep.paper_id
         INNER JOIN course c ON ep.course_id = c.course_id
-        WHERE ep.setter_id = #{setterId}
+        <where>
+            <if test="setterId != null">
+                ep.setter_id = #{setterId}
+            </if>
+        </where>
         ORDER BY e.exam_date ASC
     </select>
 </mapper>
