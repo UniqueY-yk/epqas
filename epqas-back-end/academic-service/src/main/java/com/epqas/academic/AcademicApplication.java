@@ -7,6 +7,9 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 @EnableDiscoveryClient
@@ -16,5 +19,12 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 public class AcademicApplication {
     public static void main(String[] args) {
         SpringApplication.run(AcademicApplication.class, args);
+    }
+
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+        return interceptor;
     }
 }

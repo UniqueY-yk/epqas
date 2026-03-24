@@ -47,7 +47,7 @@
       </el-table>
 
       <!-- Pagination -->
-      <div class="pagination-container" v-if="total > 0">
+      <div class="pagination-container">
         <el-pagination
           background
           layout="total, sizes, prev, pager, next, jumper"
