@@ -542,7 +542,7 @@ const confirmQuestionSelection = () => {
     selectedQuestions.value.forEach(q => {
         if (!currentQuestionIds.includes(q.questionId)) {
             let defaultScore = 5
-            if(q.questionType === 'MCQ' || q.questionType === 'TrueFalse') defaultScore = 2
+            if(q.questionType === 'SingleChoice' || q.questionType === 'MultipleChoice' || q.questionType === 'TrueFalse') defaultScore = 2
             
             form.questions.push({
                 questionId: q.questionId,
@@ -609,20 +609,22 @@ const formatDate = (date: string) => {
 
 const translateType = (type: string) => {
   const map: Record<string, string> = {
-    'MCQ': '单选题',
+    'SingleChoice': '单选题',
+    'MultipleChoice': '多选题',
     'TrueFalse': '判断题',
     'FillBlank': '填空题',
-    'Essay': '论述题'
+    'ShortAnswer': '简答题'
   }
   return map[type] || type
 }
 
 const getTypeTag = (type: string) => {
   const map: Record<string, any> = {
-    'MCQ': '',
+    'SingleChoice': 'primary',
+    'MultipleChoice': 'info',
     'TrueFalse': 'success',
     'FillBlank': 'warning',
-    'Essay': 'danger'
+    'ShortAnswer': 'danger'
   }
   return map[type] || 'info'
 }

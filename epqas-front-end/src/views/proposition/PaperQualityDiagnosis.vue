@@ -2,7 +2,7 @@
   <div class="quality-diagnosis">
     <div class="page-header">
       <h2>试卷质量诊断</h2>
-      <p class="subtitle">查看您命题的试卷在考试后的质量分析报告</p>
+      <p class="subtitle">{{ isAdmin ? '查看所有命题教师的试卷质量分析报告' : '查看您命题的试卷在考试后的质量分析报告' }}</p>
     </div>
 
     <!-- Table -->
@@ -122,14 +122,15 @@ const loading = ref(false)
 const calcLoading = ref<number | null>(null)
 const tableData = ref<PaperAnalysisVO[]>([])
 const total = ref(0)
-// For mock purposes or setter role logic, read from storage.
-const setterId = Number(localStorage.getItem('userId')) || 3
+const currentRoleId = Number(localStorage.getItem('roleId') || '1')
+const isAdmin = currentRoleId === 1
+const setterId = Number(localStorage.getItem('userId')) || 0
 
 const searchQuery = reactive({
   current: 1,
   size: 10,
-  setterId: setterId
-})
+  setterId: isAdmin ? undefined : setterId
+} as any)
 
 // --- Methods ---
 onMounted(async () => {

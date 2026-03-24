@@ -21,10 +21,11 @@
         </el-form-item>
         <el-form-item label="题目类型">
           <el-select v-model="searchForm.type" placeholder="所有类型" clearable @change="fetchData">
-            <el-option label="单选题" value="MCQ" />
+            <el-option label="单选题" value="SingleChoice" />
+            <el-option label="多选题" value="MultipleChoice" />
             <el-option label="判断题" value="TrueFalse" />
             <el-option label="填空题" value="FillBlank" />
-            <el-option label="主观题" value="Essay" />
+            <el-option label="简答题" value="ShortAnswer" />    
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -105,10 +106,11 @@
             <el-col :span="12">
                 <el-form-item label="题目类型" prop="questionType">
                   <el-select v-model="form.questionType" placeholder="请选择题型" style="width: 100%;">
-                    <el-option label="单项选择题" value="MCQ" />
+                    <el-option label="单项选择题" value="SingleChoice" />
+                    <el-option label="多项选择题" value="MultipleChoice" />
                     <el-option label="判断题" value="TrueFalse" />
                     <el-option label="填空题" value="FillBlank" />
-                    <el-option label="主观问答题" value="Essay" />
+                    <el-option label="简答题" value="ShortAnswer" />
                   </el-select>
                 </el-form-item>
             </el-col>
@@ -123,12 +125,22 @@
           <el-input v-model="form.questionContent" type="textarea" :rows="5" placeholder="请输入题干内容..." />
         </el-form-item>
         
-        <template v-if="form.questionType === 'MCQ'">
+        <template v-if="form.questionType === 'SingleChoice'">
             <el-form-item label="选项配置">
                 <div v-for="(_, k) in mcqOptions" :key="k" class="option-item">
                     <span class="option-label">{{ k }}:</span>
                     <el-input v-model="mcqOptions[k]" placeholder="选项内容" style="width: 80%" />
                     <el-radio v-model="form.correctAnswer" :value="k" style="margin-left: 10px;">设为答案</el-radio>
+                </div>
+            </el-form-item>
+        </template>
+        
+        <template v-if="form.questionType === 'MultipleChoice'">
+            <el-form-item label="选项配置">
+                <div v-for="(_, k) in mcqOptions" :key="k" class="option-item">
+                    <span class="option-label">{{ k }}:</span>
+                    <el-input v-model="mcqOptions[k]" placeholder="选项内容" style="width: 80%" />
+                    <el-checkbox v-model="form.correctAnswer" :value="k" style="margin-left: 10px;">设为答案</el-checkbox>
                 </div>
             </el-form-item>
         </template>
@@ -142,7 +154,7 @@
             </el-form-item>
         </template>
         
-         <template v-if="form.questionType === 'FillBlank' || form.questionType === 'Essay'">
+         <template v-if="form.questionType === 'FillBlank' || form.questionType === 'EssayShortAnswer'">
             <el-form-item label="参考答案" prop="correctAnswer">
                 <el-input v-model="form.correctAnswer" type="textarea" :rows="3" placeholder="请输入此题的标准/参考答案" />
             </el-form-item>
@@ -182,7 +194,7 @@ const form = reactive({
     questionId: null, 
     courseId: null, 
     questionContent: '', 
-    questionType: 'MCQ', 
+    questionType: 'SingleChoice',
     correctAnswer: '', 
     initialDifficulty: 0.5,
     optionsJson: '',
@@ -214,12 +226,12 @@ const getCourseName = (courseId: number) => {
 }
 
 const getTypeName = (type: string) => {
-    const map: Record<string, string> = { 'MCQ': '单选题', 'TrueFalse': '判断题', 'FillBlank': '填空题', 'Essay': '主观题' }
+    const map: Record<string, string> = { 'SingleChoice': '单选题', 'MultipleChoice': '多选题', 'TrueFalse': '判断题', 'FillBlank': '填空题', 'ShortAnswer': '简答题' }
     return map[type] || type
 }
 
 const getTypeTag = (type: string) => {
-    const map: Record<string, string> = { 'MCQ': 'primary', 'TrueFalse': 'success', 'FillBlank': 'warning', 'Essay': 'info' }
+    const map: Record<string, string> = { 'SingleChoice': 'primary', 'MultipleChoice': 'info', 'TrueFalse': 'success', 'FillBlank': 'warning', 'ShortAnswer': 'danger' }
     return map[type] || ''
 }
 
@@ -267,7 +279,7 @@ const handleAdd = () => {
       questionId: null, 
       courseId: searchForm.courseId || null, 
       questionContent: '', 
-      questionType: 'MCQ', 
+      questionType: 'SingleChoice', 
       correctAnswer: '', 
       initialDifficulty: 0.5,
       optionsJson: '',
@@ -292,7 +304,7 @@ const handleEdit = async (row: any) => {
           await loadKnowledgePoints(detailedQ.courseId)
       }
       
-      if (detailedQ.questionType === 'MCQ' && detailedQ.optionsJson) {
+      if (detailedQ.questionType === 'SingleChoice' && detailedQ.optionsJson) {
            try {
                const parsed = JSON.parse(detailedQ.optionsJson)
                Object.assign(mcqOptions, parsed)
@@ -320,11 +332,18 @@ const submitForm = async () => {
       submitting.value = true
       try {
         const payload = { ...form }
-        // Pack MCQ options
-        if (payload.questionType === 'MCQ') {
+        // Pack SingleChoice options
+        if (payload.questionType === 'SingleChoice') {
             payload.optionsJson = JSON.stringify(mcqOptions)
             if (!payload.correctAnswer) {
                 ElMessage.warning('请选择单选题的正确答案')
+                submitting.value = false
+                return
+            }
+        } else if (payload.questionType === 'MultipleChoice') {
+            payload.optionsJson = JSON.stringify(mcqOptions)
+            if (!payload.correctAnswer) {
+                ElMessage.warning('请选择多选题的正确答案')
                 submitting.value = false
                 return
             }

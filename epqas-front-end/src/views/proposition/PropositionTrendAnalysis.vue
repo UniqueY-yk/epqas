@@ -3,7 +3,7 @@
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
-          <span>命题质量历史趋势验证与分析 (Historical Proposition Quality Trend)</span>
+          <span>命题质量历史趋势</span>
           <el-button type="primary" size="small" @click="loadTrendData" :loading="loading">
             刷新趋势数据
           </el-button>

@@ -61,10 +61,14 @@ public class ExaminationPaperQualityAnalysisController {
 
     @GetMapping("/my-papers")
     public Result<Page<PaperAnalysisVO>> getMyPapers(
+            @RequestHeader(value = "X-Role-Id", required = false) Integer roleId,
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @RequestParam(value = "setterId") Long setterId) {
-        // In a real application, setterId should be derived from the user context/token
+            @RequestParam(value = "setterId", required = false) Long setterId) {
+        // Admin (roleId=1) sees all papers; setters see only their own
+        if (roleId != null && roleId == 1) {
+            setterId = null;
+        }
         return Result.success(analysisService.getPageBySetterId(current, size, setterId));
     }
 

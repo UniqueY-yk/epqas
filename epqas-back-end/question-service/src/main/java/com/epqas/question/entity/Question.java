@@ -26,7 +26,7 @@ public class Question {
     private String questionContent;
 
     @Column(nullable = false)
-    private String questionType; // MCQ, TrueFalse, FillBlank, Essay
+    private String questionType; // SingleChoice, MultipleChoice, TrueFalse, FillBlank, ShortAnswer
 
     @Column(columnDefinition = "JSON")
     private String optionsJson;
