@@ -4,6 +4,8 @@ export interface PaperQuestionDTO {
     questionId: number;
     scoreValue: number;
     questionOrder: number;
+    questionContent?: string;
+    questionType?: string;
 }
 
 export interface ExaminationPaperDTO {

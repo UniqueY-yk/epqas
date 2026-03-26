@@ -200,12 +200,12 @@
             </el-table-column>
             <el-table-column label="题干摘要">
               <template #default="scope">
-                 {{ getQuestionSummary(scope.row.questionId) }}
+                 {{ truncateText(scope.row.questionContent || ('题目ID: ' + scope.row.questionId), 50) }}
               </template>
             </el-table-column>
-             <el-table-column label="题型" width="100" align="center">
+             <el-table-column label="题型" width="120" align="center">
                 <template #default="scope">
-                    <el-tag size="small" type="info">{{ getQuestionType(scope.row.questionId) }}</el-tag>
+                    <el-tag size="small" type="info">{{ translateType(scope.row.questionType) || '-' }}</el-tag>
                 </template>
             </el-table-column>
             <el-table-column label="分值分配" width="160" align="center">
@@ -426,11 +426,6 @@ const openDialog = async (row?: ExaminationPaperDTO) => {
         Object.assign(form, res.data)
         // Ensure questions array exists
         if (!form.questions) form.questions = []
-        
-        // Fetch details of questions to display in the nested table
-        for (const q of form.questions) {
-            await cacheQuestionDetailsLocally(q.questionId)
-        }
     } catch (e) {
         ElMessage.error('加载试卷详情失败')
     }
@@ -561,33 +556,12 @@ const removeQuestion = (index: number) => {
     form.questions.splice(index, 1)
 }
 
-// Helper to fetch details if not in cache (used when opening EDIT mode)
-const cacheQuestionDetailsLocally = async (qId: number) => {
-    if (questionDictionary.value[qId]) return
-    try {
-        // Technically this should be a batched API or call a specific get endpoint. 
-        // For simplicity, using getQuestions with a keyword hack or fetching it if available.
-        // Assuming we need this data purely for display.
-        const res = await getQuestions({ current: 1, size: 100, courseId: form.courseId })
-         res.data.records.forEach((q: any) => {
-            questionDictionary.value[q.questionId] = q
-        })
-    } catch (e) {}
-}
-
-const getQuestionSummary = (qId: number) => {
-    const q = questionDictionary.value[qId]
-    if (!q) return `题目ID: ${qId}`
-    if (q.questionContent.length > 30) {
-        return q.questionContent.substring(0, 30) + '...'
+const truncateText = (text: string, len: number) => {
+    if (!text) return ''
+    if (text.length > len) {
+        return text.substring(0, len) + '...'
     }
-    return q.questionContent
-}
-
-const getQuestionType = (qId: number) => {
-    const q = questionDictionary.value[qId]
-    if (!q) return '-'
-    return translateType(q.questionType)
+    return text
 }
 
 

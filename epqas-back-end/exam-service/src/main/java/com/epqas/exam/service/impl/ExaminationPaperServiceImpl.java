@@ -21,6 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import com.epqas.common.dto.QuestionBatchDTO;
+import com.epqas.common.feign.QuestionFeignClient;
+
 
 @Service
 public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMapper, ExaminationPaper>
@@ -31,6 +36,9 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
 
     @Autowired
     private UserFeignClient userFeignClient;
+
+    @Autowired
+    private QuestionFeignClient questionFeignClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -94,18 +102,53 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
         ExaminationPaperDTO dto = new ExaminationPaperDTO();
         BeanUtils.copyProperties(paper, dto);
 
+        // Populate setter name
+        try {
+            if (paper.getSetterId() != null) {
+                Result<User> userResult = userFeignClient.getUserById(1, paper.getSetterId());
+                if (userResult.getCode() == 200 && userResult.getData() != null) {
+                    dto.setSetterName(userResult.getData().getRealName());
+                }
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+
         LambdaQueryWrapper<ExaminationPaperQuestion> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ExaminationPaperQuestion::getPaperId, paperId);
         queryWrapper.orderByAsc(ExaminationPaperQuestion::getQuestionOrder);
         List<ExaminationPaperQuestion> paperQuestions = paperQuestionMapper.selectList(queryWrapper);
 
         List<PaperQuestionDTO> questionDtos = new ArrayList<>();
+        List<Long> questionIds = new ArrayList<>();
         for (ExaminationPaperQuestion pq : paperQuestions) {
             PaperQuestionDTO pqDto = new PaperQuestionDTO();
             pqDto.setQuestionId(pq.getQuestionId());
             pqDto.setScoreValue(pq.getScoreValue());
             pqDto.setQuestionOrder(pq.getQuestionOrder());
             questionDtos.add(pqDto);
+            questionIds.add(pq.getQuestionId());
+        }
+
+        // Enrich with question details
+        if (!questionIds.isEmpty()) {
+            try {
+                Result<List<QuestionBatchDTO>> questionResult = questionFeignClient.getQuestionsByIds(questionIds);
+                if (questionResult.getCode() == 200 && questionResult.getData() != null) {
+                    Map<Long, QuestionBatchDTO> qMap = questionResult.getData().stream()
+                            .collect(Collectors.toMap(QuestionBatchDTO::getQuestionId, q -> q));
+                    
+                    for (PaperQuestionDTO pqDto : questionDtos) {
+                        QuestionBatchDTO qDetail = qMap.get(pqDto.getQuestionId());
+                        if (qDetail != null) {
+                            pqDto.setQuestionContent(qDetail.getQuestionContent());
+                            pqDto.setQuestionType(qDetail.getQuestionType());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Log error or ignore if question-service is down
+            }
         }
 
         dto.setQuestions(questionDtos);

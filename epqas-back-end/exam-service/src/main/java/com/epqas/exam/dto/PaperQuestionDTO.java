@@ -8,4 +8,6 @@ public class PaperQuestionDTO {
     private Long questionId;
     private BigDecimal scoreValue;
     private Integer questionOrder;
+    private String questionContent;
+    private String questionType;
 }

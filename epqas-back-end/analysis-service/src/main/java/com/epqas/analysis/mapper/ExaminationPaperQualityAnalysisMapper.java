@@ -15,5 +15,5 @@ public interface ExaminationPaperQualityAnalysisMapper extends BaseMapper<Examin
     Page<PaperAnalysisVO> selectPageBySetterId(@Param("page") Page<PaperAnalysisVO> page,
             @Param("setterId") Long setterId);
 
-    List<PaperAnalysisVO> selectTrendBySetterId(@Param("setterId") Long setterId);
+    List<PaperAnalysisVO> selectTrendBySetterId(@Param("setterId") Long setterId, @Param("courseId") Long courseId);
 }

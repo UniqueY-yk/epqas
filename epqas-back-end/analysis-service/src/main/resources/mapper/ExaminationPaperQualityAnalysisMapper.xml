@@ -53,7 +53,10 @@
         INNER JOIN course c ON ep.course_id = c.course_id
         <where>
             <if test="setterId != null">
-                ep.setter_id = #{setterId}
+                AND ep.setter_id = #{setterId}
+            </if>
+            <if test="courseId != null">
+                AND ep.course_id = #{courseId}
             </if>
         </where>
         ORDER BY e.exam_date ASC

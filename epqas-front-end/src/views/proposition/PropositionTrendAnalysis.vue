@@ -1,4 +1,4 @@
-<template>
+zho<template>
   <div class="trend-analysis-container examination-paper-management">
     <div class="page-header">
       <h2>历史命题趋势</h2>
@@ -15,7 +15,7 @@
             placeholder="请选择命题教师" 
             clearable
             class="search-input"
-            @change="handleSetterChange"
+            @change="handleFilterChange"
           >
             <el-option
               v-for="setter in setterOptions"
@@ -24,6 +24,22 @@
               :value="setter.userId"
             />
           </el-select>
+
+          <el-select 
+            v-model="selectedCourseId" 
+            placeholder="请选择课程" 
+            clearable
+            class="search-input"
+            @change="handleFilterChange"
+          >
+            <el-option
+              v-for="course in courseOptions"
+              :key="course.courseId"
+              :label="course.courseName"
+              :value="course.courseId"
+            />
+          </el-select>
+
           <el-button type="primary" @click="loadTrendData" :loading="loading" :disabled="isAdmin && !selectedSetterId">
             <el-icon><RefreshRight /></el-icon> 刷新趋势数据
           </el-button>
@@ -56,7 +72,7 @@
             </el-alert>
           </div>
         </template>
-        <el-empty v-else-if="!loading" :description="isAdmin && !selectedSetterId ? '请在右上角选择一位命题教师，查看其历史命题趋势' : '暂无历史命题分析数据，请先前往 [试卷质量诊断] 完成考试结算计算。'" />
+        <el-empty v-else-if="!loading" :description="isAdmin && !selectedSetterId ? '请在右上角选择一位命题教及其课程，查看其历史命题趋势' : '暂无历史命题分析数据，请先前往 [试卷质量诊断] 完成考试结算计算。'" />
       </div>
     </el-card>
   </div>
@@ -68,6 +84,7 @@ import { ElMessage } from 'element-plus'
 import { RefreshRight } from '@element-plus/icons-vue'
 import { getPropositionTrend, type PaperAnalysisVO } from '../../api/analysis'
 import { getSetters, type SetterInfo } from '../../api/exam'
+import { getCourses } from '../../api/academic'
 
 // Register ECharts core components manually if not globally registered
 import { use } from 'echarts/core'
@@ -95,6 +112,8 @@ const isAdmin = currentRoleId === 1
 
 const selectedSetterId = ref<number | undefined>(undefined)
 const setterOptions = ref<SetterInfo[]>([])
+const selectedCourseId = ref<number | undefined>(undefined)
+const courseOptions = ref<any[]>([])
 
 const loadTrendData = async () => {
     // If admin and no setter selected, just clear data
@@ -115,11 +134,11 @@ const loadTrendData = async () => {
                 return
             }
 
-            const res = await getPropositionTrend(setterId)
+            const res = await getPropositionTrend(setterId, selectedCourseId.value)
             trendData.value = res.data || []
         } else {
             // Admin: fetch selected setter's trend
-            const res = await getPropositionTrend(selectedSetterId.value)
+            const res = await getPropositionTrend(selectedSetterId.value, selectedCourseId.value)
             trendData.value = res.data || []
         }
     } catch (error: any) {
@@ -129,19 +148,27 @@ const loadTrendData = async () => {
     }
 }
 
-const handleSetterChange = () => {
+const handleFilterChange = () => {
     loadTrendData()
 }
 
 onMounted(async () => {
     if (isAdmin) {
         try {
-            const res = await getSetters()
-            setterOptions.value = res.data || []
+            const [setterRes, courseRes] = await Promise.all([
+                getSetters(),
+                getCourses({ current: 1, size: 100 })
+            ])
+            setterOptions.value = setterRes.data || []
+            courseOptions.value = courseRes.data.records || []
         } catch (error: any) {
-            ElMessage.error('获取命题教师列表失败')
+            ElMessage.error('获取初始筛选列表失败')
         }
     } else {
+        try {
+            const courseRes = await getCourses({ current: 1, size: 100 })
+            courseOptions.value = courseRes.data.records || []
+        } catch (e) {}
         loadTrendData()
     }
 })

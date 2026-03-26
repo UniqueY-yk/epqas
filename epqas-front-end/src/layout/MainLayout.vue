@@ -16,7 +16,7 @@
             >
                 <el-menu-item index="/">
                     <el-icon><Odometer /></el-icon>
-                    <template #title>仪表盘</template>
+                    <template #title>首页</template>
                 </el-menu-item>
 
                 <el-menu-item index="/admin/users" v-if="isAdmin">

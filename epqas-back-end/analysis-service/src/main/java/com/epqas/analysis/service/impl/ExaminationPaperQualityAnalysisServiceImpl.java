@@ -23,7 +23,7 @@ public class ExaminationPaperQualityAnalysisServiceImpl
     }
 
     @Override
-    public List<PaperAnalysisVO> getTrendAnalysisBySetterId(Long setterId) {
-        return baseMapper.selectTrendBySetterId(setterId);
+    public List<PaperAnalysisVO> getTrendAnalysis(Long setterId, Long courseId) {
+        return baseMapper.selectTrendBySetterId(setterId, courseId);
     }
 }

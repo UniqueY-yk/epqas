@@ -8,6 +8,7 @@ import com.epqas.common.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -47,6 +48,14 @@ public class QuestionController {
             @RequestParam(value = "type", required = false) String type,
             @RequestParam(value = "keyword", required = false) String keyword) {
         return Result.success(questionService.getQuestionPage(current, size, courseId, type, keyword));
+    }
+
+    @GetMapping("/batch")
+    public Result<List<Question>> getQuestionsByIds(@RequestParam("ids") List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+        return Result.success(questionService.listByIds(ids));
     }
 
     @GetMapping

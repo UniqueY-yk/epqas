@@ -76,15 +76,15 @@ public class ExaminationPaperQualityAnalysisController {
     public Result<List<PaperAnalysisVO>> getTrendAnalysis(
             @RequestHeader(value = "X-Role-Id", required = false) Integer roleId,
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
-            @RequestParam(value = "setterId", required = false) Long setterId) {
+            @RequestParam(value = "setterId", required = false) Long setterId,
+            @RequestParam(value = "courseId", required = false) Long courseId) {
         
         if (roleId != null && roleId == 1) {
-            // Admin can query any specified setterId (which is passed from the admin dropdown)
-            // or null if they wanted to see all.
+            // Admin can query any specified setterId
         } else {
             // Non-admin can ONLY query their own setterId
             setterId = userId;
         }
-        return Result.success(analysisService.getTrendAnalysisBySetterId(setterId));
+        return Result.success(analysisService.getTrendAnalysis(setterId, courseId));
     }
 }

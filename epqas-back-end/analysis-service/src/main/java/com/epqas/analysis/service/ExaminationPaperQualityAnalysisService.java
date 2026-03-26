@@ -11,5 +11,5 @@ public interface ExaminationPaperQualityAnalysisService extends IService<Examina
 
     Page<PaperAnalysisVO> getPageBySetterId(Integer current, Integer size, Long setterId);
 
-    List<PaperAnalysisVO> getTrendAnalysisBySetterId(Long setterId);
+    List<PaperAnalysisVO> getTrendAnalysis(Long setterId, Long courseId);
 }
