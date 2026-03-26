@@ -61,4 +61,9 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
             throw new RuntimeException("Failed to parse Excel file", e);
         }
     }
+
+    @Override
+    public java.util.List<Student> getStudentsByClassId(Integer classId) {
+        return this.list(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Student>().eq("class_id", classId));
+    }
 }

@@ -43,4 +43,9 @@ public class StudentController {
     public Result<Boolean> deleteStudent(@PathVariable("id") Long id) {
         return Result.success(studentService.removeById(id));
     }
+
+    @GetMapping("/class/{classId}")
+    public Result<java.util.List<Student>> getStudentsByClassId(@PathVariable("classId") Integer classId) {
+        return Result.success(studentService.getStudentsByClassId(classId));
+    }
 }

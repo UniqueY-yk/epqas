@@ -21,9 +21,26 @@ public class StudentExamResultController {
         return Result.success(studentExamResultService.save(studentExamResult));
     }
 
+    @PostMapping("/batch")
+    public Result<Boolean> batchSaveStudentResult(@RequestBody com.epqas.exam.dto.StudentExamResultBatchDTO dto) {
+        return Result.success(studentExamResultService.saveResultAndAnswers(dto));
+    }
+
     @GetMapping("/{id}")
     public Result<StudentExamResult> getStudentExamResultById(@PathVariable("id") Long id) {
         return Result.success(studentExamResultService.getById(id));
+    }
+
+    @GetMapping("/exam/{examId}")
+    public Result<List<StudentExamResult>> getResultsByExamId(@PathVariable("examId") Long examId) {
+        return Result.success(studentExamResultService.list(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<StudentExamResult>().eq("exam_id", examId)));
+    }
+
+    @GetMapping("/exam/{examId}/student/{studentId}")
+    public Result<StudentExamResult> getResultByExamAndStudent(@PathVariable("examId") Long examId, @PathVariable("studentId") Long studentId) {
+        return Result.success(studentExamResultService.getOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<StudentExamResult>()
+                .eq("exam_id", examId)
+                .eq("student_id", studentId)));
     }
 
     @PutMapping

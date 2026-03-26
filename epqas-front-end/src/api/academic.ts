@@ -9,6 +9,13 @@ export function getClasses(params: any) {
     })
 }
 
+export function getStudentsByClassId(classId: number) {
+    return request({
+        url: `/academic/students/class/${classId}`,
+        method: 'get'
+    })
+}
+
 export function addClass(data: any) {
     return request({
         url: '/academic/classes',

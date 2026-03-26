@@ -79,6 +79,12 @@ const router = createRouter({
                     name: '考试记录管理',
                     component: () => import('../views/teaching/ExamRecordManagement.vue'),
                     meta: { roles: [1, 3] }
+                },
+                {
+                    path: 'teaching/exams/:examId/grades',
+                    name: '考试成绩录入',
+                    component: () => import('../views/teaching/GradeEntry.vue'),
+                    meta: { roles: [1, 3] }
                 }
             ]
         },

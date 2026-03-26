@@ -9,6 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 public interface StudentService extends IService<Student> {
 
     void createStudentWithUser(StudentDTO studentDTO);
-
     void importStudents(MultipartFile file);
+    java.util.List<Student> getStudentsByClassId(Integer classId);
 }

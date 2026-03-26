@@ -45,8 +45,9 @@
         <el-table-column prop="totalCandidates" label="应考人数" width="120" />
         <el-table-column prop="actualExaminees" label="实考人数" width="120" />
         
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="scope">
+            <el-button size="small" type="success" link @click="goToGrades(scope.row.examId)">录入成绩</el-button>
             <el-button size="small" type="primary" link @click="handleEdit(scope.row)">编辑</el-button>
             <el-popconfirm title="确定要删除此考试记录吗？" @confirm="handleDelete(scope.row.examId)">
               <template #reference>
@@ -137,10 +138,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Plus, Monitor } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { getExaminationsPage, createExamination, updateExamination, deleteExamination, getPapers, ExaminationDTO } from '@/api/exam'
 import { getClasses } from '@/api/academic'
 
+const router = useRouter()
 const loading = ref(false)
 const submitLoading = ref(false)
 const tableData = ref<ExaminationDTO[]>([])
@@ -241,6 +244,10 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
   fetchData()
+}
+
+const goToGrades = (examId: number) => {
+  router.push(`/teaching/exams/${examId}/grades`)
 }
 
 const resetForm = () => {

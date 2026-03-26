@@ -112,3 +112,32 @@ export const deleteExamination = (id: number) => {
         method: 'delete'
     })
 }
+
+export const batchSaveStudentResult = (data: any) => {
+    return request({
+        url: '/exam/results/batch',
+        method: 'post',
+        data
+    })
+}
+
+export const getResultsByExamId = (examId: number) => {
+    return request({
+        url: `/exam/results/exam/${examId}`,
+        method: 'get'
+    })
+}
+
+export const getResultByExamAndStudent = (examId: number, studentId: number) => {
+    return request({
+        url: `/exam/results/exam/${examId}/student/${studentId}`,
+        method: 'get'
+    })
+}
+
+export const getAnswersByResultId = (resultId: number) => {
+    return request({
+        url: `/exam/answers/result/${resultId}`,
+        method: 'get'
+    })
+}

@@ -19,14 +19,14 @@ public class UserController {
             @RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "username", required = false) String username) {
-        if (roleId == null || roleId != 1)
+        if (roleId == null || roleId == 4)
             return Result.error(403, "Access Denied");
         return Result.success(userService.getUsersPage(page, size, username));
     }
 
     @GetMapping("/{id}")
     public Result<User> getUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable("id") Long id) {
-        if (roleId == null || roleId != 1)
+        if (roleId == null || roleId == 4)
             return Result.error(403, "Access Denied");
         return Result.success(userService.getById(id));
     }

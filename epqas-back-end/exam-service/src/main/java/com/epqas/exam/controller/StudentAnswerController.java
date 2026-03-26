@@ -26,6 +26,11 @@ public class StudentAnswerController {
         return Result.success(studentAnswerService.getById(id));
     }
 
+    @GetMapping("/result/{resultId}")
+    public Result<List<StudentAnswer>> getAnswersByResultId(@PathVariable("resultId") Long resultId) {
+        return Result.success(studentAnswerService.list(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<StudentAnswer>().eq("result_id", resultId)));
+    }
+
     @PutMapping
     public Result<Boolean> updateStudentAnswer(@RequestBody StudentAnswer studentAnswer) {
         return Result.success(studentAnswerService.updateById(studentAnswer));
