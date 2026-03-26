@@ -72,3 +72,43 @@ export const getSetters = () => {
         method: 'get'
     })
 }
+
+export interface ExaminationDTO {
+    examId?: number;
+    paperId: number | null;
+    classId: number | null;
+    examDate: string;
+    totalCandidates: number;
+    actualExaminees: number;
+}
+
+export const getExaminationsPage = (params: any) => {
+    return request({
+        url: '/exam/examinations/page',
+        method: 'get',
+        params
+    })
+}
+
+export const createExamination = (data: ExaminationDTO) => {
+    return request({
+        url: '/exam/examinations',
+        method: 'post',
+        data
+    })
+}
+
+export const updateExamination = (data: ExaminationDTO) => {
+    return request({
+        url: '/exam/examinations',
+        method: 'put',
+        data
+    })
+}
+
+export const deleteExamination = (id: number) => {
+    return request({
+        url: `/exam/examinations/${id}`,
+        method: 'delete'
+    })
+}

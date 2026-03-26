@@ -66,6 +66,16 @@
                         >历史命题趋势</el-menu-item
                     >
                 </el-sub-menu>
+
+                <el-sub-menu index="/teaching" v-if="isAdmin || isInstructor">
+                    <template #title>
+                        <el-icon><Monitor /></el-icon>
+                        <span>教学管理</span>
+                    </template>
+                    <el-menu-item index="/teaching/exams"
+                        >考试记录管理</el-menu-item
+                    >
+                </el-sub-menu>
             </el-menu>
         </el-aside>
 
@@ -129,7 +139,8 @@ import {
     Fold,
     ArrowDown,
     Filter,
-    Document
+    Document,
+    Monitor
 } from "@element-plus/icons-vue";
 
 const route = useRoute();
@@ -139,6 +150,7 @@ const isCollapse = ref(false);
 const roleId = Number(localStorage.getItem('roleId') || '0');
 const isAdmin = computed(() => roleId === 1);
 const isSetter = computed(() => roleId === 2);
+const isInstructor = computed(() => roleId === 3);
 
 const activeMenu = computed(() => route.path);
 const currentRouteName = computed(() => route.name);

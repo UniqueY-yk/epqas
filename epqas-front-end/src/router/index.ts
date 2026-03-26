@@ -73,9 +73,16 @@ const router = createRouter({
                     name: '试卷模板管理',
                     component: () => import('../views/proposition/ExaminationPaperManagement.vue'),
                     meta: { roles: [1, 2] }
+                },
+                {
+                    path: 'teaching/exams',
+                    name: '考试记录管理',
+                    component: () => import('../views/teaching/ExamRecordManagement.vue'),
+                    meta: { roles: [1, 3] }
                 }
             ]
         },
+
         {
             path: '/login',
             name: '登录',
