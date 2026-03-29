@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Bean;
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = { "com.epqas.common.feign" })
 @MapperScan("com.epqas.academic.mapper")
-@ComponentScan(basePackages = { "com.epqas.academic", "com.epqas.common" })
+@ComponentScan(basePackages = { "com.epqas.academic" })
 public class AcademicApplication {
     public static void main(String[] args) {
         SpringApplication.run(AcademicApplication.class, args);

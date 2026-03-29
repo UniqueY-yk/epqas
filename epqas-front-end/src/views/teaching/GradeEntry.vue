@@ -56,20 +56,69 @@
                 </div>
                 <p class="q-content">{{ q.questionContent }}</p>
                 
+                <div class="reference-answer-block" v-if="q.correctAnswer">
+                    <el-tag type="success" effect="plain" class="ref-tag">参考答案</el-tag>
+                    <span class="ref-content" v-if="q.questionType !== 'MultipleChoice'">{{ q.correctAnswer }}</span>
+                    <span class="ref-content" v-else>{{ parseOptions(q.optionsJson) && parseOptions(q.optionsJson)[q.correctAnswer] ? q.correctAnswer + '. ' + parseOptions(q.optionsJson)[q.correctAnswer] : q.correctAnswer }}</span>
+                </div>
+
                 <div class="answer-inputs" v-if="currentStudentAnswers[q.questionId]">
                   <el-form-item label="学生选项/答案" class="flex-grow">
-                    <el-input 
-                      v-model="currentStudentAnswers[q.questionId].studentChoice" 
-                      placeholder="请输入学生实际作答内容"
-                    />
+                    
+                    <template v-if="q.questionType === 'SingleChoice'">
+                        <el-radio-group v-model="currentStudentAnswers[q.questionId].studentChoice" @change="autoScore(q)">
+                            <el-radio v-for="(text, key) in parseOptions(q.optionsJson)" :key="key" :value="String(key)">
+                                {{ key }}. {{ text }}
+                            </el-radio>
+                        </el-radio-group>
+                    </template>
+
+                    <template v-else-if="q.questionType === 'MultipleChoice'">
+                        <el-checkbox-group v-model="currentStudentAnswers[q.questionId].studentChoiceArray" @change="autoScore(q)">
+                            <el-checkbox v-for="(text, key) in parseOptions(q.optionsJson)" :key="key" :value="String(key)">
+                                {{ key }}. {{ text }}
+                            </el-checkbox>
+                        </el-checkbox-group>
+                    </template>
+
+                    <template v-else-if="q.questionType === 'TrueFalse'">
+                        <el-radio-group v-model="currentStudentAnswers[q.questionId].studentChoice" @change="autoScore(q)">
+                            <el-radio value="True">正确 (T)</el-radio>
+                            <el-radio value="False">错误 (F)</el-radio>
+                        </el-radio-group>
+                    </template>
+
+                    <template v-else-if="q.questionType === 'FillBlank'">
+                        <el-input 
+                          v-model="currentStudentAnswers[q.questionId].studentChoice" 
+                          placeholder="请输入学生实际作答内容"
+                          type="textarea"
+                          :rows="2"
+                          @change="autoScore(q)"
+                        />
+                    </template>
+
+                    <template v-else>
+                        <el-input 
+                          v-model="currentStudentAnswers[q.questionId].studentChoice" 
+                          placeholder="请输入学生实际作答内容"
+                          type="textarea"
+                          :rows="2"
+                        />
+                    </template>
+
                   </el-form-item>
                   <el-form-item label="本次得分" class="score-input">
-                     <el-input-number 
-                       v-model="currentStudentAnswers[q.questionId].scoreObtained" 
-                       :min="0" 
-                       :max="Number(q.scoreValue)" 
-                       :step="0.5"
-                     />
+                     <div class="score-input-wrapper">
+                         <el-input-number 
+                           v-model="currentStudentAnswers[q.questionId].scoreObtained" 
+                           :min="0" 
+                           :max="Number(q.scoreValue)" 
+                           :step="0.5"
+                           class="score-number-width"
+                         />
+                         <el-button type="success" plain size="small" @click="setFullMarks(q.questionId, q)">满分</el-button>
+                     </div>
                   </el-form-item>
                 </div>
               </div>
@@ -165,6 +214,77 @@ const formatQuestionType = (type: string) => {
 
 const getGlobalIndex = (qId: number) => {
   return paperQuestions.value.findIndex(q => q.questionId === qId) + 1
+}
+
+const parseOptions = (optionsJson: string) => {
+  if (!optionsJson) return {}
+  try {
+    return JSON.parse(optionsJson)
+  } catch(e) {
+    return {}
+  }
+}
+
+const setFullMarks = (qId: number, q: any) => {
+  const ans = currentStudentAnswers.value[qId]
+  if (ans) {
+    ans.scoreObtained = Number(q.scoreValue)
+    let correctStr = q.correctAnswer || ''
+    
+    if (q.questionType === 'MultipleChoice') {
+      try {
+        const parsed = JSON.parse(correctStr)
+        ans.studentChoiceArray = Array.isArray(parsed) ? parsed.map(String) : []
+      } catch (e) {
+        // Fallback for non-JSON string
+        ans.studentChoiceArray = correctStr.split(',').map(s => s.trim()).filter(s => s)
+      }
+      ans.studentChoice = correctStr
+    } else {
+      ans.studentChoice = correctStr
+    }
+  }
+}
+
+const autoScore = (q: any) => {
+  const ans = currentStudentAnswers.value[q.questionId]
+  if (!ans || !q.correctAnswer) return
+
+  const type = q.questionType
+  const correctStr = String(q.correctAnswer).trim()
+  
+  if (['SingleChoice', 'TrueFalse'].includes(type)) {
+     if (String(ans.studentChoice).trim() === correctStr) {
+         ans.scoreObtained = Number(q.scoreValue)
+     } else {
+         ans.scoreObtained = 0
+     }
+  } else if (type === 'MultipleChoice') {
+     let correctArr: string[] = []
+     try {
+        const parsed = JSON.parse(correctStr)
+        correctArr = Array.isArray(parsed) ? parsed.map(String) : []
+     } catch (e) {
+        correctArr = correctStr.split(',').map(s => s.trim()).filter(Boolean)
+     }
+     
+     const studentArr = ans.studentChoiceArray || []
+     
+     const sortedCorrect = [...correctArr].sort().join(',')
+     const sortedStudent = [...studentArr].sort().join(',')
+     
+     if (sortedCorrect === sortedStudent && sortedCorrect !== '') {
+         ans.scoreObtained = Number(q.scoreValue)
+     } else {
+         ans.scoreObtained = 0
+     }
+  } else if (type === 'FillBlank') {
+      if (String(ans.studentChoice).trim() === correctStr) {
+         ans.scoreObtained = Number(q.scoreValue)
+      } else {
+         ans.scoreObtained = 0
+      }
+  }
 }
 
 onMounted(async () => {
@@ -300,9 +420,21 @@ const openDetailedEntry = async (row: any) => {
       
       paperQuestions.value.forEach(q => {
         const existing = existingAnswers.find((a: any) => a.questionId === q.questionId)
+        let choice = existing ? existing.studentChoice : ''
+        let choiceArray: string[] = []
+        if (q.questionType === 'MultipleChoice' && choice) {
+          try {
+            choiceArray = JSON.parse(choice)
+            if (!Array.isArray(choiceArray)) choiceArray = choice.split(',').map(s => s.trim()).filter(Boolean)
+          } catch(e) {
+             choiceArray = choice.split(',').map(s => s.trim()).filter(Boolean)
+          }
+        }
+        
         currentStudentAnswers.value[q.questionId] = {
           questionId: q.questionId,
-          studentChoice: existing ? existing.studentChoice : '',
+          studentChoice: choice,
+          studentChoiceArray: choiceArray,
           scoreObtained: existing ? existing.scoreObtained : 0,
           answerId: existing ? existing.answerId : null
         }
@@ -313,6 +445,7 @@ const openDetailedEntry = async (row: any) => {
         currentStudentAnswers.value[q.questionId] = {
           questionId: q.questionId,
           studentChoice: '',
+          studentChoiceArray: [],
           scoreObtained: 0,
           answerId: null
         }
@@ -336,6 +469,15 @@ const submitDetailedAnswers = async () => {
     const answersList = []
     for (const qId in currentStudentAnswers.value) {
       const ans = currentStudentAnswers.value[qId]
+      const q = paperQuestions.value.find(pq => pq.questionId === Number(qId))
+      
+      if (q && q.questionType === 'MultipleChoice') {
+        if (ans.studentChoiceArray && Array.isArray(ans.studentChoiceArray)) {
+          // Store multiple choices as JSON string
+          ans.studentChoice = JSON.stringify(ans.studentChoiceArray.sort())
+        }
+      }
+      
       calcTotal += ans.scoreObtained || 0
       answersList.push(ans)
     }
@@ -506,5 +648,36 @@ const submitDetailedAnswers = async () => {
   color: #f56c6c;
   font-weight: 600;
   font-size: 20px;
+}
+
+.reference-answer-block {
+  background-color: #f0f9eb;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ref-tag {
+  font-weight: 600;
+}
+
+.ref-content {
+  color: #67c23a;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.score-input-wrapper {
+  display: flex; 
+  align-items: center; 
+  gap: 12px;
+}
+
+.score-number-width {
+  width: 130px;
 }
 </style>

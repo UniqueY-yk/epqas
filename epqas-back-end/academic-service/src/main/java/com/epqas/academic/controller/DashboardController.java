@@ -16,14 +16,16 @@ import java.util.Map;
 @RequestMapping("/dashboard")
 public class DashboardController {
 
-    @Autowired
-    private CourseService courseService;
+    private final CourseService courseService;
+    private final SchoolClassService classService;
+    private final StudentService studentService;
 
     @Autowired
-    private SchoolClassService classService;
-
-    @Autowired
-    private StudentService studentService;
+    public DashboardController(CourseService courseService, SchoolClassService classService, StudentService studentService) {
+        this.courseService = courseService;
+        this.classService = classService;
+        this.studentService = studentService;
+    }
 
     @GetMapping("/stats")
     public Result<Map<String, Object>> getStats() {

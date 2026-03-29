@@ -7,4 +7,6 @@ public class QuestionBatchDTO {
     private Long questionId;
     private String questionContent;
     private String questionType;
+    private String optionsJson;
+    private String correctAnswer;
 }

@@ -10,4 +10,6 @@ public class PaperQuestionDTO {
     private Integer questionOrder;
     private String questionContent;
     private String questionType;
+    private String optionsJson;
+    private String correctAnswer;
 }

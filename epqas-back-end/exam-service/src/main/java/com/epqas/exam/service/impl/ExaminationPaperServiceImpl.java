@@ -143,6 +143,8 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
                         if (qDetail != null) {
                             pqDto.setQuestionContent(qDetail.getQuestionContent());
                             pqDto.setQuestionType(qDetail.getQuestionType());
+                            pqDto.setOptionsJson(qDetail.getOptionsJson());
+                            pqDto.setCorrectAnswer(qDetail.getCorrectAnswer());
                         }
                     }
                 }

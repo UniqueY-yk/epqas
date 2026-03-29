@@ -140,8 +140,8 @@
                 <el-col :span="12">
                     <el-form-item label="题目类型" prop="questionType">
                       <el-select v-model="form.questionType" placeholder="请选择题型" style="width: 100%;">
-                        <el-option label="单项选择题" value="SingleChoice" />
-                        <el-option label="多项选择题" value="MultipleChoice" />
+                        <el-option label="单选题" value="SingleChoice" />
+                        <el-option label="多选题" value="MultipleChoice" />
                         <el-option label="判断题" value="TrueFalse" />
                         <el-option label="填空题" value="FillBlank" />
                         <el-option label="简答题" value="ShortAnswer" />
@@ -162,21 +162,29 @@
         
         <template v-if="form.questionType === 'SingleChoice'">
             <el-form-item label="选项配置">
-                <div v-for="(_, k) in mcqOptions" :key="k" class="option-item">
-                    <span class="option-label">{{ k }}:</span>
-                    <el-input v-model="mcqOptions[k]" placeholder="选项内容" style="width: 80%" />
-                    <el-radio v-model="form.correctAnswer" :value="k" style="margin-left: 10px;">设为答案</el-radio>
-                </div>
+                <el-row :gutter="20" style="width: 100%;">
+                    <el-col :span="12" v-for="(_, k) in mcqOptions" :key="k">
+                        <div class="option-item">
+                            <span class="option-label">{{ k }}:</span>
+                            <el-input v-model="mcqOptions[k]" placeholder="选项内容" style="width: 100%;" />
+                            <el-radio v-model="form.correctAnswer" :value="k" style="margin-left: 10px;">答案</el-radio>
+                        </div>
+                    </el-col>
+                </el-row>
             </el-form-item>
         </template>
         
         <template v-if="form.questionType === 'MultipleChoice'">
             <el-form-item label="选项配置">
-                <div v-for="(_, k) in mcqOptions" :key="k" class="option-item">
-                    <span class="option-label">{{ k }}:</span>
-                    <el-input v-model="mcqOptions[k]" placeholder="选项内容" style="width: 80%" />
-                    <el-checkbox v-model="form.correctAnswer" :value="k" style="margin-left: 10px;">设为答案</el-checkbox>
-                </div>
+                <el-row :gutter="20" style="width: 100%;">
+                    <el-col :span="12" v-for="(_, k) in mcqOptions" :key="k">
+                        <div class="option-item">
+                            <span class="option-label">{{ k }}:</span>
+                            <el-input v-model="mcqOptions[k]" placeholder="选项内容" style="width: 100%;" />
+                            <el-checkbox v-model="form.correctAnswer" :label="k" style="margin-left: 10px;">答案</el-checkbox>
+                        </div>
+                    </el-col>
+                </el-row>
             </el-form-item>
         </template>
         
@@ -189,7 +197,7 @@
             </el-form-item>
         </template>
         
-         <template v-if="form.questionType === 'FillBlank' || form.questionType === 'EssayShortAnswer'">
+         <template v-if="form.questionType === 'FillBlank' || form.questionType === 'ShortAnswer'">
             <el-form-item label="参考答案" prop="correctAnswer">
                 <el-input v-model="form.correctAnswer" type="textarea" :rows="3" placeholder="请输入此题的标准/参考答案" />
             </el-form-item>
@@ -345,11 +353,21 @@ const handleEdit = async (row: any) => {
           await loadKnowledgePoints(detailedQ.courseId)
       }
       
-      if (detailedQ.questionType === 'SingleChoice' && detailedQ.optionsJson) {
+      if ((detailedQ.questionType === 'SingleChoice' || detailedQ.questionType === 'MultipleChoice') && detailedQ.optionsJson) {
            try {
                const parsed = JSON.parse(detailedQ.optionsJson)
                Object.assign(mcqOptions, parsed)
            } catch(e) {}
+      }
+
+      if (detailedQ.questionType === 'MultipleChoice' && detailedQ.correctAnswer) {
+          try {
+              const parsed = JSON.parse(detailedQ.correctAnswer)
+              form.correctAnswer = Array.isArray(parsed) ? parsed : []
+          } catch(e) {
+              // If not JSON, maybe comma separated?
+              form.correctAnswer = detailedQ.correctAnswer.split(',').filter((s: string) => s.trim())
+          }
       }
       
       dialogVisible.value = true
@@ -383,10 +401,13 @@ const submitForm = async () => {
             }
         } else if (payload.questionType === 'MultipleChoice') {
             payload.optionsJson = JSON.stringify(mcqOptions)
-            if (!payload.correctAnswer) {
+            if (!payload.correctAnswer || (Array.isArray(payload.correctAnswer) && payload.correctAnswer.length === 0)) {
                 ElMessage.warning('请选择多选题的正确答案')
                 submitting.value = false
                 return
+            }
+            if (Array.isArray(payload.correctAnswer)) {
+                payload.correctAnswer = JSON.stringify(payload.correctAnswer.sort())
             }
         } else {
              payload.optionsJson = ''

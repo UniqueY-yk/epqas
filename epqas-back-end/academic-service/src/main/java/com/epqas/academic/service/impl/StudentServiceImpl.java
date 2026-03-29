@@ -20,8 +20,14 @@ import java.io.IOException;
 @Service
 public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> implements StudentService {
 
+    private final UserFeignClient userFeignClient;
+    private final StudentMapper studentMapper;
+
     @Autowired
-    private UserFeignClient userFeignClient;
+    public StudentServiceImpl(UserFeignClient userFeignClient, StudentMapper studentMapper) {
+        this.userFeignClient = userFeignClient;
+        this.studentMapper = studentMapper;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
