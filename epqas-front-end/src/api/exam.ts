@@ -141,3 +141,18 @@ export const getAnswersByResultId = (resultId: number) => {
         method: 'get'
     })
 }
+
+// Class Analysis APIs
+export const getQuestionStats = (examId: number) => {
+    return request({
+        url: `/exam/class-analysis/${examId}/questions`,
+        method: 'get'
+    })
+}
+
+export const getKnowledgeMastery = (examId: number) => {
+    return request({
+        url: `/exam/class-analysis/${examId}/knowledge-mastery`,
+        method: 'get'
+    })
+}

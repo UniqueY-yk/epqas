@@ -85,6 +85,18 @@ const router = createRouter({
                     name: '考试成绩录入',
                     component: () => import('../views/teaching/GradeEntry.vue'),
                     meta: { roles: [1, 3] }
+                },
+                {
+                    path: 'teaching/class-analysis',
+                    name: '班级答题分析',
+                    component: () => import('../views/teaching/ClassAnswerAnalysis.vue'),
+                    meta: { roles: [1, 3] }
+                },
+                {
+                    path: 'teaching/knowledge-mastery',
+                    name: '知识点掌握诊断',
+                    component: () => import('../views/teaching/KnowledgeMasteryDiagnosis.vue'),
+                    meta: { roles: [1, 3] }
                 }
             ]
         },

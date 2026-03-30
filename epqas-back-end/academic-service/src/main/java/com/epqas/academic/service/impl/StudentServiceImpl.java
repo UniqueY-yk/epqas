@@ -21,12 +21,10 @@ import java.io.IOException;
 public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> implements StudentService {
 
     private final UserFeignClient userFeignClient;
-    private final StudentMapper studentMapper;
 
     @Autowired
-    public StudentServiceImpl(UserFeignClient userFeignClient, StudentMapper studentMapper) {
+    public StudentServiceImpl(UserFeignClient userFeignClient) {
         this.userFeignClient = userFeignClient;
-        this.studentMapper = studentMapper;
     }
 
     @Override

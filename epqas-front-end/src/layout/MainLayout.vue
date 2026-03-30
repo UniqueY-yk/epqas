@@ -75,6 +75,12 @@
                     <el-menu-item index="/teaching/exams"
                         >考试记录管理</el-menu-item
                     >
+                    <el-menu-item index="/teaching/class-analysis"
+                        >班级答题分析</el-menu-item
+                    >
+                    <el-menu-item index="/teaching/knowledge-mastery"
+                        >知识点掌握诊断</el-menu-item
+                    >
                 </el-sub-menu>
             </el-menu>
         </el-aside>
