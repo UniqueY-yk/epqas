@@ -95,6 +95,11 @@
                     <el-icon><Monitor /></el-icon>
                     <template #title>学习诊断</template>
                 </el-menu-item>
+                
+                <el-menu-item index="/student/errors" v-if="isStudent">
+                    <el-icon><Document /></el-icon>
+                    <template #title>我的错题本</template>
+                </el-menu-item>
             </el-menu>
         </el-aside>
 

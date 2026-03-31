@@ -19,4 +19,12 @@ public class StudentAnalysisController {
     public Result<List<KnowledgeMasteryDTO>> getStudentKnowledgeMastery(@PathVariable("studentId") Long studentId) {
         return Result.success(studentAnalysisService.getStudentKnowledgeMastery(studentId));
     }
+
+    @GetMapping("/{studentId}/error-questions")
+    public Result<com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.epqas.exam.dto.StudentErrorQuestionDTO>> getStudentErrorQuestions(
+            @PathVariable("studentId") Long studentId, 
+            @ModelAttribute com.epqas.exam.dto.StudentErrorQuestionQuery query) {
+        query.setStudentId(studentId);
+        return Result.success(studentAnalysisService.getStudentErrorQuestions(query));
+    }
 }

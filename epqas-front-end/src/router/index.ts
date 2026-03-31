@@ -115,6 +115,12 @@ const router = createRouter({
                     name: '学习薄弱点诊断',
                     component: () => import('../views/student/StudentLearningDiagnosis.vue'),
                     meta: { roles: [4] }
+                },
+                {
+                    path: 'student/errors',
+                    name: '错题本',
+                    component: () => import('../views/student/StudentErrorBook.vue'),
+                    meta: { roles: [4] }
                 }
             ]
         },

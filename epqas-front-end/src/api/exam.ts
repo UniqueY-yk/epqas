@@ -178,3 +178,11 @@ export const getStudentKnowledgeMastery = (studentId: number) => {
         method: 'get'
     })
 }
+
+export const getStudentErrorQuestions = (studentId: number, params: any) => {
+    return request({
+        url: `/exam/student-analysis/${studentId}/error-questions`,
+        method: 'get',
+        params
+    })
+}
