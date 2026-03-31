@@ -103,6 +103,12 @@ const router = createRouter({
                     name: '异常答题检测',
                     component: () => import('../views/teaching/AbnormalAnswerDetection.vue'),
                     meta: { roles: [1, 3] }
+                },
+                {
+                    path: 'student/scores',
+                    name: '我的成绩',
+                    component: () => import('../views/student/StudentScoreInquiry.vue'),
+                    meta: { roles: [4] }
                 }
             ]
         },

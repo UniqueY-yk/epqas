@@ -85,6 +85,11 @@
                         >异常答题检测</el-menu-item
                     >
                 </el-sub-menu>
+
+                <el-menu-item index="/student/scores" v-if="isStudent">
+                    <el-icon><Notebook /></el-icon>
+                    <template #title>我的成绩</template>
+                </el-menu-item>
             </el-menu>
         </el-aside>
 
@@ -149,7 +154,8 @@ import {
     ArrowDown,
     Filter,
     Document,
-    Monitor
+    Monitor,
+    Notebook
 } from "@element-plus/icons-vue";
 
 const route = useRoute();
@@ -160,6 +166,7 @@ const roleId = Number(localStorage.getItem('roleId') || '0');
 const isAdmin = computed(() => roleId === 1);
 const isSetter = computed(() => roleId === 2);
 const isInstructor = computed(() => roleId === 3);
+const isStudent = computed(() => roleId === 4);
 
 const activeMenu = computed(() => route.path);
 const currentRouteName = computed(() => route.name);

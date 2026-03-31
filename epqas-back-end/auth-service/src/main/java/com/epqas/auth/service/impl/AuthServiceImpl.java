@@ -48,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
             return Result.error("Invalid password");
         }
 
-        if (!Boolean.TRUE.equals(user.getIsActive())) {
+        if (Boolean.FALSE.equals(user.getIsActive())) {
             return Result.error("Account is inactive");
         }
 

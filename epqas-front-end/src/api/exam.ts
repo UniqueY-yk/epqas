@@ -163,3 +163,11 @@ export const getAbnormalDetection = (examId: number) => {
         method: 'get'
     })
 }
+
+// Student Score Inquiry
+export const getStudentScores = (studentId: number) => {
+    return request({
+        url: `/exam/results/student/${studentId}/scores`,
+        method: 'get'
+    })
+}

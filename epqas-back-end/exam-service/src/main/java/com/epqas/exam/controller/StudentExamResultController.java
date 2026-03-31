@@ -64,4 +64,17 @@ public class StudentExamResultController {
     public Result<List<StudentExamResult>> listStudentExamResults() {
         return Result.success(studentExamResultService.list());
     }
+
+    /**
+     * Student-facing: get all exam results for a given studentId.
+     */
+    @GetMapping("/student/{studentId}/scores")
+    public Result<List<StudentExamResult>> getStudentScores(@PathVariable("studentId") Long studentId) {
+        List<StudentExamResult> results = studentExamResultService.list(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<StudentExamResult>()
+                        .eq("student_id", studentId)
+                        .orderByDesc("submitted_at")
+        );
+        return Result.success(results);
+    }
 }

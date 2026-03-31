@@ -19,7 +19,7 @@ public class SchoolClassController {
             @RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "className", required = false) String className) {
-        if (roleId == null || roleId == 4)
+        if (roleId == null)
             return Result.error(403, "Access Denied");
         return Result.success(schoolClassService.getClassesPage(page, size, className));
     }

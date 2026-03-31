@@ -154,15 +154,16 @@ const stats = ref([
 ])
 
 const quickActions = ref([
-  { title: '试卷质量诊断', desc: '上传数据并生成质量分析报告', icon: 'Operation', path: '/proposition/diagnosis', color: '#409EFF' },
-  { title: '题库管理', desc: '维护和管理系统内的各种题目', icon: 'Reading', path: '/question/bank', color: '#67C23A' },
-  { title: '用户权限管理', desc: '配置系统用户及其操作权限', icon: 'Setting', path: '/admin/users', color: '#E6A23C' }
+  { title: '试卷质量诊断', desc: '上传数据并生成质量分析报告', icon: 'Operation', path: '/proposition/diagnosis', color: '#409EFF', roles: [1, 2] },
+  { title: '题库管理', desc: '维护和管理系统内的各种题目', icon: 'Reading', path: '/question/bank', color: '#67C23A', roles: [1, 2] },
+  { title: '用户权限管理', desc: '配置系统用户及其操作权限', icon: 'Setting', path: '/admin/users', color: '#E6A23C', roles: [1] },
+  { title: '考试记录管理', desc: '管理考试安排与成绩录入', icon: 'Document', path: '/teaching/exams', color: '#409EFF', roles: [3] },
+  { title: '班级答题分析', desc: '查看班级整体作答情况', icon: 'PieChart', path: '/teaching/class-analysis', color: '#67C23A', roles: [3] },
+  { title: '我的成绩', desc: '查看您的考试成绩与历史记录', icon: 'Reading', path: '/student/scores', color: '#409EFF', roles: [4] }
 ])
 
 // Filter actions based on role
-if (roleId !== 1) {
-    quickActions.value = quickActions.value.filter(a => a.path !== '/admin/users')
-}
+quickActions.value = quickActions.value.filter(a => a.roles.includes(roleId))
 
 onMounted(() => {
   timer = setInterval(() => {
