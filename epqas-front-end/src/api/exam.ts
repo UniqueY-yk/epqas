@@ -164,10 +164,17 @@ export const getAbnormalDetection = (examId: number) => {
     })
 }
 
-// Student Score Inquiry
+// Student Score & Analysis
 export const getStudentScores = (studentId: number) => {
     return request({
         url: `/exam/results/student/${studentId}/scores`,
+        method: 'get'
+    })
+}
+
+export const getStudentKnowledgeMastery = (studentId: number) => {
+    return request({
+        url: `/exam/student-analysis/${studentId}/knowledge-mastery`,
         method: 'get'
     })
 }

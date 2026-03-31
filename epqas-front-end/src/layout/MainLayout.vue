@@ -90,6 +90,11 @@
                     <el-icon><Notebook /></el-icon>
                     <template #title>我的成绩</template>
                 </el-menu-item>
+                
+                <el-menu-item index="/student/diagnosis" v-if="isStudent">
+                    <el-icon><Monitor /></el-icon>
+                    <template #title>学习诊断</template>
+                </el-menu-item>
             </el-menu>
         </el-aside>
 

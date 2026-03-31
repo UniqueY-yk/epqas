@@ -109,6 +109,12 @@ const router = createRouter({
                     name: '我的成绩',
                     component: () => import('../views/student/StudentScoreInquiry.vue'),
                     meta: { roles: [4] }
+                },
+                {
+                    path: 'student/diagnosis',
+                    name: '学习薄弱点诊断',
+                    component: () => import('../views/student/StudentLearningDiagnosis.vue'),
+                    meta: { roles: [4] }
                 }
             ]
         },
