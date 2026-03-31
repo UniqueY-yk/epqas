@@ -97,6 +97,12 @@ const router = createRouter({
                     name: '知识点掌握诊断',
                     component: () => import('../views/teaching/KnowledgeMasteryDiagnosis.vue'),
                     meta: { roles: [1, 3] }
+                },
+                {
+                    path: 'teaching/abnormal-detection',
+                    name: '异常答题检测',
+                    component: () => import('../views/teaching/AbnormalAnswerDetection.vue'),
+                    meta: { roles: [1, 3] }
                 }
             ]
         },

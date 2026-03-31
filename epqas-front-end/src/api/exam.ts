@@ -156,3 +156,10 @@ export const getKnowledgeMastery = (examId: number) => {
         method: 'get'
     })
 }
+
+export const getAbnormalDetection = (examId: number) => {
+    return request({
+        url: `/exam/class-analysis/${examId}/abnormal-detection`,
+        method: 'get'
+    })
+}

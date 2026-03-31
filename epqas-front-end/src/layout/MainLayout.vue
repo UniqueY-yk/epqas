@@ -81,6 +81,9 @@
                     <el-menu-item index="/teaching/knowledge-mastery"
                         >知识点掌握诊断</el-menu-item
                     >
+                    <el-menu-item index="/teaching/abnormal-detection"
+                        >异常答题检测</el-menu-item
+                    >
                 </el-sub-menu>
             </el-menu>
         </el-aside>
