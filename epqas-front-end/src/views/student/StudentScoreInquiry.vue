@@ -100,19 +100,133 @@
             {{ row.submittedAt ? row.submittedAt.substring(0, 19).replace('T', ' ') : '—' }}
           </template>
         </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right" align="center">
+          <template #default="{ row }">
+            <el-button 
+              type="primary" 
+              link 
+              size="small" 
+              :disabled="row.isAbsent"
+              @click="viewAnalysisReport(row)"
+            >
+              查看详情
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <el-empty v-if="!loading && scoreList.length === 0" description="您还没有参加过考试" />
     </el-card>
+
+    <!-- Analysis Report Drawer -->
+    <el-drawer
+      v-model="drawerVisible"
+      title="个人答题分析报告"
+      direction="rtl"
+      size="65%"
+      class="analysis-drawer"
+    >
+      <div class="drawer-content" v-loading="drawerLoading">
+        <template v-if="currentReportData">
+          <!-- Report Header -->
+          <div class="report-header">
+            <h3>{{ currentReportData.examName }}</h3>
+            <div class="report-meta">
+              <span>得分: <strong class="highlight-score">{{ currentReportData.score }}</strong> / {{ currentReportData.totalScore }}</span>
+              <el-tag :type="getGradeType(currentReportData.score)" effect="dark">{{ getGradeLabel(currentReportData.score) }}</el-tag>
+            </div>
+          </div>
+
+          <!-- Report Summary Stats -->
+          <div class="report-summary">
+            <div class="summary-stat-box status-correct">
+              <div class="stat-num">{{ currentReportData.correctCount }}</div>
+              <div class="stat-label"><el-icon><Check /></el-icon> 正确</div>
+            </div>
+            <div class="summary-stat-box status-wrong">
+              <div class="stat-num">{{ currentReportData.wrongCount }}</div>
+              <div class="stat-label"><el-icon><Close /></el-icon> 错误</div>
+            </div>
+            <div class="summary-stat-box status-partial">
+              <div class="stat-num">{{ currentReportData.partialCount }}</div>
+              <div class="stat-label"><el-icon><WarningFilled /></el-icon> 半对</div>
+            </div>
+            <div class="summary-stat-box">
+              <div class="stat-num">{{ currentReportData.unansweredCount }}</div>
+              <div class="stat-label"><el-icon><Document /></el-icon> 未作答</div>
+            </div>
+          </div>
+
+          <!-- Question Breakdown -->
+          <div class="question-list">
+            <h4>题目明细分析</h4>
+            <div 
+              v-for="(q, index) in currentReportData.questions" 
+              :key="q.questionId" 
+              class="question-card"
+              :class="q.statusClass"
+            >
+              <div class="q-header">
+                <span class="q-title">第 {{ Number(index) + 1 }} 题. [{{ q.questionType }}]</span>
+                <span class="q-score-info">得分: <strong>{{ q.scoreObtained }}</strong> / {{ q.maxScore }}</span>
+              </div>
+              
+              <div class="q-body">
+                <div class="q-content" v-html="q.questionContent"></div>
+                
+                <div class="q-options" v-if="q.options && q.options.length > 0">
+                  <div 
+                    v-for="opt in q.options" 
+                    :key="opt.key" 
+                    class="q-option-item"
+                    :class="{ 
+                      'is-correct-opt': q.rawCorrectAnswer === opt.key || q.rawCorrectAnswer?.includes(opt.key),
+                      'is-my-opt': q.rawStudentChoice === opt.key || q.rawStudentChoice?.includes(opt.key)
+                    }"
+                  >
+                    <span class="opt-key">{{ opt.key }}.</span>
+                    <span class="opt-val">{{ opt.value }}</span>
+                    <el-tag size="small" type="success" effect="dark" v-if="q.rawCorrectAnswer === opt.key || q.rawCorrectAnswer?.includes(opt.key)" style="margin-left: 10px;">标准答案</el-tag>
+                    <el-tag size="small" type="primary" v-if="q.rawStudentChoice === opt.key || q.rawStudentChoice?.includes(opt.key)" style="margin-left: 10px;">我的选择</el-tag>
+                  </div>
+                </div>
+              </div>
+
+              <div class="q-footer" :class="{ 'q-footer-vertical': ['FillBlank', 'ShortAnswer'].includes(q.questionType) }">
+                <div class="answer-compare" :class="{ 'is-vertical': ['FillBlank', 'ShortAnswer'].includes(q.questionType) }">
+                  <div class="answer-box my-answer">
+                    <span class="ans-label">我的解答:</span>
+                    <span class="ans-value" :class="q.isCorrect ? 'text-success' : 'text-danger'">
+                      {{ q.studentChoice || '未作答' }}
+                    </span>
+                  </div>
+                  <div class="answer-box std-answer">
+                    <span class="ans-label">正确答案:</span>
+                    <span class="ans-value text-success">{{ q.correctAnswer || '略' }}</span>
+                  </div>
+                </div>
+                <!-- Visual Indicator -->
+                <div class="status-icon" :class="q.statusClass">
+                  <el-icon v-if="q.statusClass === 'status-correct'"><Check /></el-icon>
+                  <el-icon v-else-if="q.statusClass === 'status-wrong'"><Close /></el-icon>
+                  <el-icon v-else><WarningFilled /></el-icon>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        <el-empty v-else description="暂无分析数据" />
+      </div>
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
-import { getStudentScores, getExaminationsPage, getPapers } from '@/api/exam'
+import { getStudentScores, getExaminationsPage, getPapers, getAnswersByResultId, getPaperById } from '@/api/exam'
 import { getClasses } from '@/api/academic'
 import { ElMessage } from 'element-plus'
-import { Document, TrendCharts, Trophy, Warning } from '@element-plus/icons-vue'
+import { Document, TrendCharts, Trophy, Warning, Check, Close, WarningFilled } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 
 const loading = ref(false)
@@ -177,6 +291,120 @@ const getGradeLabel = (score: number) => {
   if (score >= 70) return '中等'
   if (score >= 60) return '及格'
   return '不及格'
+}
+
+// Drawer state
+const drawerVisible = ref(false)
+const drawerLoading = ref(false)
+const currentReportData = ref<any>(null)
+
+const viewAnalysisReport = async (row: any) => {
+  drawerVisible.value = true
+  drawerLoading.value = true
+  try {
+    const exam = examList.value.find(e => e.examId === row.examId)
+    if (!exam || !exam.paperId) throw new Error('Exam or Paper not found')
+
+    const [paperRes, answersRes] = await Promise.all([
+      getPaperById(exam.paperId),
+      getAnswersByResultId(row.resultId)
+    ])
+
+    const paper = paperRes.data
+    const answers = answersRes.data || []
+
+    const parseAndFormat = (val: string | null) => {
+      if (!val) return val
+      if (val.trim().startsWith('[') && val.trim().endsWith(']')) {
+        try {
+          const arr = JSON.parse(val)
+          if (Array.isArray(arr)) return arr.join(', ')
+        } catch(e) {}
+      }
+      return val
+    }
+
+    const mappedQuestions = paper.questions.map((pq: any) => {
+      const stuAns = answers.find((a: any) => String(a.questionId) === String(pq.questionId))
+      
+      let options: any[] = []
+      if (pq.optionsJson) {
+        try { 
+          const parsed = JSON.parse(pq.optionsJson) 
+          if (Array.isArray(parsed)) {
+            options = parsed.map((item, i) => ({ key: String.fromCharCode(65 + i), value: item }))
+          } else if (typeof parsed === 'object') {
+            options = Object.keys(parsed).map(k => ({ key: k, value: parsed[k] }))
+          }
+        } catch (e) {}
+      }
+
+      // Format answers for display (unwrap JSON arrays like ["A","B"] to "A, B")
+      const rawCorrectAnswer = pq.correctAnswer
+      const formattedCorrectAnswer = parseAndFormat(rawCorrectAnswer)
+      
+      const rawStudentChoice = stuAns ? stuAns.studentChoice : null
+      const formattedStudentChoice = parseAndFormat(rawStudentChoice)
+
+      // Determine status using score obtained vs max score
+      let statusClass = 'status-wrong'
+      let isCorrect = false
+      if (stuAns) {
+        const obtained = Number(stuAns.scoreObtained || 0)
+        const maxScore = Number(pq.scoreValue || 0)
+        
+        if (obtained > 0 && obtained >= maxScore) {
+          statusClass = 'status-correct'
+          isCorrect = true
+        } else if (obtained > 0) {
+          statusClass = 'status-partial'
+        }
+      }
+
+      return {
+        questionId: pq.questionId,
+        questionOrder: pq.questionOrder,
+        questionContent: pq.questionContent,
+        questionType: pq.questionType,
+        options,
+        correctAnswer: formattedCorrectAnswer,
+        rawCorrectAnswer: rawCorrectAnswer,
+        studentChoice: formattedStudentChoice,
+        rawStudentChoice: rawStudentChoice,
+        scoreObtained: stuAns ? stuAns.scoreObtained : 0,
+        isCorrect,
+        statusClass,
+        hasAnswered: !!stuAns && rawStudentChoice !== null && rawStudentChoice !== ''
+      }
+    })
+
+    // Sort by order
+    mappedQuestions.sort((a: any, b: any) => a.questionOrder - b.questionOrder)
+
+    // Calculate Summary Stats
+    const correctCount = mappedQuestions.filter((q: any) => q.statusClass === 'status-correct').length
+    const partialCount = mappedQuestions.filter((q: any) => q.statusClass === 'status-partial').length
+    const wrongCount = mappedQuestions.filter((q: any) => q.statusClass === 'status-wrong' && q.scoreObtained !== null).length
+    const unansweredCount = mappedQuestions.filter((q: any) => !q.hasAnswered).length
+
+    currentReportData.value = {
+      examName: getExamName(row.examId),
+      score: row.totalScore,
+      totalScore: paper.totalScore,
+      questions: mappedQuestions,
+      correctCount,
+      partialCount,
+      wrongCount,
+      unansweredCount
+    }
+
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('无法加载分析报告详情')
+    drawerVisible.value = false
+  } finally {
+    drawerLoading.value = false
+  }
 }
 
 const fetchData = async () => {
@@ -378,4 +606,219 @@ onMounted(fetchData)
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Analysis Drawer Styles */
+.analysis-drawer .drawer-content {
+  padding: 0 24px 24px;
+}
+
+.report-header {
+  border-bottom: 2px solid #ebeef5;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.report-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  color: #303133;
+}
+
+.report-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 15px;
+  color: #606266;
+}
+
+.highlight-score {
+  font-size: 24px;
+  color: #f56c6c;
+}
+
+.report-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.summary-stat-box {
+  flex: 1;
+  min-width: 100px;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  background-color: #f4f4f5;
+  color: #909399;
+}
+
+.summary-stat-box.status-correct {
+  background-color: #f0f9eb;
+  color: #67c23a;
+}
+.summary-stat-box.status-wrong {
+  background-color: #fef0f0;
+  color: #f56c6c;
+}
+.summary-stat-box.status-partial {
+  background-color: #fdf6ec;
+  color: #e6a23c;
+}
+
+.stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.question-list h4 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #303133;
+}
+
+.question-card {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background-color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Subtle Colored Backgrounds per user request */
+.question-card.status-correct {
+  background-color: #f8fdf6;
+  border-color: #e1f3d8;
+}
+
+.question-card.status-wrong {
+  background-color: #fffaf9; 
+  border-color: #fde2e2;
+}
+
+.question-card.status-partial {
+  background-color: #fffcf8;
+  border-color: #faecd8;
+}
+
+/* Add a bold left border flag to emphasize state */
+.question-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+.question-card.status-correct::before { background-color: #67c23a; }
+.question-card.status-wrong::before { background-color: #f56c6c; }
+.question-card.status-partial::before { background-color: #e6a23c; }
+
+.q-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  color: #606266;
+  font-size: 15px;
+}
+
+.q-title { font-weight: 600; color: #303133; }
+.q-score-info strong { color: #f56c6c; font-size: 18px; }
+
+.q-body { margin-bottom: 20px; }
+
+.q-content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #303133;
+  margin-bottom: 16px;
+}
+
+.q-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.q-option-item {
+  padding: 10px 16px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid #dcdfe6;
+}
+
+.q-option-item.is-correct-opt {
+  border-color: #67c23a;
+  background-color: #f0f9eb;
+}
+
+.q-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px dashed #ebeef5;
+}
+
+.answer-compare {
+  display: flex;
+  gap: 32px;
+}
+
+.answer-compare.is-vertical {
+  flex-direction: column;
+  gap: 16px;
+  max-width: 90%;
+}
+
+.answer-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.answer-compare.is-vertical .answer-box {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.answer-compare.is-vertical .ans-value {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-weight: normal;
+}
+
+.ans-label { color: #909399; font-size: 14px; font-weight: 600; }
+.ans-value { font-weight: 600; font-size: 16px; }
+
+.q-footer-vertical {
+  align-items: flex-start;
+}
+
+.text-success { color: #67c23a; }
+.text-danger { color: #f56c6c; }
+
+.status-icon {
+  font-size: 32px;
+  opacity: 0.8;
+}
+.status-icon.status-correct { color: #67c23a; }
+.status-icon.status-wrong { color: #f56c6c; }
+.status-icon.status-partial { color: #e6a23c; }
 </style>
