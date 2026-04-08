@@ -23,16 +23,17 @@
     </select>
 
     <select id="selectPaperQuestions" resultType="com.epqas.analysis.dto.compute.ComputePaperQuestionDTO">
-        SELECT 
+        SELECT DISTINCT
             eq.paper_id, eq.question_id, eq.score_value, eq.question_order, q.initial_difficulty
         FROM 
             examination_paper_question eq
         INNER JOIN 
             examination e ON eq.paper_id = e.paper_id
-        INNER JOIN 
+        LEFT JOIN 
             question q ON eq.question_id = q.question_id
         WHERE 
             e.exam_id = #{examId}
+        ORDER BY eq.question_order ASC
     </select>
 
     <select id="countCourseKnowledgePoints" resultType="java.lang.Integer">
@@ -60,7 +61,9 @@
             q.question_content as stem,
             q.question_type as questionType,
             qa.correct_response_rate as correctResponseRate,
+            qa.difficulty_index as difficultyIndex,
             qa.discrimination_index as discriminationIndex,
+            qa.validity_index as validityIndex,
 
             qa.is_too_easy as isTooEasy,
             qa.is_low_discrimination as isLowDiscrimination,
@@ -68,9 +71,12 @@
             qa.selection_distribution_json as selectionDistributionJson,
             q.options_json as optionsJson,
             q.correct_answer as correctAnswer,
+            qa.difficulty_evaluation as difficultyEvaluation,
+            qa.discrimination_evaluation as discriminationEvaluation,
             (qa.is_too_easy = 1 OR qa.is_low_discrimination = 1) as isAbnormal
         FROM question_quality_analysis qa
-        INNER JOIN question q ON qa.question_id = q.question_id
+        LEFT JOIN question q ON qa.question_id = q.question_id
         WHERE qa.exam_id = #{examId}
+        ORDER BY qa.question_id ASC
     </select>
 </mapper>

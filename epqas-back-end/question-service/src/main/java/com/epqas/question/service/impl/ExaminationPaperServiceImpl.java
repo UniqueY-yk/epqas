@@ -7,5 +7,6 @@ import com.epqas.question.service.ExaminationPaperService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMapper, ExaminationPaper> implements ExaminationPaperService {
+public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMapper, ExaminationPaper>
+        implements ExaminationPaperService {
 }

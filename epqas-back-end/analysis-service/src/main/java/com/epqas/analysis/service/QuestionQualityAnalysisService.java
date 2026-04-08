@@ -8,8 +8,10 @@ import java.util.List;
 public interface QuestionQualityAnalysisService extends IService<QuestionQualityAnalysis> {
 
     /**
-     * Retrieves detailed question-level quality analysis combined with question
-     * text.
+     * 获取包含题目文本的详细题目级质量分析。
+     * 
+     * @param examId 考试ID
+     * @return 题目分析详情列表
      */
     List<QuestionAnalysisDTO> getQuestionAnalysisDetailsByExamId(Long examId);
 }

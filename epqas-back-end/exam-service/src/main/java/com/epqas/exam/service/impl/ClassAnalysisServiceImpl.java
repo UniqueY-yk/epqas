@@ -38,36 +38,41 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    /**
+     * 获取题目统计数据
+     * @param examId 考试ID
+     * @return 题目统计数据
+     */
     @Override
     public List<QuestionStatsDTO> getQuestionStats(Long examId) {
-        // 1. Get exam and its paper
+        // 1. 获取考试和试卷
         Examination exam = examinationMapper.selectById(examId);
         if (exam == null) return Collections.emptyList();
 
-        // 2. Get questions on this paper
+        // 2. 获取试卷上的题目
         List<ExaminationPaperQuestion> paperQuestions = paperQuestionMapper.selectList(
                 new QueryWrapper<ExaminationPaperQuestion>().eq("paper_id", exam.getPaperId())
                         .orderByAsc("question_order")
         );
         if (paperQuestions.isEmpty()) return Collections.emptyList();
 
-        // 3. Get all result IDs for this exam
+        // 3. 获取该考试的所有结果ID
         List<StudentExamResult> results = resultMapper.selectList(
                 new QueryWrapper<StudentExamResult>().eq("exam_id", examId).eq("is_absent", false)
         );
         List<Long> resultIds = results.stream().map(StudentExamResult::getResultId).collect(Collectors.toList());
         if (resultIds.isEmpty()) return Collections.emptyList();
 
-        // 4. Get all answers for these results
+        // 4. 获取这些结果的所有答案
         List<StudentAnswer> allAnswers = answerMapper.selectList(
                 new QueryWrapper<StudentAnswer>().in("result_id", resultIds)
         );
 
-        // Group answers by questionId
+        // 按 questionId 分组答案
         Map<Long, List<StudentAnswer>> answersByQuestion = allAnswers.stream()
                 .collect(Collectors.groupingBy(StudentAnswer::getQuestionId));
 
-        // 5. Fetch question details from question table
+        // 5. 从 question 表获取问题详情
         List<Long> questionIds = paperQuestions.stream()
                 .map(ExaminationPaperQuestion::getQuestionId).collect(Collectors.toList());
 
@@ -82,7 +87,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             questionMap.put(qId, row);
         }
 
-        // 6. Fetch knowledge points for questions
+        // 6. 获取每一个问题的知识点
         List<Map<String, Object>> kpRows = jdbcTemplate.queryForList(
                 "SELECT qkp.question_id, kp.point_name FROM question_knowledge_map qkp " +
                         "JOIN knowledge_point kp ON qkp.point_id = kp.point_id " +
@@ -95,7 +100,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             kpMap.computeIfAbsent(qId, k -> new ArrayList<>()).add(pName);
         }
 
-        // 7. Build result DTOs
+        // 7. 构建结果DTOs
         List<QuestionStatsDTO> statsList = new ArrayList<>();
         for (ExaminationPaperQuestion pq : paperQuestions) {
             Long qId = pq.getQuestionId();
@@ -117,12 +122,12 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             dto.setCorrectCount(correct);
             dto.setCorrectRate(answers.isEmpty() ? 0.0 : (double) correct / answers.size());
 
-            // Option distribution
+            // 选项分布
             Map<String, Integer> distribution = new LinkedHashMap<>();
             for (StudentAnswer a : answers) {
                 String choice = a.getStudentChoice();
                 if (choice != null && !choice.isBlank()) {
-                    // For multiple choice, a student may choose multiple options like ["A","B"] or "A,B"
+                    // 对于多选题，学生可以选择多个选项，如 ["A","B"] 或 "A,B"
                     String cleanChoice = choice.replaceAll("[\\[\\]\" ]", ""); 
                     if (cleanChoice.contains(",")) {
                         String[] opts = cleanChoice.split(",");
@@ -145,13 +150,18 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         return statsList;
     }
 
+    /**
+     * 获取知识点掌握度
+     * @param examId 考试ID
+     * @return 知识点掌握度
+     */
     @Override
     public List<KnowledgeMasteryDTO> getKnowledgeMastery(Long examId) {
-        // 1. Get exam
+        // 1. 获取考试
         Examination exam = examinationMapper.selectById(examId);
         if (exam == null) return Collections.emptyList();
 
-        // 2. Get questions on this paper
+        // 2. 获取试卷上的题目
         List<ExaminationPaperQuestion> paperQuestions = paperQuestionMapper.selectList(
                 new QueryWrapper<ExaminationPaperQuestion>().eq("paper_id", exam.getPaperId())
         );
@@ -161,14 +171,14 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
                 .map(ExaminationPaperQuestion::getQuestionId).collect(Collectors.toList());
         String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
-        // 3. Get result IDs
+        // 3. 获取结果ID
         List<StudentExamResult> results = resultMapper.selectList(
                 new QueryWrapper<StudentExamResult>().eq("exam_id", examId).eq("is_absent", false)
         );
         List<Long> resultIds = results.stream().map(StudentExamResult::getResultId).collect(Collectors.toList());
         if (resultIds.isEmpty()) return Collections.emptyList();
 
-        // 4. Get all answers
+        // 4. 获取所有答案
         List<StudentAnswer> allAnswers = answerMapper.selectList(
                 new QueryWrapper<StudentAnswer>().in("result_id", resultIds)
                         .in("question_id", questionIds)
@@ -184,7 +194,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
                         "WHERE qkp.question_id IN (" + questionIdStr + ")"
         );
 
-        // Group: pointId -> list of questionIds
+        // 分组: pointId -> list of questionIds
         Map<Long, String> pointNames = new HashMap<>();
         Map<Long, Set<Long>> pointToQuestions = new HashMap<>();
         for (Map<String, Object> row : kpRows) {
@@ -195,7 +205,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             pointToQuestions.computeIfAbsent(pointId, k -> new HashSet<>()).add(qId);
         }
 
-        // 6. Calculate mastery per knowledge point
+        // 6. 计算每个知识点的掌握程度
         List<KnowledgeMasteryDTO> masteryList = new ArrayList<>();
         for (Map.Entry<Long, Set<Long>> entry : pointToQuestions.entrySet()) {
             Long pointId = entry.getKey();
@@ -228,19 +238,24 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             masteryList.add(dto);
         }
 
-        // Sort by mastery rate ascending (weakest first)
+        // 按掌握程度升序排序（最弱的在前）
         masteryList.sort(Comparator.comparingDouble(KnowledgeMasteryDTO::getMasteryRate));
 
         return masteryList;
     }
 
+    /**
+     * 检测异常答案
+     * @param examId 考试ID
+     * @return 异常答案列表
+     */
     @Override
     public List<AbnormalDetectionDTO> detectAbnormalAnswers(Long examId) {
-        // 1. Get exam and its paper
+        // 1. 获取考试和试卷
         Examination exam = examinationMapper.selectById(examId);
         if (exam == null) return Collections.emptyList();
 
-        // 2. Get questions on this paper
+        // 2. 获取试卷上的题目
         List<ExaminationPaperQuestion> paperQuestions = paperQuestionMapper.selectList(
                 new QueryWrapper<ExaminationPaperQuestion>().eq("paper_id", exam.getPaperId())
                         .orderByAsc("question_order")
@@ -250,7 +265,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         List<Long> questionIds = paperQuestions.stream()
                 .map(ExaminationPaperQuestion::getQuestionId).collect(Collectors.toList());
 
-        // 3. Get all non-absent results for this exam
+        // 3. 获取该考试的所有非缺考结果
         List<StudentExamResult> results = resultMapper.selectList(
                 new QueryWrapper<StudentExamResult>().eq("exam_id", examId).eq("is_absent", false)
         );
@@ -263,13 +278,13 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             resultIds.add(r.getResultId());
         }
 
-        // 4. Get all answers for these results
+        // 4. 获取这些结果的所有答案
         List<StudentAnswer> allAnswers = answerMapper.selectList(
                 new QueryWrapper<StudentAnswer>().in("result_id", resultIds)
                         .in("question_id", questionIds)
         );
 
-        // Build per-student answer map: studentId -> (questionId -> studentChoice)
+        // 构建每个学生的答案映射：studentId -> (questionId -> studentChoice)
         Map<Long, Map<Long, String>> studentAnswerMap = new HashMap<>();
         for (StudentAnswer a : allAnswers) {
             Long studentId = resultToStudent.get(a.getResultId());
@@ -279,7 +294,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
                     .put(a.getQuestionId(), a.getStudentChoice());
         }
 
-        // 5. Fetch correct answers and question details
+        // 5. 获取正确答案和问题详情
         String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
         List<Map<String, Object>> questionRows = jdbcTemplate.queryForList(
                 "SELECT question_id, question_content, correct_answer FROM question WHERE question_id IN (" + questionIdStr + ")"
@@ -292,17 +307,17 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             questionContents.put(qId, (String) row.get("question_content"));
         }
 
-        // Build questionOrder lookup
+        // 构建 questionOrder 映射
         Map<Long, Integer> questionOrderMap = new HashMap<>();
         for (ExaminationPaperQuestion pq : paperQuestions) {
             questionOrderMap.put(pq.getQuestionId(), pq.getQuestionOrder());
         }
 
-        // 6. Resolve student names
+        // 6. 解析学生姓名
         List<Long> studentIds = new ArrayList<>(studentAnswerMap.keySet());
         Map<Long, String> studentNames = resolveStudentNames(studentIds);
 
-        // 7. Pairwise comparison
+        // 7. 成对比较
         int totalQuestions = questionIds.size();
         List<AbnormalDetectionDTO> detectionResults = new ArrayList<>();
 
@@ -323,12 +338,12 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
                     if (choiceA == null || choiceB == null || correct == null) continue;
                     if (choiceA.isBlank() || choiceB.isBlank()) continue;
 
-                    // Normalize choices for comparison
+                    // 规范化选择以进行比较
                     String normA = normalizeChoice(choiceA);
                     String normB = normalizeChoice(choiceB);
                     String normCorrect = normalizeChoice(correct);
 
-                    // Both gave the same answer AND it's wrong
+                    // 两人给出了相同的答案且答案是错误的
                     if (normA.equals(normB) && !normA.equals(normCorrect)) {
                         Map<String, Object> detail = new LinkedHashMap<>();
                         detail.put("questionOrder", questionOrderMap.getOrDefault(qId, 0));
@@ -342,7 +357,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
                 int identicalWrongCount = identicalWrongDetails.size();
                 double similarityRate = totalQuestions == 0 ? 0.0 : (double) identicalWrongCount / totalQuestions;
 
-                // Only flag if meets threshold: >= 3 identical wrong answers OR >= 50% similarity
+                // 仅当满足阈值时标记：>= 3 个相同的错误答案或 >= 50% 的相似度
                 if (identicalWrongCount >= 3 || similarityRate >= 0.5) {
                     AbnormalDetectionDTO dto = new AbnormalDetectionDTO();
                     dto.setStudentIdA(studentA);
@@ -358,15 +373,20 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
             }
         }
 
-        // Sort by similarity rate descending (most suspicious first)
+        // 按相似度降序排序（最可疑的在前）
         detectionResults.sort((a, b) -> Double.compare(b.getSimilarityRate(), a.getSimilarityRate()));
 
         return detectionResults;
     }
 
+    /**
+     * 规范化答案
+     * @param choice 答案
+     * @return 规范化后的答案
+     */
     private String normalizeChoice(String choice) {
         if (choice == null) return "";
-        // Remove brackets, quotes, spaces, and sort for multi-choice comparison
+        // 移除括号、引号、空格并排序以进行多选比较
         String clean = choice.replaceAll("[\\[\\]\" ]", "").trim();
         if (clean.contains(",")) {
             String[] parts = clean.split(",");
@@ -376,13 +396,18 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         return clean;
     }
 
+    /**
+     * 解析学生姓名
+     * @param studentIds 学生ID列表
+     * @return 学生姓名映射
+     */
     private Map<Long, String> resolveStudentNames(List<Long> studentIds) {
         Map<Long, String> names = new HashMap<>();
         if (studentIds.isEmpty()) return names;
 
         try {
             String idStr = studentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-            // student.student_id is the student table PK, student.user_id links to user.user_id
+            // student.student_id 是学生表主键，student.user_id 链接到 user.user_id
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                     "SELECT s.student_id, u.real_name FROM student s " +
                             "JOIN user u ON s.user_id = u.user_id " +
@@ -394,7 +419,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
                 names.put(sid, name);
             }
         } catch (Exception e) {
-            // Fallback: use student IDs if cross-DB query fails
+            // 降级：如果跨数据库查询失败，则使用学生ID
             for (Long sid : studentIds) {
                 names.put(sid, "学生" + sid);
             }

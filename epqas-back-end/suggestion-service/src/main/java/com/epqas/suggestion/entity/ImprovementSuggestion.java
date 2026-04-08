@@ -14,18 +14,18 @@ public class ImprovementSuggestion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long suggestionId;
+    private Long suggestionId; // 建议ID
 
-    private Long examId;
+    private Long examId; // 考试ID
 
-    private Long questionId;
+    private Long questionId; // 题目ID
 
     private String suggestionType; // Paper_Structure, Question_Content, Difficulty_Adj
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String suggestionText;
+    private String suggestionText; // 建议文本
 
-    private String generatedRule;
+    private String generatedRule; // 生成规则
 
-    private Boolean isImplemented;
+    private Boolean isImplemented; // 是否已实施
 }

@@ -16,20 +16,20 @@ public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long logId;
+    private Long logId; // 审计日志ID
 
-    private Long userId;
+    private Long userId; // 用户ID
 
-    private String actionType;
+    private String actionType; // 操作类型
 
-    private String targetTable;
+    private String targetTable; // 目标表
 
-    private Long targetId;
+    private Long targetId; // 目标ID
 
-    private String ipAddress;
+    private String ipAddress; // IP地址
 
     @Column(updatable = false)
-    private LocalDateTime actionTime;
+    private LocalDateTime actionTime; // 操作时间
 
     @PrePersist
     protected void onCreate() {

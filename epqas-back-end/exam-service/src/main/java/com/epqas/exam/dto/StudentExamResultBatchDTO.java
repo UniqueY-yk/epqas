@@ -8,6 +8,7 @@ import java.util.List;
 
 @Data
 public class StudentExamResultBatchDTO {
-    private StudentExamResult result;
-    private List<StudentAnswer> answers;
+    private StudentExamResult result; // 考试结果
+
+    private List<StudentAnswer> answers; // 学生答案
 }

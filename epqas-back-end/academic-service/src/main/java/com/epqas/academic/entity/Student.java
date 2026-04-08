@@ -7,13 +7,10 @@ import lombok.Data;
 @Data
 @TableName("student")
 public class Student {
-    /**
-     * Links to user.user_id
-     */
     @TableId
-    private Long studentId;
-    
-    private Integer classId;
-    
-    private String studentNumber;
+    private Long studentId; // 学生ID
+
+    private Integer classId; // 班级ID
+
+    private String studentNumber; // 学号
 }

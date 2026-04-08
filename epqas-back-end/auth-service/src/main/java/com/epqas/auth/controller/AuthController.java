@@ -18,12 +18,23 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    /**
+     * 用户登录
+     * 
+     * @param user 用户信息
+     * @return 登录结果
+     */
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody User user) {
-        // User DTO usually better, but reusing Entity for speed as per requirements
         return authService.login(user.getUsername(), user.getPasswordHash(), user.getRoleId());
     }
 
+    /**
+     * 用户注册
+     * 
+     * @param user 用户信息
+     * @return 注册结果
+     */
     @PostMapping("/register")
     public Result<String> register(@RequestBody User user) {
         return authService.register(user);

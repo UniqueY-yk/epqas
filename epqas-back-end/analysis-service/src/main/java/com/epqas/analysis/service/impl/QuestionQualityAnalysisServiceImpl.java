@@ -21,6 +21,12 @@ public class QuestionQualityAnalysisServiceImpl extends
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    /**
+     * 根据考试ID获取题目分析详情
+     * 
+     * @param examId 考试ID
+     * @return 题目分析详情列表
+     */
     @Override
     public List<QuestionAnalysisDTO> getQuestionAnalysisDetailsByExamId(Long examId) {
         List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByExamId(examId);

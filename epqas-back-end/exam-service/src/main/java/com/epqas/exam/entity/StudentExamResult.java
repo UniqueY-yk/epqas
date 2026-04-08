@@ -17,15 +17,15 @@ public class StudentExamResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long resultId;
+    private Long resultId; // 考试结果ID
 
-    private Long examId;
+    private Long examId; // 考试ID
 
-    private Long studentId;
+    private Long studentId; // 学生ID
 
-    private BigDecimal totalScore;
+    private BigDecimal totalScore; // 总分
 
-    private Boolean isAbsent;
+    private Boolean isAbsent; // 是否缺考
 
-    private LocalDateTime submittedAt;
+    private LocalDateTime submittedAt; // 提交时间
 }

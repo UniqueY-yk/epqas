@@ -11,8 +11,8 @@ import lombok.Data;
 @IdClass(QuestionKnowledgeMapId.class)
 public class QuestionKnowledgeMap {
     @Id
-    private Long questionId;
+    private Long questionId; // 题目ID
 
     @Id
-    private Integer pointId;
+    private Integer pointId; // 知识点ID
 }

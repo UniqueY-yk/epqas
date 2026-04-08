@@ -22,23 +22,32 @@
         </el-table-column>
         
         <el-table-column label="质量诊断指标" align="center">
-            <el-table-column prop="overallDifficulty" label="难度系数" width="100" align="center">
+            <el-table-column prop="overallDifficulty" label="难度系数" width="140" align="center">
                 <template #default="scope">
-                    <span :class="getValClass(scope.row.overallDifficulty, 0.4, 0.7)">
+                    <span :class="getDifficultyClass(scope.row.overallDifficulty)">
                         {{ scope.row.overallDifficulty?.toFixed(2) }}
                     </span>
+                    <el-tag v-if="scope.row.difficultyEvaluation" size="small" :type="getDifficultyTagType(scope.row.overallDifficulty)" style="margin-left: 4px;">
+                        {{ scope.row.difficultyEvaluation }}
+                    </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column prop="overallDiscrimination" label="区分度" width="100" align="center">
+            <el-table-column prop="overallDiscrimination" label="区分度" width="160" align="center">
                 <template #default="scope">
                      <span :class="getDiscriminationClass(scope.row.overallDiscrimination)">
                         {{ scope.row.overallDiscrimination?.toFixed(2) }}
                     </span>
+                    <el-tag v-if="scope.row.discriminationEvaluation" size="small" :type="getDiscriminationTagType(scope.row.overallDiscrimination)" style="margin-left: 4px;">
+                        {{ scope.row.discriminationEvaluation }}
+                    </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column prop="reliabilityCoefficient" label="信度(α)" width="100" align="center">
+            <el-table-column prop="reliabilityCoefficient" label="信度(α)" width="180" align="center">
                 <template #default="scope">
                     {{ scope.row.reliabilityCoefficient?.toFixed(2) }}
+                    <el-tag v-if="scope.row.reliabilityEvaluation" size="small" :type="getReliabilityTagType(scope.row.reliabilityCoefficient)" style="margin-left: 4px;">
+                        {{ scope.row.reliabilityEvaluation }}
+                    </el-tag>
                 </template>
             </el-table-column>
             <el-table-column prop="validityCoefficient" label="效度" width="100" align="center">
@@ -166,11 +175,17 @@ const formatDate = (date: string) => {
 }
 
 // Indicator colors
-const getValClass = (val: number, min: number, max: number) => {
+const getDifficultyClass = (val: number) => {
     if (val === undefined || val === null) return ''
-    if (val < min) return 'text-success' // Hard
-    if (val > max) return 'text-danger'  // Easy
+    if (val < 0.4) return 'text-success' // Hard
+    if (val > 0.7) return 'text-danger'  // Easy
     return 'text-normal'
+}
+
+const getDifficultyTagType = (val: number) => {
+    if (val === undefined || val === null) return 'info'
+    if (val >= 0.4 && val <= 0.7) return 'success'
+    return 'warning'
 }
 
 const getDiscriminationClass = (val: number) => {
@@ -178,6 +193,21 @@ const getDiscriminationClass = (val: number) => {
     if (val < 0.2) return 'text-danger' // Poor discrimination
     if (val >= 0.4) return 'text-success' // Excellent
     return 'text-normal'
+}
+
+const getDiscriminationTagType = (val: number) => {
+    if (val === undefined || val === null) return 'info'
+    if (val >= 0.4) return 'success'
+    if (val >= 0.3) return ''
+    if (val >= 0.2) return 'warning'
+    return 'danger'
+}
+
+const getReliabilityTagType = (val: number) => {
+    if (val === undefined || val === null) return 'info'
+    if (val >= 0.8) return 'success'
+    if (val >= 0.6) return 'warning'
+    return 'danger'
 }
 
 const handleCalculate = async (row: PaperAnalysisVO) => {

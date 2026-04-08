@@ -20,14 +20,19 @@ public class StudentExamResultServiceImpl extends ServiceImpl<StudentExamResultM
     @Autowired
     private StudentAnswerService studentAnswerService;
 
+    /**
+     * 保存考试结果和答案
+     * @param dto 考试结果和答案
+     * @return 是否成功
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveResultAndAnswers(StudentExamResultBatchDTO dto) {
         StudentExamResult result = dto.getResult();
         
-        // 1. Save or Update StudentExamResult
+        // 1. 保存或更新考试结果
         if (result.getResultId() == null) {
-            // Check if user already has a result for this exam
+            // 检查用户是否已经有该考试的结果
             StudentExamResult existing = this.getOne(new QueryWrapper<StudentExamResult>()
                     .eq("exam_id", result.getExamId())
                     .eq("student_id", result.getStudentId()));
@@ -42,7 +47,7 @@ public class StudentExamResultServiceImpl extends ServiceImpl<StudentExamResultM
             this.updateById(result);
         }
 
-        // 2. Save or Update StudentAnswers
+        // 2. 保存或更新学生答案
         List<StudentAnswer> answers = dto.getAnswers();
         if (answers != null && !answers.isEmpty()) {
             for (StudentAnswer answer : answers) {

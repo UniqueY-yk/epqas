@@ -18,10 +18,9 @@ public class AnalysisScheduledTasks {
     private final AnalysisComputationService computationService;
 
     /**
-     * Periodically check for exams that have student results but no quality
-     * analysis generated.
-     * Runs every 1 minute (60,000 milliseconds) for demonstration purposes.
-     * In a production environment, this might run daily or post grading phase.
+     * 定期检查是否有已生成学生成绩但未生成质量分析的考试。
+     * 演示目的：每1分钟（60,000毫秒）运行一次。
+     * 在生产环境中，这可能会每天运行或在评分阶段后运行。
      */
     @Scheduled(fixedDelay = 60000)
     public void calculatePendingExamMetrics() {

@@ -17,32 +17,42 @@ public class ExaminationPaperQualityAnalysis {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long analysisId;
+    private Long analysisId; // 分析ID
 
-    private Long examId;
+    private Long examId; // 考试ID
 
-    private BigDecimal averageScore;
+    private BigDecimal averageScore; // 平均分
 
-    private BigDecimal stdDeviation;
+    private BigDecimal stdDeviation; // 标准差
 
-    private BigDecimal highestScore;
+    private BigDecimal highestScore; // 最高分
 
-    private BigDecimal lowestScore;
+    private BigDecimal lowestScore; // 最低分
 
-    private Float reliabilityCoefficient;
+    private Float reliabilityCoefficient; // 信度系数
 
-    private Float validityCoefficient;
+    private Float validityCoefficient; // 效度系数
 
-    private Float knowledgeCoverageRate;
+    private Float knowledgeCoverageRate; // 知识覆盖率
 
-    private Float overallDifficulty;
+    private Float overallDifficulty; // 整体难度
 
-    private Float overallDiscrimination;
+    private Float overallDiscrimination; // 整体区分度
 
-    private Boolean isAbnormal;
+    private Boolean isAbnormal; // 是否异常
+
+    private Float skewness; // 偏度
+
+    private Float kurtosis; // 峰度
+
+    private String reliabilityEvaluation; // 信度定性评价
+
+    private String difficultyEvaluation; // 难度定性评价
+
+    private String discriminationEvaluation; // 区分度定性评价
 
     @Column(updatable = false)
-    private LocalDateTime calculatedAt;
+    private LocalDateTime calculatedAt; // 计算时间
 
     @PrePersist
     protected void onCreate() {

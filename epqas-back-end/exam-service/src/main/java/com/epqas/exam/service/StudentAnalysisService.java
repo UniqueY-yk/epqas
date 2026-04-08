@@ -5,16 +5,16 @@ import java.util.List;
 
 public interface StudentAnalysisService {
     /**
-     * Get a student's personal knowledge point mastery based on their past exam performance.
-     * @param studentId The student's user ID
-     * @return List of KnowledgeMasteryDTO sorted from weakest to strongest
+     * 获取学生知识点掌握度
+     * @param studentId 学生ID
+     * @return 知识点掌握度列表
      */
     List<KnowledgeMasteryDTO> getStudentKnowledgeMastery(Long studentId);
 
     /**
-     * Get a student's error questions from past exams for targeted revision.
-     * @param query The filtering and pagination constraints
-     * @return Page of ErrorQuestions chronologically sorted
+     * 获取学生错题
+     * @param query 错题查询条件
+     * @return 错题列表
      */
     com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.epqas.exam.dto.StudentErrorQuestionDTO> getStudentErrorQuestions(com.epqas.exam.dto.StudentErrorQuestionQuery query);
 }

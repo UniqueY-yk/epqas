@@ -6,11 +6,17 @@ import java.math.BigDecimal;
 
 @Data
 public class ComputeStudentAnswerDTO {
-    private Long answerId;
-    private Long resultId;
-    private Long questionId;
-    private Long studentId;
-    private BigDecimal scoreObtained;
-    private Boolean isCorrect;
-    private String studentChoice;
+    private Long answerId; // 答案ID
+
+    private Long resultId; // 成绩ID
+
+    private Long questionId; // 题目ID
+
+    private Long studentId; // 学生ID
+
+    private BigDecimal scoreObtained; // 获得分数
+
+    private Boolean isCorrect; // 是否正确
+
+    private String studentChoice; // 学生选项
 }

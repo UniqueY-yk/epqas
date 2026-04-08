@@ -9,7 +9,9 @@ import lombok.Data;
 @TableName("school_class")
 public class SchoolClass {
     @TableId(type = IdType.AUTO)
-    private Integer classId;
-    private String className;
-    private String department;
+    private Integer classId; // 班级ID
+
+    private String className; // 班级名称
+
+    private String department; // 院系
 }

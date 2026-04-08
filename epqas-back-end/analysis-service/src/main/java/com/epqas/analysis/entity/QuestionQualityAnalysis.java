@@ -14,22 +14,30 @@ public class QuestionQualityAnalysis {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long qAnalysisId;
+    private Long qAnalysisId; // 题目分析ID
 
-    private Long examId;
+    private Long examId; // 考试ID
 
-    private Long questionId;
+    private Long questionId; // 题目ID
 
-    private Float correctResponseRate;
+    private Float correctResponseRate; // 正确反应率
 
-    private Float discriminationIndex;
+    private Float difficultyIndex; // 难度系数P (极端组法)
+
+    private Float discriminationIndex; // 区分度
+
+    private Float validityIndex; // 效度 (Pearson r)
 
     @Column(columnDefinition = "JSON")
-    private String selectionDistributionJson;
+    private String selectionDistributionJson; // 选项分布
 
-    private Boolean isTooEasy;
+    private Boolean isTooEasy; // 是否太简单
 
-    private Boolean isLowDiscrimination;
+    private Boolean isLowDiscrimination; // 是否区分度低
 
-    private String diagnosisTag;
+    private String diagnosisTag; // 诊断标签
+
+    private String difficultyEvaluation; // 难度定性评价
+
+    private String discriminationEvaluation; // 区分度定性评价
 }

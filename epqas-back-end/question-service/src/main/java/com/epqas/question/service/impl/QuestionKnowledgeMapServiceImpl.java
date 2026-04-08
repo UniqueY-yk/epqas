@@ -7,5 +7,6 @@ import com.epqas.question.service.QuestionKnowledgeMapService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class QuestionKnowledgeMapServiceImpl extends ServiceImpl<QuestionKnowledgeMapMapper, QuestionKnowledgeMap> implements QuestionKnowledgeMapService {
+public class QuestionKnowledgeMapServiceImpl extends ServiceImpl<QuestionKnowledgeMapMapper, QuestionKnowledgeMap>
+        implements QuestionKnowledgeMapService {
 }

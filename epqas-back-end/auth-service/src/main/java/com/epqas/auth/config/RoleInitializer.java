@@ -18,6 +18,11 @@ public class RoleInitializer implements CommandLineRunner {
     @Autowired
     private RoleMapper roleMapper;
 
+    /**
+     * 初始化默认角色
+     * 
+     * @param args 命令行参数
+     */
     @Override
     public void run(String... args) throws Exception {
         log.info("Checking default roles...");

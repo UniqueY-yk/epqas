@@ -10,22 +10,33 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+/**
+ * Excel学生数据监听器
+ */
 @Slf4j
 public class StudentExcelListener implements ReadListener<ExcelStudentDTO> {
 
-    /**
-     * Batch size for processing
-     */
     private static final int BATCH_COUNT = 100;
 
     private List<ExcelStudentDTO> cachedDataList = ListUtils.newArrayListWithExpectedSize(BATCH_COUNT);
 
     private final StudentService studentService;
 
+    /**
+     * 构造函数
+     * 
+     * @param studentService 学生服务
+     */
     public StudentExcelListener(StudentService studentService) {
         this.studentService = studentService;
     }
 
+    /**
+     * 覆写invoke方法，处理Excel每一行数据
+     * 
+     * @param data    Excel学生数据
+     * @param context Excel分析上下文
+     */
     @Override
     public void invoke(ExcelStudentDTO data, AnalysisContext context) {
         cachedDataList.add(data);
@@ -35,13 +46,20 @@ public class StudentExcelListener implements ReadListener<ExcelStudentDTO> {
         }
     }
 
+    /**
+     * 覆写doAfterAllAnalysed方法，处理Excel所有数据解析完成后的操作
+     * 
+     * @param context Excel分析上下文
+     */
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
-        // Save remaining data
         saveData();
         log.info("All data parsed!");
     }
 
+    /**
+     * 保存数据
+     */
     private void saveData() {
         log.info("Saving {} student records to database...", cachedDataList.size());
         for (ExcelStudentDTO excelData : cachedDataList) {
@@ -54,9 +72,8 @@ public class StudentExcelListener implements ReadListener<ExcelStudentDTO> {
                 dto.setStudentNumber(excelData.getStudentNumber());
                 dto.setClassId(excelData.getClassId());
 
-                // Real implementation should probably have a batch insert method, but calling
-                // one by one
-                // ensures we hit the UserFeignClient for each to get distinct User IDs
+                // 实际应该有一个批量插入的方法，但是逐个调用
+                // 确保我们命中 UserFeignClient 以获取不同的用户 ID
                 studentService.createStudentWithUser(dto);
             } catch (Exception e) {
                 log.error("Failed to import student {}: {}", excelData.getStudentNumber(), e.getMessage());

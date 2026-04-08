@@ -21,6 +21,11 @@ public class DashboardController {
     @Autowired
     private ExaminationService examinationService;
 
+    /**
+     * 获取统计数据
+     * 
+     * @return 统计数据
+     */
     @GetMapping("/stats")
     public Result<Map<String, Object>> getStats() {
         Map<String, Object> stats = new HashMap<>();

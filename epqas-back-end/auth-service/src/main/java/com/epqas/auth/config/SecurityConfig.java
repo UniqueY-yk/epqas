@@ -18,6 +18,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * 配置安全过滤器链
+     * 
+     * @param http HTTP安全配置
+     * @return 安全过滤器链
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -30,7 +36,7 @@ public class SecurityConfig {
                     return corsConfiguration;
                 }))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Allow all, gateway handles auth
+                        .anyRequest().permitAll() // 允许所有请求，网关处理认证
                 );
         return http.build();
     }

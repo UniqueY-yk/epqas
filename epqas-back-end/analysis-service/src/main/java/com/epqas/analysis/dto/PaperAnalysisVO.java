@@ -7,21 +7,45 @@ import java.time.LocalDateTime;
 
 @Data
 public class PaperAnalysisVO {
-    private Long analysisId;
-    private Long examId;
-    private Long paperId;
-    private String paperTitle;
-    private String courseName;
-    private LocalDateTime examDate;
+    private Long analysisId; // 分析ID
 
-    private BigDecimal averageScore;
-    private BigDecimal highestScore;
-    private BigDecimal lowestScore;
+    private Long examId; // 考试ID
 
-    private Float reliabilityCoefficient;
-    private Float validityCoefficient;
-    private Float knowledgeCoverageRate;
-    private Float overallDifficulty;
-    private Float overallDiscrimination;
-    private Boolean isAbnormal;
+    private Long paperId; // 试卷ID
+
+    private String paperTitle; // 试卷标题
+
+    private String courseName; // 课程名称
+
+    private LocalDateTime examDate; // 考试日期
+
+    private BigDecimal averageScore; // 平均分
+
+    private BigDecimal stdDeviation; // 标准差
+
+    private BigDecimal highestScore; // 最高分
+
+    private BigDecimal lowestScore; // 最低分
+
+    private Float reliabilityCoefficient; // 信度系数
+
+    private Float validityCoefficient; // 效度系数
+
+    private Float knowledgeCoverageRate; // 知识覆盖率
+
+    private Float overallDifficulty; // 整体难度
+
+    private Float overallDiscrimination; // 整体区分度
+
+    private Boolean isAbnormal; // 是否异常
+
+    private Float skewness; // 偏度
+
+    private Float kurtosis; // 峰度
+
+    private String reliabilityEvaluation; // 信度评价
+
+    private String difficultyEvaluation; // 难度评价
+
+    private String discriminationEvaluation; // 区分度评价
 }

@@ -10,6 +10,7 @@
             c.course_name AS courseName,
             e.exam_date AS examDate,
             eqa.average_score AS averageScore,
+            eqa.std_deviation AS stdDeviation,
             eqa.highest_score AS highestScore,
             eqa.lowest_score AS lowestScore,
             eqa.reliability_coefficient AS reliabilityCoefficient,
@@ -17,7 +18,12 @@
             eqa.knowledge_coverage_rate AS knowledgeCoverageRate,
             eqa.overall_difficulty AS overallDifficulty,
             eqa.overall_discrimination AS overallDiscrimination,
-            eqa.is_abnormal AS isAbnormal
+            eqa.is_abnormal AS isAbnormal,
+            eqa.skewness AS skewness,
+            eqa.kurtosis AS kurtosis,
+            eqa.reliability_evaluation AS reliabilityEvaluation,
+            eqa.difficulty_evaluation AS difficultyEvaluation,
+            eqa.discrimination_evaluation AS discriminationEvaluation
         FROM examination_paper_quality_analysis eqa
         INNER JOIN examination e ON eqa.exam_id = e.exam_id
         INNER JOIN examination_paper ep ON e.paper_id = ep.paper_id
@@ -39,6 +45,7 @@
             c.course_name AS courseName,
             e.exam_date AS examDate,
             eqa.average_score AS averageScore,
+            eqa.std_deviation AS stdDeviation,
             eqa.highest_score AS highestScore,
             eqa.lowest_score AS lowestScore,
             eqa.reliability_coefficient AS reliabilityCoefficient,
@@ -46,7 +53,12 @@
             eqa.knowledge_coverage_rate AS knowledgeCoverageRate,
             eqa.overall_difficulty AS overallDifficulty,
             eqa.overall_discrimination AS overallDiscrimination,
-            eqa.is_abnormal AS isAbnormal
+            eqa.is_abnormal AS isAbnormal,
+            eqa.skewness AS skewness,
+            eqa.kurtosis AS kurtosis,
+            eqa.reliability_evaluation AS reliabilityEvaluation,
+            eqa.difficulty_evaluation AS difficultyEvaluation,
+            eqa.discrimination_evaluation AS discriminationEvaluation
         FROM examination_paper_quality_analysis eqa
         INNER JOIN examination e ON eqa.exam_id = e.exam_id
         INNER JOIN examination_paper ep ON e.paper_id = ep.paper_id

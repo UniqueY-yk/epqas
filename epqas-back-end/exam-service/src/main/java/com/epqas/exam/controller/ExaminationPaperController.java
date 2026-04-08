@@ -22,19 +22,37 @@ public class ExaminationPaperController {
     @Autowired
     private UserFeignClient userFeignClient;
 
+    /**
+     * 创建试卷
+     * 
+     * @param dto 试卷信息
+     * @return 创建结果
+     */
     @PostMapping
     public Result createPaper(@RequestBody ExaminationPaperDTO dto) {
-        // Here we could get setterId from the token context in a real scenario
+        // 在实际场景中，可以从令牌上下文中获取 setterId
         paperService.createPaperWithQuestions(dto);
         return Result.success("Paper created successfully");
     }
 
+    /**
+     * 更新试卷
+     * 
+     * @param dto 试卷信息
+     * @return 更新结果
+     */
     @PutMapping
     public Result updatePaper(@RequestBody ExaminationPaperDTO dto) {
         paperService.updatePaperWithQuestions(dto);
         return Result.success("Paper updated successfully");
     }
 
+    /**
+     * 获取试卷详情
+     * 
+     * @param id 试卷ID
+     * @return 试卷详情
+     */
     @GetMapping("/{id}")
     public Result getPaper(@PathVariable("id") Long id) {
         ExaminationPaperDTO dto = paperService.getPaperWithQuestions(id);
@@ -44,13 +62,28 @@ public class ExaminationPaperController {
         return Result.error("Paper not found");
     }
 
+    /**
+     * 删除试卷
+     * 
+     * @param id 试卷ID
+     * @return 删除结果
+     */
     @DeleteMapping("/{id}")
     public Result deletePaper(@PathVariable("id") Long id) {
-        // Could also physically delete questions mapping, but leaving it simple for now
+        // 也可以物理删除问题映射，但暂时保持简单
         paperService.removeById(id);
         return Result.success("Paper deleted successfully");
     }
 
+    /**
+     * 获取试卷分页数据
+     * 
+     * @param current  当前页
+     * @param size     每页数量
+     * @param courseId 课程ID
+     * @param keyword  关键词
+     * @return 试卷分页数据
+     */
     @GetMapping("/page")
     public Result getPaperPage(
             @RequestParam(value = "current", defaultValue = "1") Integer current,
@@ -61,14 +94,20 @@ public class ExaminationPaperController {
         return Result.success(page);
     }
 
+    /**
+     * 获取试卷出题人列表
+     * 
+     * @return 出题人列表
+     */
     @GetMapping("/setters")
     public Result getSetters() {
         try {
             Result usersResult = userFeignClient.listUsers(1, 1, 100);
             if (usersResult != null && usersResult.getCode() == 200 && usersResult.getData() != null) {
-                // The data is a Page object; extract records and filter by roleId=2
+                // 数据是一个 Page 对象；提取记录并按 roleId=2 过滤
                 LinkedHashMap<String, Object> pageData = (LinkedHashMap<String, Object>) usersResult.getData();
-                List<LinkedHashMap<String, Object>> records = (List<LinkedHashMap<String, Object>>) pageData.get("records");
+                List<LinkedHashMap<String, Object>> records = (List<LinkedHashMap<String, Object>>) pageData
+                        .get("records");
                 List<LinkedHashMap<String, Object>> setters = new ArrayList<>();
                 if (records != null) {
                     for (LinkedHashMap<String, Object> record : records) {

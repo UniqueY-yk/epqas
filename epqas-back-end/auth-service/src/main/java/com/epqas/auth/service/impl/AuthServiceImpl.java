@@ -30,6 +30,14 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private RoleMapper roleMapper;
 
+    /**
+     * 用户登录
+     * 
+     * @param username 用户名
+     * @param password 密码
+     * @param roleId   角色ID
+     * @return 登录结果
+     */
     @Override
     public Result<Map<String, Object>> login(String username, String password, Integer roleId) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -65,6 +73,12 @@ public class AuthServiceImpl implements AuthService {
         return Result.success(result);
     }
 
+    /**
+     * 用户注册
+     * 
+     * @param user 用户信息
+     * @return 注册结果
+     */
     @Override
     public Result<String> register(User user) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -74,7 +88,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
-        // Default role? Let's say 4 (Student) for now, or require it
         if (user.getRoleId() == null) {
             Role studentRole = roleMapper.selectOne(new QueryWrapper<Role>().eq("role_name", "Student"));
             if (studentRole != null) {

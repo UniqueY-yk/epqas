@@ -14,10 +14,10 @@ public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Integer roleId;
+    private Integer roleId; // 角色ID
 
     @Column(nullable = false, unique = true)
-    private String roleName;
+    private String roleName; // 角色名称
 
-    private String description;
+    private String description; // 角色描述
 }

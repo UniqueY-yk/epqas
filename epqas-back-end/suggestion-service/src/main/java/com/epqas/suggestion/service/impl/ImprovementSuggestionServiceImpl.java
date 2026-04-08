@@ -10,8 +10,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.List;
 
 @Service
-public class ImprovementSuggestionServiceImpl extends ServiceImpl<ImprovementSuggestionMapper, ImprovementSuggestion> implements ImprovementSuggestionService {
-    
+public class ImprovementSuggestionServiceImpl extends ServiceImpl<ImprovementSuggestionMapper, ImprovementSuggestion>
+        implements ImprovementSuggestionService {
+
+    /**
+     * 获取建议列表
+     * 
+     * @param examId     考试ID
+     * @param questionId 题目ID
+     * @return 建议列表
+     */
     @Override
     public List<ImprovementSuggestion> getSuggestionsByExamAndQuestion(Long examId, Long questionId) {
         LambdaQueryWrapper<ImprovementSuggestion> wrapper = new LambdaQueryWrapper<>();

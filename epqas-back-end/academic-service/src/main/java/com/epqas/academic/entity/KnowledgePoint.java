@@ -15,11 +15,11 @@ import lombok.Data;
 public class KnowledgePoint {
     @Id
     @TableId(type = IdType.AUTO)
-    private Integer pointId;
-    
-    private Integer courseId;
-    
-    private String pointName;
-    
-    private String description;
+    private Integer pointId; // 知识点ID
+
+    private Integer courseId; // 课程ID
+
+    private String pointName; // 知识点名称
+
+    private String description; // 知识点描述
 }

@@ -24,12 +24,17 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     @Autowired
     private QuestionKnowledgeMapService questionKnowledgeMapService;
 
+    /**
+     * 创建题目
+     * 
+     * @param dto 题目DTO
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createQuestionWithPoints(QuestionDTO dto) {
         Question question = new Question();
         BeanUtils.copyProperties(dto, question);
-        this.save(question); // Gets generated ID
+        this.save(question); // 获取生成的ID
 
         if (dto.getPointIds() != null && !dto.getPointIds().isEmpty()) {
             List<QuestionKnowledgeMap> maps = new ArrayList<>();
@@ -43,6 +48,11 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         }
     }
 
+    /**
+     * 更新题目
+     * 
+     * @param dto 题目DTO
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateQuestionWithPoints(QuestionDTO dto) {
@@ -50,12 +60,12 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         BeanUtils.copyProperties(dto, question);
         this.updateById(question);
 
-        // Delete old mappings
+        // 删除旧的映射
         QueryWrapper<QuestionKnowledgeMap> wrapper = new QueryWrapper<>();
         wrapper.eq("question_id", question.getQuestionId());
         questionKnowledgeMapService.remove(wrapper);
 
-        // Insert new mappings
+        // 插入新的映射
         if (dto.getPointIds() != null && !dto.getPointIds().isEmpty()) {
             List<QuestionKnowledgeMap> maps = new ArrayList<>();
             for (Integer pointId : dto.getPointIds()) {
@@ -68,6 +78,12 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         }
     }
 
+    /**
+     * 根据ID获取题目
+     * 
+     * @param id 题目ID
+     * @return 题目DTO
+     */
     @Override
     public QuestionDTO getQuestionById(Long id) {
         Question question = this.getById(id);
@@ -86,6 +102,16 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         return dto;
     }
 
+    /**
+     * 分页获取题目
+     * 
+     * @param current  当前页
+     * @param size     每页数量
+     * @param courseId 课程ID
+     * @param type     题目类型
+     * @param keyword  关键词
+     * @return 题目分页数据
+     */
     @Override
     public Page<Question> getQuestionPage(Integer current, Integer size, Integer courseId, String type,
             String keyword) {

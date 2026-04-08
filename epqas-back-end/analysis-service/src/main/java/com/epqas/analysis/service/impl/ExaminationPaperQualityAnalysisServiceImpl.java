@@ -16,12 +16,27 @@ public class ExaminationPaperQualityAnalysisServiceImpl
         extends ServiceImpl<ExaminationPaperQualityAnalysisMapper, ExaminationPaperQualityAnalysis>
         implements ExaminationPaperQualityAnalysisService {
 
+    /**
+     * 分页查询试卷分析结果
+     * 
+     * @param current  当前页
+     * @param size     每页数量
+     * @param setterId 命题人ID
+     * @return 分页试卷分析结果
+     */
     @Override
     public Page<PaperAnalysisVO> getPageBySetterId(Integer current, Integer size, Long setterId) {
         Page<PaperAnalysisVO> page = new Page<>(current, size);
         return baseMapper.selectPageBySetterId(page, setterId);
     }
 
+    /**
+     * 获取趋势分析数据
+     * 
+     * @param setterId 命题人ID
+     * @param courseId 课程ID
+     * @return 趋势分析数据
+     */
     @Override
     public List<PaperAnalysisVO> getTrendAnalysis(Long setterId, Long courseId) {
         return baseMapper.selectTrendBySetterId(setterId, courseId);

@@ -4,11 +4,15 @@ import lombok.Data;
 
 @Data
 public class StudentErrorQuestionQuery {
-    private Long studentId;
-    private Long courseId;
-    private Long examId;
-    private String questionType;
+    private Long studentId; // 学生ID
     
-    private Integer current = 1;
-    private Integer size = 5;
+    private Long courseId; // 课程ID
+    
+    private Long examId; // 考试ID
+    
+    private String questionType; // 题目类型
+    
+    private Integer current = 1; // 当前页
+    
+    private Integer size = 5; // 每页数量
 }

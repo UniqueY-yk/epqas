@@ -3,11 +3,9 @@ package com.epqas.analysis.service;
 public interface AnalysisComputationService {
 
     /**
-     * Compute psychometric indicators for an entire examination and its
-     * corresponding
-     * questions based on the submitted student answers.
+     * 计算整个考试及其相关问题的心理测量指标
      * 
-     * @param examId The ID of the exam instance
+     * @param examId 考试实例ID
      */
     void calculateExamIndicators(Long examId);
 }

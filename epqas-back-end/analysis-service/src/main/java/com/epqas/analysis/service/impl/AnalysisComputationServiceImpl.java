@@ -33,12 +33,17 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
     private final QuestionQualityAnalysisService questionAnalysisService;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * 计算考试指标
+     * 
+     * @param examId 考试ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void calculateExamIndicators(Long examId) {
         log.info("Starting indicator computation for examId: {}", examId);
 
-        // 1. Load context data
+        // ==================== 1. 加载上下文数据 ====================
         List<ComputeExamResultDTO> results = computeMapper.selectExamResults(examId);
         if (results == null || results.isEmpty()) {
             throw new RuntimeException("No student results found for calculation.");
@@ -51,28 +56,20 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             throw new RuntimeException("No questions configured for this exam paper.");
         }
 
-        // 2. Fetch total paper score & context
-        BigDecimal totalExamScore = questions.stream()
-                .map(ComputePaperQuestionDTO::getScoreValue)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Fetch course and paper context manually given standard foreign keys
-        // (Assuming exams map back properly, fallback courseId lookup)
+        // ==================== 2. 基础统计 ====================
         Long paperId = questions.get(0).getPaperId();
         Integer courseId = jdbcTemplate.queryForObject(
                 "SELECT course_id FROM examination_paper WHERE paper_id = ?",
                 Integer.class, paperId);
 
-        // 3. Compute Basic Exam Statistics (Average, Max, Min, StdDev)
+        // 计算基本统计 (平均分, 最高分, 最低分, 标准差)
         BigDecimal sumScores = BigDecimal.ZERO;
         BigDecimal maxScore = BigDecimal.ZERO;
         BigDecimal minScore = new BigDecimal("9999");
-
         List<BigDecimal> scoreList = new ArrayList<>();
+
         for (ComputeExamResultDTO r : results) {
-            BigDecimal ts = r.getTotalScore();
-            if (ts == null)
-                ts = BigDecimal.ZERO;
+            BigDecimal ts = r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO;
             scoreList.add(ts);
             sumScores = sumScores.add(ts);
             if (ts.compareTo(maxScore) > 0)
@@ -81,17 +78,34 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                 minScore = ts;
         }
 
-        int N = results.size();
-        BigDecimal avgScore = sumScores.divide(BigDecimal.valueOf(N), 2, RoundingMode.HALF_UP);
-        double stdDev = calculateStdDev(scoreList, avgScore);
+        int N = results.size(); // 总学生数
+        BigDecimal avgScore = sumScores.divide(BigDecimal.valueOf(N), 4, RoundingMode.HALF_UP);
+        double totalStdDev = calculateStdDev(scoreList, avgScore); // σ_T
 
-        // 4. Compute Overall Difficulty (μ / Max_Score)
-        double overallDifficulty = 0.0;
-        if (totalExamScore.compareTo(BigDecimal.ZERO) > 0) {
-            overallDifficulty = avgScore.doubleValue() / totalExamScore.doubleValue();
+        // ==================== 3. 极端组分组 (25%) ====================
+        results.sort((a, b) -> b.getTotalScore().compareTo(a.getTotalScore())); // 降序
+        int groupSize = (int) Math.floor(N * 0.25); // 取25%，向下取整
+        if (groupSize < 1)
+            groupSize = 1;
+
+        List<ComputeExamResultDTO> highGroup = results.subList(0, Math.min(groupSize, N));
+        List<ComputeExamResultDTO> lowGroup = results.subList(Math.max(0, N - groupSize), N);
+
+        Set<Long> highGroupIds = highGroup.stream().map(ComputeExamResultDTO::getStudentId).collect(Collectors.toSet());
+        Set<Long> lowGroupIds = lowGroup.stream().map(ComputeExamResultDTO::getStudentId).collect(Collectors.toSet());
+
+        // ==================== 4. 按题目分组答题记录 ====================
+        Map<Long, List<ComputeStudentAnswerDTO>> answersByQuestion = answers.stream()
+                .collect(Collectors.groupingBy(ComputeStudentAnswerDTO::getQuestionId));
+
+        // 为Pearson相关系数准备: 每个学生的总分Map
+        Map<Long, BigDecimal> studentTotalScores = new HashMap<>();
+        for (ComputeExamResultDTO r : results) {
+            studentTotalScores.put(r.getStudentId(), r.getTotalScore() != null ? r.getTotalScore() : BigDecimal.ZERO);
         }
+        double meanTotal = avgScore.doubleValue();
 
-        // 5. Compute Knowledge Coverage Rate
+        // ==================== 5. 知识覆盖率 ====================
         Integer totalCoursePoints = computeMapper.countCourseKnowledgePoints(courseId);
         Integer paperPoints = computeMapper.countPaperKnowledgePoints(paperId);
         double coverageRate = 0.0;
@@ -99,112 +113,86 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             coverageRate = (double) paperPoints / totalCoursePoints;
         }
 
-        // 6. Compute Discrimination Index
-        // Sort students by score to find Top 27% and Bottom 27%
-        results.sort((a, b) -> b.getTotalScore().compareTo(a.getTotalScore())); // Descending
-        int topBottomCount = (int) Math.max(1, Math.round(N * 0.27));
-
-        List<ComputeExamResultDTO> highGroup = results.subList(0, Math.min(topBottomCount, N));
-        List<ComputeExamResultDTO> lowGroup = results.subList(Math.max(0, N - topBottomCount), N);
-
-        double highGroupAvg = highGroup.stream()
-                .map(ComputeExamResultDTO::getTotalScore)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(highGroup.size()), 2, RoundingMode.HALF_UP)
-                .doubleValue();
-
-        double lowGroupAvg = lowGroup.stream()
-                .map(ComputeExamResultDTO::getTotalScore)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(lowGroup.size()), 2, RoundingMode.HALF_UP)
-                .doubleValue();
-
-        double overallDiscrimination = 0.0;
-        if (totalExamScore.compareTo(BigDecimal.ZERO) > 0) {
-            overallDiscrimination = (highGroupAvg - lowGroupAvg) / totalExamScore.doubleValue();
-        }
-
-        // 7. Compute Reliability (Cronbach's Alpha)
-        // ά = (K / K-1) * (1 - sum(σ_i^2) / σ_x^2)
+        // ==================== 6. 信度 Cronbach's Alpha ====================
+        // α = (K / K-1) * (1 - Σ(S_i²) / S_T²)
         int K = questions.size();
         double sumItemVariances = 0.0;
+        double reliability = 0.0;
 
-        if (K > 1 && stdDev > 0) {
-            Map<Long, List<ComputeStudentAnswerDTO>> answersByQuestion = answers.stream()
-                    .collect(Collectors.groupingBy(ComputeStudentAnswerDTO::getQuestionId));
-
+        if (K > 1 && totalStdDev > 0) {
             for (ComputePaperQuestionDTO q : questions) {
                 List<ComputeStudentAnswerDTO> qAnswers = answersByQuestion.getOrDefault(q.getQuestionId(),
                         new ArrayList<>());
                 List<BigDecimal> itemScores = qAnswers.stream()
                         .map(a -> a.getScoreObtained() != null ? a.getScoreObtained() : BigDecimal.ZERO)
                         .collect(Collectors.toList());
-
-                // Pad missing answers with zero score
+                // 填充缺失的答题记录为0分
                 while (itemScores.size() < N) {
                     itemScores.add(BigDecimal.ZERO);
                 }
-
-                BigDecimal sumItemScore = itemScores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal avgItemScore = sumItemScore.divide(BigDecimal.valueOf(N), 2, RoundingMode.HALF_UP);
-                double itemVar = Math.pow(calculateStdDev(itemScores, avgItemScore), 2);
+                BigDecimal sumItem = itemScores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal avgItem = sumItem.divide(BigDecimal.valueOf(N), 4, RoundingMode.HALF_UP);
+                double itemVar = Math.pow(calculateStdDev(itemScores, avgItem), 2);
                 sumItemVariances += itemVar;
             }
-
-            double reliability = ((double) K / (K - 1)) * (1.0 - (sumItemVariances / Math.pow(stdDev, 2)));
-            // Clamp
+            reliability = ((double) K / (K - 1)) * (1.0 - (sumItemVariances / Math.pow(totalStdDev, 2)));
             reliability = Math.max(0.0, Math.min(1.0, reliability));
         }
 
-        double validity = 0.85; // Heuristic placeholder
-
-        // Check if anything is abnormal (e.g., extremely hard or extremely low
-        // discrimination)
-        boolean isAbnormal = overallDifficulty < 0.3 || overallDiscrimination < 0.2;
-
-        // 8. Save Paper Analysis
-        deleteExistingPaperAnalysis(examId);
-
-        ExaminationPaperQualityAnalysis examAnalysis = new ExaminationPaperQualityAnalysis();
-        examAnalysis.setExamId(examId);
-        examAnalysis.setAverageScore(avgScore);
-        examAnalysis.setStdDeviation(BigDecimal.valueOf(stdDev));
-        examAnalysis.setHighestScore(maxScore);
-        examAnalysis.setLowestScore(minScore);
-        examAnalysis.setReliabilityCoefficient((float) overallDiscrimination); // FIX: Storing Cronbach later, reuse
-                                                                               // variable
-        examAnalysis.setReliabilityCoefficient(
-                (float) (K > 1 ? ((double) K / (K - 1)) * (1.0 - (sumItemVariances / Math.pow(stdDev, 2))) : 0.8));
-        examAnalysis.setValidityCoefficient((float) validity);
-        examAnalysis.setKnowledgeCoverageRate((float) coverageRate);
-        examAnalysis.setOverallDifficulty((float) overallDifficulty);
-        examAnalysis.setOverallDiscrimination((float) overallDiscrimination);
-        examAnalysis.setIsAbnormal(isAbnormal);
-
-        examAnalysisService.save(examAnalysis);
-
-        // 9. Compute & Save Item-Level Metrics
+        // ==================== 7. 逐题指标计算 (P, D, V) ====================
         deleteExistingItemAnalysis(examId);
         List<QuestionQualityAnalysis> qAnalyses = new ArrayList<>();
-
-        Set<Long> highGroupIds = highGroup.stream().map(ComputeExamResultDTO::getStudentId).collect(Collectors.toSet());
-        Set<Long> lowGroupIds = lowGroup.stream().map(ComputeExamResultDTO::getStudentId).collect(Collectors.toSet());
+        double sumP = 0.0; // 用于计算平均难度
+        double sumD = 0.0; // 用于计算平均区分度
+        double sumV = 0.0; // 用于计算平均效度
 
         for (ComputePaperQuestionDTO q : questions) {
             QuestionQualityAnalysis itemQa = new QuestionQualityAnalysis();
             itemQa.setExamId(examId);
             itemQa.setQuestionId(q.getQuestionId());
 
-            List<ComputeStudentAnswerDTO> qAns = answers.stream()
-                    .filter(a -> a.getQuestionId().equals(q.getQuestionId()))
-                    .collect(Collectors.toList());
+            List<ComputeStudentAnswerDTO> qAns = answersByQuestion.getOrDefault(q.getQuestionId(), new ArrayList<>());
+            BigDecimal H = q.getScoreValue(); // 该题满分
+            if (H == null || H.compareTo(BigDecimal.ZERO) == 0)
+                H = BigDecimal.ONE;
 
-            // Correct Response Rate (P-Value / Difficulty)
+            // ---- 7a. 正确反应率 (保留向后兼容) ----
             long correctCount = qAns.stream().filter(a -> Boolean.TRUE.equals(a.getIsCorrect())).count();
-            float rRate = N > 0 ? (float) correctCount / N : 0f;
-            itemQa.setCorrectResponseRate(rRate);
+            float correctRate = N > 0 ? (float) correctCount / N : 0f;
+            itemQa.setCorrectResponseRate(correctRate);
 
-            // Compute Selection Distribution
+            // ---- 7b. 极端组法难度 P = (X_H + X_L) / (2 * groupSize * H) ----
+            BigDecimal xH = BigDecimal.ZERO; // 高分组该题得分总和
+            BigDecimal xL = BigDecimal.ZERO; // 低分组该题得分总和
+            for (ComputeStudentAnswerDTO a : qAns) {
+                BigDecimal score = a.getScoreObtained() != null ? a.getScoreObtained() : BigDecimal.ZERO;
+                if (highGroupIds.contains(a.getStudentId())) {
+                    xH = xH.add(score);
+                }
+                if (lowGroupIds.contains(a.getStudentId())) {
+                    xL = xL.add(score);
+                }
+            }
+            double denomP = 2.0 * groupSize * H.doubleValue();
+            double P = denomP > 0 ? (xH.doubleValue() + xL.doubleValue()) / denomP : 0.0;
+            P = Math.max(0.0, Math.min(1.0, P));
+            itemQa.setDifficultyIndex((float) P);
+            sumP += P;
+
+            // ---- 7c. 极端组法区分度 D = (X_H - X_L) / (groupSize * H) ----
+            double denomD = groupSize * H.doubleValue();
+            double D = denomD > 0 ? (xH.doubleValue() - xL.doubleValue()) / denomD : 0.0;
+            D = Math.max(-1.0, Math.min(1.0, D));
+            itemQa.setDiscriminationIndex((float) D);
+            sumD += D;
+
+            // ---- 7d. 效度 Pearson r(i,T) ----
+            // r = Σ((Xi - X̄i)(T - T̄)) / sqrt(Σ(Xi - X̄i)² * Σ(T - T̄)²)
+            double validity = calculatePearsonCorrelation(qAns, studentTotalScores, N, meanTotal);
+            itemQa.setValidityIndex((float) validity);
+            sumV += Math.abs(validity);
+
+            // ---- 7e. 选项分布 ----
             Map<String, Integer> choiceCounts = new HashMap<>();
             for (ComputeStudentAnswerDTO a : qAns) {
                 String choice = a.getStudentChoice();
@@ -219,24 +207,19 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                 log.error("Failed to serialize choice distribution for question {}", q.getQuestionId(), e);
             }
 
-            // Item Discrimination: (CH - CL) / (N/2 roughly) based on groups
-            long highCorrect = qAns.stream()
-                    .filter(a -> highGroupIds.contains(a.getStudentId()) && Boolean.TRUE.equals(a.getIsCorrect()))
-                    .count();
-            long lowCorrect = qAns.stream()
-                    .filter(a -> lowGroupIds.contains(a.getStudentId()) && Boolean.TRUE.equals(a.getIsCorrect()))
-                    .count();
+            // ---- 7f. 定性评价 ----
+            itemQa.setDifficultyEvaluation(evaluateDifficulty(P));
+            itemQa.setDiscriminationEvaluation(evaluateDiscrimination(D));
 
-            float itemDisc = topBottomCount > 0 ? (float) (highCorrect - lowCorrect) / topBottomCount : 0f;
-            itemQa.setDiscriminationIndex(itemDisc);
-
-            itemQa.setIsTooEasy(rRate > 0.90f);
-            itemQa.setIsLowDiscrimination(itemDisc < 0.20f);
-
+            // ---- 7g. 异常标记 ----
+            itemQa.setIsTooEasy(P > 0.7);
+            itemQa.setIsLowDiscrimination(D < 0.2);
             if (itemQa.getIsTooEasy() && itemQa.getIsLowDiscrimination()) {
                 itemQa.setDiagnosisTag("题目过于简单且无区分度");
             } else if (itemQa.getIsLowDiscrimination()) {
                 itemQa.setDiagnosisTag("区分度较差，建议修改选项");
+            } else if (P < 0.4) {
+                itemQa.setDiagnosisTag("题目过难，建议降低难度");
             }
 
             qAnalyses.add(itemQa);
@@ -246,36 +229,258 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             questionAnalysisService.saveBatch(qAnalyses);
         }
 
-        // 10. Generate and Persist Improvement Suggestions (in Chinese)
+        // ==================== 8. 整体试卷指标 ====================
+        double overallDifficulty = K > 0 ? sumP / K : 0.0;
+        double overallDiscrimination = K > 0 ? sumD / K : 0.0;
+        double overallValidity = K > 0 ? sumV / K : 0.0;
+
+        // ==================== 9. 正态分布指标 (偏度 & 峰度) ====================
+        double skewness = calculateSkewness(scoreList, avgScore, totalStdDev, N);
+        double kurtosis = calculateKurtosis(scoreList, avgScore, totalStdDev, N);
+
+        // ==================== 10. 异常判定 ====================
+        boolean isAbnormal = overallDifficulty < 0.4 || overallDifficulty > 0.7
+                || overallDiscrimination < 0.2 || reliability < 0.6;
+
+        // ==================== 11. 保存试卷分析 ====================
+        deleteExistingPaperAnalysis(examId);
+
+        ExaminationPaperQualityAnalysis examAnalysis = new ExaminationPaperQualityAnalysis();
+        examAnalysis.setExamId(examId);
+        examAnalysis.setAverageScore(avgScore.setScale(2, RoundingMode.HALF_UP));
+        examAnalysis.setStdDeviation(BigDecimal.valueOf(totalStdDev).setScale(2, RoundingMode.HALF_UP));
+        examAnalysis.setHighestScore(maxScore);
+        examAnalysis.setLowestScore(minScore);
+        examAnalysis.setReliabilityCoefficient((float) reliability);
+        examAnalysis.setValidityCoefficient((float) overallValidity);
+        examAnalysis.setKnowledgeCoverageRate((float) coverageRate);
+        examAnalysis.setOverallDifficulty((float) overallDifficulty);
+        examAnalysis.setOverallDiscrimination((float) overallDiscrimination);
+        examAnalysis.setIsAbnormal(isAbnormal);
+        examAnalysis.setSkewness((float) skewness);
+        examAnalysis.setKurtosis((float) kurtosis);
+        examAnalysis.setReliabilityEvaluation(evaluateReliability(reliability));
+        examAnalysis.setDifficultyEvaluation(evaluateDifficulty(overallDifficulty));
+        examAnalysis.setDiscriminationEvaluation(evaluateDiscrimination(overallDiscrimination));
+
+        examAnalysisService.save(examAnalysis);
+
+        // ==================== 12. 生成并保存改进建议 ====================
+        generateImprovementSuggestions(examId);
+
+        log.info("Finished indicator computation for examId: {}", examId);
+    }
+
+    /**
+     * 计算皮尔逊相关系数
+     * 
+     * @param qAns               题目答案
+     * @param studentTotalScores 学生总分
+     * @param totalStudents      学生总数
+     * @param meanTotal          平均总分
+     * @return 皮尔逊相关系数
+     */
+    // ==================== Pearson相关系数 r(i,T) ====================
+    private double calculatePearsonCorrelation(List<ComputeStudentAnswerDTO> qAns,
+            Map<Long, BigDecimal> studentTotalScores,
+            int totalStudents, double meanTotal) {
+        // 建立该题各学生得分Map
+        Map<Long, BigDecimal> itemScoreMap = new HashMap<>();
+        for (ComputeStudentAnswerDTO a : qAns) {
+            itemScoreMap.put(a.getStudentId(), a.getScoreObtained() != null ? a.getScoreObtained() : BigDecimal.ZERO);
+        }
+
+        // 计算该题平均分
+        double sumItem = 0.0;
+        for (Map.Entry<Long, BigDecimal> entry : studentTotalScores.entrySet()) {
+            sumItem += itemScoreMap.getOrDefault(entry.getKey(), BigDecimal.ZERO).doubleValue();
+        }
+        double meanItem = totalStudents > 0 ? sumItem / totalStudents : 0.0;
+
+        // 计算 Pearson r
+        double sumXY = 0.0;
+        double sumX2 = 0.0;
+        double sumY2 = 0.0;
+
+        for (Map.Entry<Long, BigDecimal> entry : studentTotalScores.entrySet()) {
+            Long sid = entry.getKey();
+            double xi = itemScoreMap.getOrDefault(sid, BigDecimal.ZERO).doubleValue();
+            double ti = entry.getValue().doubleValue();
+
+            double dx = xi - meanItem;
+            double dy = ti - meanTotal;
+            sumXY += dx * dy;
+            sumX2 += dx * dx;
+            sumY2 += dy * dy;
+        }
+
+        double denom = Math.sqrt(sumX2 * sumY2);
+        if (denom == 0)
+            return 0.0;
+        return sumXY / denom;
+    }
+
+    /**
+     * 计算偏度
+     * 
+     * @param data   数据
+     * @param mean   平均值
+     * @param stdDev 标准差
+     * @param n      数据数量
+     * @return 偏度
+     */
+    // ==================== 偏度 (Skewness) ====================
+    // Skewness = [n / ((n-1)(n-2))] * Σ((xi - x̄) / σ)³
+    private double calculateSkewness(List<BigDecimal> data, BigDecimal mean, double stdDev, int n) {
+        if (n < 3 || stdDev == 0)
+            return 0.0;
+        double sum = 0.0;
+        double meanVal = mean.doubleValue();
+        for (BigDecimal val : data) {
+            double z = (val.doubleValue() - meanVal) / stdDev;
+            sum += z * z * z;
+        }
+        return ((double) n / ((n - 1) * (n - 2))) * sum;
+    }
+
+    /**
+     * 计算峰度
+     * 
+     * @param data   数据
+     * @param mean   平均值
+     * @param stdDev 标准差
+     * @param n      数据数量
+     * @return 峰度
+     */
+    // ==================== 峰度 (Excess Kurtosis) ====================
+    // Kurtosis = [n(n+1) / ((n-1)(n-2)(n-3))] * Σ((xi - x̄) / σ)⁴ - [3(n-1)² /
+    // ((n-2)(n-3))]
+    private double calculateKurtosis(List<BigDecimal> data, BigDecimal mean, double stdDev, int n) {
+        if (n < 4 || stdDev == 0)
+            return 0.0;
+        double sum = 0.0;
+        double meanVal = mean.doubleValue();
+        for (BigDecimal val : data) {
+            double z = (val.doubleValue() - meanVal) / stdDev;
+            sum += z * z * z * z;
+        }
+        double term1 = ((double) n * (n + 1)) / ((double) (n - 1) * (n - 2) * (n - 3));
+        double term2 = (3.0 * (n - 1) * (n - 1)) / ((double) (n - 2) * (n - 3));
+        return term1 * sum - term2;
+    }
+
+    // ==================== 定性评价映射 ====================
+
+    /**
+     * 评价信度
+     * 
+     * @param alpha 信度
+     * @return 评价结果
+     */
+    /** 信度评价: α >= 0.8 → High, α >= 0.6 → Medium, α < 0.6 → Low */
+    private String evaluateReliability(double alpha) {
+        if (alpha >= 0.8)
+            return "高 (结构优良，信度高)";
+        if (alpha >= 0.6)
+            return "中 (结构尚可)";
+        return "低 (不可靠，需重组)";
+    }
+
+    /**
+     * 评价难度
+     * 
+     * @param p 难度
+     * @return 评价结果
+     */
+    /** 难度评价: P > 0.7 → Too Easy, P >= 0.4 → Moderate, P < 0.4 → Too Hard */
+    private String evaluateDifficulty(double p) {
+        if (p > 0.7)
+            return "偏易";
+        if (p >= 0.4)
+            return "适中";
+        return "偏难";
+    }
+
+    /**
+     * 评价区分度
+     * 
+     * @param d 区分度
+     * @return 评价结果
+     */
+    /**
+     * 区分度评价: D >= 0.4 → Excellent, D >= 0.3 → Good, D >= 0.2 → Marginal, D < 0.2 →
+     * Poor
+     */
+    private String evaluateDiscrimination(double d) {
+        if (d >= 0.4)
+            return "优秀 (区分度很好)";
+        if (d >= 0.3)
+            return "良好 (可接受)";
+        if (d >= 0.2)
+            return "一般 (需修改)";
+        return "差 (建议淘汰)";
+    }
+
+    /**
+     * 计算标准差
+     * 
+     * @param data 数据
+     * @param mean 平均值
+     * @return 标准差
+     */
+    // ==================== 标准差 (总体) ====================
+    private double calculateStdDev(List<BigDecimal> data, BigDecimal mean) {
+        if (data.size() <= 1)
+            return 0.0;
+        double sumSquareDiffs = 0.0;
+        for (BigDecimal val : data) {
+            double diff = val.doubleValue() - mean.doubleValue();
+            sumSquareDiffs += diff * diff;
+        }
+        return Math.sqrt(sumSquareDiffs / data.size());
+    }
+
+    /**
+     * 生成改进建议
+     * 
+     * @param examId 考试ID
+     */
+    // ==================== 改进建议生成 ====================
+    private void generateImprovementSuggestions(Long examId) {
         jdbcTemplate.update("DELETE FROM improvement_suggestion WHERE exam_id = ?", examId);
         List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByExamId(examId);
         ObjectMapper mapper = new ObjectMapper();
 
         for (QuestionAnalysisDTO dto : dtos) {
-            // Rule 1: Difficulty Check
-            if (dto.getCorrectResponseRate() != null) {
-                if (dto.getCorrectResponseRate() < 0.3f) {
-                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj", "题目难度过高，建议修改题干或干扰项。");
+            // 规则1：难度检查 (使用difficultyIndex)
+            Float diffIdx = dto.getDifficultyIndex();
+            if (diffIdx != null) {
+                if (diffIdx < 0.4f) {
+                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj",
+                            "题目难度过高 (P=" + String.format("%.2f", diffIdx) + ", " + evaluateDifficulty(diffIdx)
+                                    + ")，建议修改题干或干扰项。");
 
-                    // Negative keyword check
                     if (dto.getStem() != null && (dto.getStem().toUpperCase().contains("NOT") ||
                             dto.getStem().toUpperCase().contains("EXCEPT") ||
-                            dto.getStem().contains("不") ||
-                            dto.getStem().contains("除了"))) {
+                            dto.getStem().contains("不") || dto.getStem().contains("除了"))) {
                         saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
-                                "这是一道难度较高的否定形式题目。建议在题干中加粗或高亮否定词 (如 'NOT', 'EXCEPT', '不', '除了')，以提醒学生。");
+                                "这是一道难度较高的否定形式题目。建议在题干中加粗或高亮否定词。");
                     }
-                } else if (dto.getCorrectResponseRate() > 0.9f) {
-                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj", "题目过于简单，请检查正确答案是否过于明显。");
+                } else if (diffIdx > 0.7f) {
+                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj",
+                            "题目过于简单 (P=" + String.format("%.2f", diffIdx) + ", " + evaluateDifficulty(diffIdx)
+                                    + ")，请检查正确答案是否过于明显。");
                 }
             }
 
-            // Rule 2: Discrimination Check
+            // 规则2：区分度检查
             if (dto.getDiscriminationIndex() != null && dto.getDiscriminationIndex() < 0.2f) {
-                saveSuggestion(examId, dto.getQuestionId(), "Question_Content", "区分度较低。高分学生可能会被模棱两可的选项迷惑，建议优化选项。");
+                saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                        "区分度较低 (D=" + String.format("%.2f", dto.getDiscriminationIndex()) + ", "
+                                + evaluateDiscrimination(dto.getDiscriminationIndex()) + ")。建议优化选项。");
             }
 
-            // Parse Options JSON for detailed checks
+            // 解析选项JSON进行详细检查
             Map<String, String> optionsMap = null;
             if (dto.getOptionsJson() != null && !dto.getOptionsJson().isEmpty() &&
                     ("SingleChoice".equals(dto.getQuestionType()) || "MultipleChoice".equals(dto.getQuestionType()))) {
@@ -283,18 +488,16 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                     optionsMap = mapper.readValue(dto.getOptionsJson(), new TypeReference<Map<String, String>>() {
                     });
                 } catch (Exception e) {
-                    // Ignore
                 }
             }
 
-            // Rule 3: Option Distribution
+            // 规则3：选项分布
             if (dto.getSelectionDistributionJson() != null && !dto.getSelectionDistributionJson().isEmpty() &&
                     "SingleChoice".equals(dto.getQuestionType())) {
                 try {
                     Map<String, Integer> distribution = mapper.readValue(dto.getSelectionDistributionJson(),
                             new TypeReference<Map<String, Integer>>() {
                             });
-
                     String[] standardOptions = { "A", "B", "C", "D" };
                     for (String opt : standardOptions) {
                         if (!distribution.containsKey(opt) || distribution.get(opt) == 0) {
@@ -306,11 +509,10 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                         }
                     }
                 } catch (Exception e) {
-                    // Ignore error
                 }
             }
 
-            // Rule 4: Length Bias Check
+            // 规则4：长度偏差检查
             if (optionsMap != null && dto.getCorrectAnswer() != null && "SingleChoice".equals(dto.getQuestionType())) {
                 String correctOptKey = dto.getCorrectAnswer().trim();
                 String correctText = optionsMap.get(correctOptKey);
@@ -318,7 +520,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                     int correctLen = correctText.length();
                     boolean isSignificantlyLonger = true;
                     int validDistractors = 0;
-
                     for (Map.Entry<String, String> entry : optionsMap.entrySet()) {
                         if (!entry.getKey().equals(correctOptKey) && entry.getValue() != null) {
                             validDistractors++;
@@ -328,7 +529,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                             }
                         }
                     }
-
                     if (validDistractors > 0 && isSignificantlyLonger) {
                         saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
                                 "潜在长度偏差：正确答案 (" + correctOptKey + ") 明显长于其他干扰项。学生可能会根据长度猜测答案。");
@@ -336,31 +536,36 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                 }
             }
         }
-
-        log.info("Finished indicator computation for examId: {}", examId);
     }
 
+    /**
+     * 保存改进建议
+     * 
+     * @param examId     考试ID
+     * @param questionId 题目ID
+     * @param type       建议类型
+     * @param text       建议内容
+     */
     private void saveSuggestion(Long examId, Long questionId, String type, String text) {
         jdbcTemplate.update(
                 "INSERT INTO improvement_suggestion (exam_id, question_id, suggestion_type, suggestion_text, generated_rule, is_implemented) VALUES (?, ?, ?, ?, ?, ?)",
                 examId, questionId, type, text, text, false);
     }
 
-    private double calculateStdDev(List<BigDecimal> data, BigDecimal mean) {
-        if (data.size() <= 1)
-            return 0.0;
-        double sumSquareDiffs = 0.0;
-        for (BigDecimal val : data) {
-            double diff = val.doubleValue() - mean.doubleValue();
-            sumSquareDiffs += diff * diff;
-        }
-        return Math.sqrt(sumSquareDiffs / data.size()); // Population StdDev
-    }
-
+    /**
+     * 删除已存在的试卷分析
+     * 
+     * @param examId 考试ID
+     */
     private void deleteExistingPaperAnalysis(Long examId) {
         jdbcTemplate.update("DELETE FROM examination_paper_quality_analysis WHERE exam_id = ?", examId);
     }
 
+    /**
+     * 删除已存在的题目分析
+     * 
+     * @param examId 考试ID
+     */
     private void deleteExistingItemAnalysis(Long examId) {
         jdbcTemplate.update("DELETE FROM question_quality_analysis WHERE exam_id = ?", examId);
     }

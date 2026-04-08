@@ -9,9 +9,9 @@ import lombok.Data;
 @TableName("course")
 public class Course {
     @TableId(type = IdType.AUTO)
-    private Integer courseId;
-    
-    private String courseName;
-    
-    private String courseCode;
+    private Integer courseId; // 课程ID
+
+    private String courseName; // 课程名称
+
+    private String courseCode; // 课程代码
 }

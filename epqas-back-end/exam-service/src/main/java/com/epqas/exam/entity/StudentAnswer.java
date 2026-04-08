@@ -16,16 +16,16 @@ public class StudentAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long answerId;
+    private Long answerId; // 答案ID
 
-    private Long resultId;
+    private Long resultId; // 考试结果ID
 
-    private Long questionId;
+    private Long questionId; // 题目ID
 
     @Column(columnDefinition = "TEXT")
-    private String studentChoice;
+    private String studentChoice; // 学生答案
 
-    private BigDecimal scoreObtained;
+    private BigDecimal scoreObtained; // 获得分数
 
-    private Boolean isCorrect;
+    private Boolean isCorrect; // 是否正确
 }

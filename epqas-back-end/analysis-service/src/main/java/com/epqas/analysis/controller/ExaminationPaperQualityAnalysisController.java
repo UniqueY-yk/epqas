@@ -21,32 +21,69 @@ public class ExaminationPaperQualityAnalysisController {
     @Autowired
     private AnalysisComputationService computationService;
 
+    /**
+     * 计算试卷指标
+     * 
+     * @param examId 试卷ID
+     * @return 计算结果
+     */
     @PostMapping("/calculate/{examId}")
     public Result<Boolean> calculateExamIndicators(@PathVariable("examId") Long examId) {
         computationService.calculateExamIndicators(examId);
         return Result.success(true);
     }
 
+    /**
+     * 创建分析
+     * 
+     * @param analysis 分析数据
+     * @return 创建结果
+     */
     @PostMapping
     public Result<Boolean> createAnalysis(@RequestBody ExaminationPaperQualityAnalysis analysis) {
         return Result.success(analysisService.save(analysis));
     }
 
+    /**
+     * 获取分析详情
+     * 
+     * @param id 分析ID
+     * @return 分析详情
+     */
     @GetMapping("/{id}")
     public Result<ExaminationPaperQualityAnalysis> getAnalysisById(@PathVariable("id") Long id) {
         return Result.success(analysisService.getById(id));
     }
 
+    /**
+     * 更新分析
+     * 
+     * @param analysis 分析数据
+     * @return 更新结果
+     */
     @PutMapping
     public Result<Boolean> updateAnalysis(@RequestBody ExaminationPaperQualityAnalysis analysis) {
         return Result.success(analysisService.updateById(analysis));
     }
 
+    /**
+     * 删除分析
+     * 
+     * @param id 分析ID
+     * @return 删除结果
+     */
     @DeleteMapping("/{id}")
     public Result<Boolean> deleteAnalysis(@PathVariable("id") Long id) {
         return Result.success(analysisService.removeById(id));
     }
 
+    /**
+     * 获取分析分页数据
+     * 
+     * @param current 当前页
+     * @param size    每页数量
+     * @return 分析分页数据
+     */
     @GetMapping("/page")
     public Result<Page<ExaminationPaperQualityAnalysis>> getAnalysisPage(
             @RequestParam(value = "current", defaultValue = "1") Integer current,
@@ -54,35 +91,58 @@ public class ExaminationPaperQualityAnalysisController {
         return Result.success(analysisService.page(new Page<>(current, size)));
     }
 
+    /**
+     * 获取所有分析
+     * 
+     * @return 分析列表
+     */
     @GetMapping
     public Result<List<ExaminationPaperQualityAnalysis>> listAnalysis() {
         return Result.success(analysisService.list());
     }
 
+    /**
+     * 获取我的试卷
+     * 
+     * @param roleId   角色ID
+     * @param current  当前页
+     * @param size     每页数量
+     * @param setterId 命题教师ID
+     * @return 试卷分页数据
+     */
     @GetMapping("/my-papers")
     public Result<Page<PaperAnalysisVO>> getMyPapers(
             @RequestHeader(value = "X-Role-Id", required = false) Integer roleId,
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
             @RequestParam(value = "setterId", required = false) Long setterId) {
-        // Admin (roleId=1) sees all papers; setters see only their own
+        // 管理员(roleId=1)查看所有试卷；命题教师只查看自己的试卷
         if (roleId != null && roleId == 1) {
             setterId = null;
         }
         return Result.success(analysisService.getPageBySetterId(current, size, setterId));
     }
 
+    /**
+     * 获取趋势分析
+     * 
+     * @param roleId   角色ID
+     * @param userId   用户ID
+     * @param setterId 命题教师ID
+     * @param courseId 课程ID
+     * @return 趋势分析数据
+     */
     @GetMapping("/trend")
     public Result<List<PaperAnalysisVO>> getTrendAnalysis(
             @RequestHeader(value = "X-Role-Id", required = false) Integer roleId,
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestParam(value = "setterId", required = false) Long setterId,
             @RequestParam(value = "courseId", required = false) Long courseId) {
-        
+
         if (roleId != null && roleId == 1) {
-            // Admin can query any specified setterId
+            // 管理员可以查询任何指定的setterId
         } else {
-            // Non-admin can ONLY query their own setterId
+            // 命题教师只能查询自己的setterId
             setterId = userId;
         }
         return Result.success(analysisService.getTrendAnalysis(setterId, courseId));

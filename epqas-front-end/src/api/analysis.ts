@@ -8,6 +8,7 @@ export interface PaperAnalysisVO {
     courseName: string;
     examDate: string;
     averageScore: number;
+    stdDeviation: number;
     highestScore: number;
     lowestScore: number;
     reliabilityCoefficient: number;
@@ -16,6 +17,11 @@ export interface PaperAnalysisVO {
     overallDifficulty: number;
     overallDiscrimination: number;
     isAbnormal: boolean;
+    skewness: number;
+    kurtosis: number;
+    reliabilityEvaluation: string;
+    difficultyEvaluation: string;
+    discriminationEvaluation: string;
 }
 
 export const getMyPaperAnalyses = (params: any) => {
@@ -38,14 +44,18 @@ export interface QuestionAnalysisVO {
     questionId: number;
     stem: string;
     questionType: string;
-    correctResponseRate: number; // Difficulty (X Axis)
-    discriminationIndex: number; // Discrimination (Y Axis)
+    correctResponseRate: number; // legacy simple ratio
+    difficultyIndex: number; // Extreme Group P value (X axis)
+    discriminationIndex: number; // Extreme Group D value (Y axis)
+    validityIndex: number; // Pearson r(i,T)
     isTooEasy: boolean;
     isLowDiscrimination: boolean;
     diagnosisTag: string;
     isAbnormal: boolean;
     selectionDistributionJson?: string;
     suggestions?: string[];
+    difficultyEvaluation?: string;
+    discriminationEvaluation?: string;
 }
 
 export const getQuestionAnalysisByExamId = (examId: number) => {

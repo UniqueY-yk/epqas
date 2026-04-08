@@ -3,25 +3,27 @@ package com.epqas.academic.dto;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 
+/**
+ * Excel学生数据传输对象
+ */
 @Data
 public class ExcelStudentDTO {
 
     @ExcelProperty("Student Number")
-    private String studentNumber;
+    private String studentNumber; // 学号
 
     @ExcelProperty("Real Name")
-    private String realName;
+    private String realName; // 真实姓名
 
     @ExcelProperty("Username")
-    private String username;
+    private String username; // 用户名
 
     @ExcelProperty("Email")
-    private String email;
+    private String email; // 邮箱
 
-    // In a real system you might map "Class Name" -> ID, but for simplicity:
     @ExcelProperty("Class ID")
-    private Integer classId;
+    private Integer classId; // 班级ID
 
     @ExcelProperty("Password")
-    private String password;
+    private String password; // 密码
 }

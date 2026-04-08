@@ -40,6 +40,10 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
     @Autowired
     private QuestionFeignClient questionFeignClient;
 
+    /**
+     * 创建试卷
+     * @param dto 试卷信息
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createPaperWithQuestions(ExaminationPaperDTO dto) {
@@ -47,14 +51,14 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
         BeanUtils.copyProperties(dto, paper);
         paper.setCreatedAt(LocalDateTime.now());
 
-        // Ensure status is at least Draft
+        // 确保状态至少是草稿
         if (paper.getStatus() == null || paper.getStatus().isEmpty()) {
             paper.setStatus("Draft");
         }
 
         this.save(paper);
 
-        // Save questions
+        // 保存题目
         if (dto.getQuestions() != null && !dto.getQuestions().isEmpty()) {
             for (PaperQuestionDTO pqDto : dto.getQuestions()) {
                 ExaminationPaperQuestion epq = new ExaminationPaperQuestion();
@@ -67,6 +71,10 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
         }
     }
 
+    /**
+     * 更新试卷
+     * @param dto 试卷信息
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updatePaperWithQuestions(ExaminationPaperDTO dto) {
@@ -74,12 +82,12 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
         BeanUtils.copyProperties(dto, paper);
         this.updateById(paper);
 
-        // Delete old question mappings
+        // 删除旧的题目映射
         LambdaQueryWrapper<ExaminationPaperQuestion> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ExaminationPaperQuestion::getPaperId, paper.getPaperId());
         paperQuestionMapper.delete(queryWrapper);
 
-        // Insert new ones
+        // 插入新的
         if (dto.getQuestions() != null && !dto.getQuestions().isEmpty()) {
             for (PaperQuestionDTO pqDto : dto.getQuestions()) {
                 ExaminationPaperQuestion epq = new ExaminationPaperQuestion();
@@ -92,6 +100,11 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
         }
     }
 
+    /**
+     * 获取试卷详情
+     * @param paperId 试卷ID
+     * @return 试卷详情
+     */
     @Override
     public ExaminationPaperDTO getPaperWithQuestions(Long paperId) {
         ExaminationPaper paper = this.getById(paperId);
@@ -102,7 +115,7 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
         ExaminationPaperDTO dto = new ExaminationPaperDTO();
         BeanUtils.copyProperties(paper, dto);
 
-        // Populate setter name
+        // 填充出卷人姓名
         try {
             if (paper.getSetterId() != null) {
                 Result<User> userResult = userFeignClient.getUserById(1, paper.getSetterId());
@@ -111,7 +124,6 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
                 }
             }
         } catch (Exception e) {
-            // Ignore
         }
 
         LambdaQueryWrapper<ExaminationPaperQuestion> queryWrapper = new LambdaQueryWrapper<>();
@@ -130,7 +142,7 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
             questionIds.add(pq.getQuestionId());
         }
 
-        // Enrich with question details
+        // 丰富题目详情
         if (!questionIds.isEmpty()) {
             try {
                 Result<List<QuestionBatchDTO>> questionResult = questionFeignClient.getQuestionsByIds(questionIds);
@@ -149,7 +161,6 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
                     }
                 }
             } catch (Exception e) {
-                // Log error or ignore if question-service is down
             }
         }
 
@@ -157,6 +168,14 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
         return dto;
     }
 
+    /**
+     * 分页获取试卷
+     * @param current 当前页
+     * @param size 每页数量
+     * @param courseId 课程ID
+     * @param keyword 关键词
+     * @return 分页试卷
+     */
     @Override
     public Page<ExaminationPaperDTO> getPaperPage(Integer current, Integer size, Integer courseId, String keyword) {
         Page<ExaminationPaper> page = new Page<>(current, size);
@@ -188,7 +207,6 @@ public class ExaminationPaperServiceImpl extends ServiceImpl<ExaminationPaperMap
                     }
                 }
             } catch (Exception e) {
-                // Safe ignore if feign fails for a user
             }
             dtoList.add(dto);
         }

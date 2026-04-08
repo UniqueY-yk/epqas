@@ -13,12 +13,12 @@ import java.math.BigDecimal;
 @IdClass(ExaminationPaperQuestionId.class)
 public class ExaminationPaperQuestion {
     @Id
-    private Long paperId;
+    private Long paperId; // 试卷ID
 
     @Id
-    private Long questionId;
+    private Long questionId; // 题目ID
 
-    private BigDecimal scoreValue;
+    private BigDecimal scoreValue; // 分值
 
-    private Integer questionOrder;
+    private Integer questionOrder; // 题目顺序
 }

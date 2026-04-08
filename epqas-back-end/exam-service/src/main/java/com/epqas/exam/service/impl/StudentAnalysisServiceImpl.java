@@ -44,9 +44,14 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    /**
+     * 获取学生知识点掌握度
+     * @param studentId 学生ID
+     * @return 知识点掌握度列表
+     */
     @Override
     public List<KnowledgeMasteryDTO> getStudentKnowledgeMastery(Long studentId) {
-        // 1. Fetch all completed exam results for this student
+        // 1. 获取该学生所有完成的考试结果
         List<StudentExamResult> results = resultMapper.selectList(
                 new QueryWrapper<StudentExamResult>()
                         .eq("student_id", studentId)
@@ -56,7 +61,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
 
         List<Long> resultIds = results.stream().map(StudentExamResult::getResultId).collect(Collectors.toList());
 
-        // 2. Fetch all student answers belonging to those results
+        // 2. 获取属于这些结果的所有学生答案
         List<StudentAnswer> allAnswers = answerMapper.selectList(
                 new QueryWrapper<StudentAnswer>().in("result_id", resultIds)
         );
@@ -65,11 +70,11 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         List<Long> questionIds = allAnswers.stream()
                 .map(StudentAnswer::getQuestionId).distinct().collect(Collectors.toList());
 
-        // Group answers by question ID for fast lookup
+        // 按题目ID分组答案以便快速查找
         Map<Long, List<StudentAnswer>> answersByQuestion = allAnswers.stream()
                 .collect(Collectors.groupingBy(StudentAnswer::getQuestionId));
 
-        // 3. Fetch paper question info (we need scoreValue for maxScore of each question)
+        // 3. 获取试卷题目信息（我们需要 scoreValue 作为每道题的最大分数）
         List<ExaminationPaperQuestion> paperQuestions = paperQuestionMapper.selectList(
                 new QueryWrapper<ExaminationPaperQuestion>().in("question_id", questionIds)
         );
@@ -80,7 +85,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
                     (existing, replacement) -> existing
                 ));
 
-        // 4. Trace the knowledge points for these precise questions
+        // 4. 追踪这些精确问题的知识点
         String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
         List<Map<String, Object>> kpRows = jdbcTemplate.queryForList(
                 "SELECT qkp.question_id, kp.point_id, kp.point_name " +
@@ -89,7 +94,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
                         "WHERE qkp.question_id IN (" + questionIdStr + ")"
         );
 
-        // Map Point -> Set of Question IDs
+        // 映射知识点 -> 题目ID集合
         Map<Long, String> pointNames = new HashMap<>();
         Map<Long, Set<Long>> pointToQuestions = new HashMap<>();
         for (Map<String, Object> row : kpRows) {
@@ -100,7 +105,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             pointToQuestions.computeIfAbsent(pointId, k -> new HashSet<>()).add(qId);
         }
 
-        // 5. Aggregate performance per Knowledge Point mathematically based on scores
+        // 5. 基于分数按知识点汇总表现
         List<KnowledgeMasteryDTO> masteryList = new ArrayList<>();
         for (Map.Entry<Long, Set<Long>> entry : pointToQuestions.entrySet()) {
             Long pointId = entry.getKey();
@@ -129,14 +134,14 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             dto.setTotalQuestions(totalQuestionsEncountered); // This is total *attempts*, effectively answers given
             dto.setTotalAnswers(totalQuestionsEncountered); 
 
-            // Calculate true fractional mastery
+            // 计算真实分数掌握率
             double masteryRate = 0.0;
             if (totalMaxScore.compareTo(BigDecimal.ZERO) > 0) {
                 masteryRate = totalObtainedScore.divide(totalMaxScore, 4, java.math.RoundingMode.HALF_UP).doubleValue();
             }
             
-            // For backward compatibility with the generic charts if they use purely correctCount
-            // We can abstract correctCount = true completely accurate answers
+            // 为了与使用纯粹 correctCount 的通用图表向后兼容
+            // 我们可以将 correctCount 抽象为完全正确的答案
             int perfectlyCorrect = 0;
             for (Long qId : qIds) {
                 List<StudentAnswer> studentEfforts = answersByQuestion.getOrDefault(qId, Collections.emptyList());
@@ -161,17 +166,22 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             masteryList.add(dto);
         }
 
-        // Sort dynamically: weakest points physically surface at the top
+        // 动态排序：最薄弱的知识点物理上浮现到顶部
         masteryList.sort(Comparator.comparingDouble(KnowledgeMasteryDTO::getMasteryRate));
 
         return masteryList;
     }
 
+    /**
+     * 获取学生错题
+     * @param query 错题查询条件
+     * @return 错题列表
+     */
     @Override
     public Page<com.epqas.exam.dto.StudentErrorQuestionDTO> getStudentErrorQuestions(StudentErrorQuestionQuery query) {
         Page<com.epqas.exam.dto.StudentErrorQuestionDTO> emptyPage = new Page<>(query.getCurrent(), query.getSize());
         
-        // 1. Fetch completed test results
+        // 1. 获取完成的考试结果
         QueryWrapper<StudentExamResult> rw = new QueryWrapper<StudentExamResult>()
                 .eq("student_id", query.getStudentId())
                 .eq("is_absent", false);
@@ -185,11 +195,11 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         List<Long> resultIds = results.stream().map(StudentExamResult::getResultId).collect(Collectors.toList());
         List<Long> examIds = results.stream().map(StudentExamResult::getExamId).distinct().collect(Collectors.toList());
 
-        // 2. Fetch Exams for context (Name, Date, PaperId)
+        // 2. 获取考试信息以供参考（名称、日期、试卷ID）
         List<Examination> exams = examinationMapper.selectList(new QueryWrapper<Examination>().in("exam_id", examIds));
         Map<Long, Examination> examMap = exams.stream().collect(Collectors.toMap(Examination::getExamId, e -> e));
 
-        // 2.5 Fetch Papers if Course filtering is needed
+        // 2.5 如果需要按课程过滤，则获取试卷
         if (query.getCourseId() != null) {
             List<Long> paperIds = exams.stream().map(Examination::getPaperId).distinct().collect(Collectors.toList());
             if (paperIds.isEmpty()) return emptyPage;
@@ -199,7 +209,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             );
             Set<Long> validPaperIds = papers.stream().map(ExaminationPaper::getPaperId).collect(Collectors.toSet());
             
-            // Filter exams & results internally by course valid papers
+            // 按课程有效试卷过滤考试和结果
             exams = exams.stream().filter(e -> validPaperIds.contains(e.getPaperId())).collect(Collectors.toList());
             if (exams.isEmpty()) return emptyPage;
             
@@ -215,13 +225,13 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             resultToExamMap.put(r.getResultId(), examMap.get(r.getExamId()));
         }
 
-        // 3. Fetch all Answers for these valid results
+        // 3. 获取所有有效结果的学生答案
         List<StudentAnswer> allAnswers = answerMapper.selectList(new QueryWrapper<StudentAnswer>().in("result_id", resultIds));
         if (allAnswers.isEmpty()) return emptyPage;
 
         List<Long> questionIds = allAnswers.stream().map(StudentAnswer::getQuestionId).distinct().collect(Collectors.toList());
 
-        // 4. Load full Question metadata (including constraints)
+        // 4. 加载完整的题目元数据（包括约束）
         List<ExaminationPaperQuestion> paperQuestions = paperQuestionMapper.selectList(
                 new QueryWrapper<ExaminationPaperQuestion>().in("question_id", questionIds)
         );
@@ -246,7 +256,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             questionMap.put(qId, row);
         }
 
-        // 5. Detect and Extract Erroneous Questions mathematically
+        // 5. 检测并提取错误题目
         List<com.epqas.exam.dto.StudentErrorQuestionDTO> errorList = new ArrayList<>();
         List<Long> errorQuestionIds = new ArrayList<>(); 
         
@@ -282,7 +292,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
 
         if (errorList.isEmpty()) return emptyPage;
 
-        // 6. Chronological Sort (Most Recent Mistakes Displayed Sequentially First)
+        // 6. 按时间顺序排序（最近的错误按顺序显示）
         errorList.sort((a, b) -> {
             if (a.getExamDate() == null && b.getExamDate() == null) return 0;
             if (a.getExamDate() == null) return 1;
@@ -290,7 +300,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
             return b.getExamDate().compareTo(a.getExamDate());
         });
 
-        // 7. Paginate the Memory List before fetching KP
+        // 7. 分页内存列表，然后再获取知识点
         int total = errorList.size();
         emptyPage.setTotal(total);
         
@@ -303,7 +313,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
 
         if (paginatedList.isEmpty()) return emptyPage;
 
-        // 8. Map rich Knowledge Points solely onto the paginated slice layer to save massive DB JOIN overhead!
+        // 8. 将丰富的知识点映射到分页切片层，以节省大量的数据库连接开销！
         String errorIdStr = paginatedList.stream().map(e -> String.valueOf(e.getQuestionId())).distinct().collect(Collectors.joining(","));
         List<Map<String, Object>> kpRows = jdbcTemplate.queryForList(
                 "SELECT qkp.question_id, kp.point_name FROM question_knowledge_map qkp " +

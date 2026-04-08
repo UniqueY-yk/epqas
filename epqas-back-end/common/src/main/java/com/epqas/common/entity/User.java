@@ -16,24 +16,24 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @TableId(type = IdType.AUTO)
-    private Long userId;
+    private Long userId; // 用户ID
 
     @Column(nullable = false, unique = true)
-    private String username;
+    private String username; // 用户名
 
     @Column(nullable = false)
-    private String passwordHash;
+    private String passwordHash; // 密码哈希
 
-    private String realName;
+    private String realName; // 真实姓名
 
-    private Integer roleId;
+    private Integer roleId; // 角色ID
 
-    private String email;
+    private String email; // 邮箱
 
     @Column(updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // 创建时间
 
-    private Boolean isActive;
+    private Boolean isActive; // 是否激活
 
     @PrePersist
     protected void onCreate() {

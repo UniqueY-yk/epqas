@@ -6,17 +6,27 @@ import java.util.List;
 
 @Data
 public class ExaminationPaperDTO {
-    private Long paperId;
-    private String title;
-    private Integer courseId;
-    private Long setterId;
-    private String setterName;
-    private Integer totalScore;
-    private Integer durationMinutes;
-    private Float targetDifficulty;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Long paperId; // 试卷ID
 
-    private List<PaperQuestionDTO> questions;
+    private String title; // 试卷标题
+
+    private Integer courseId; // 课程ID
+
+    private Long setterId; // 命题人ID
+
+    private String setterName; // 命题人姓名
+
+    private Integer totalScore; // 总分
+
+    private Integer durationMinutes; // 考试时长
+
+    private Float targetDifficulty; // 目标难度
+
+    private String status; // 试卷状态
+
+    private LocalDateTime createdAt; // 创建时间
+
+    private LocalDateTime updatedAt; // 更新时间
+
+    private List<PaperQuestionDTO> questions; // 试卷问题列表
 }
