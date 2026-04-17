@@ -72,64 +72,94 @@
       </div>
     </el-card>
 
+    <!-- Premium Examination Record Dialog -->
     <el-dialog
-      :title="dialogType === 'add' ? '新建考试记录' : '编辑考试记录'"
       v-model="dialogVisible"
-      width="500px"
+      width="540px"
       append-to-body
-      class="custom-dialog"
+      class="premium-dialog"
+      :show-close="false"
+      align-center
+      destroy-on-close
     >
-      <div class="form-header-section">
-        <el-icon class="form-icon"><Monitor /></el-icon>
-        <div class="form-title-text">
-          <h3>{{ dialogType === 'add' ? '新建记录' : '编辑记录' }}</h3>
-          <p>请准确填写考试信息，确保学生成绩正确匹配。</p>
+      <div class="premium-header">
+        <div class="header-left">
+          <div class="icon-box">
+            <el-icon><Monitor /></el-icon>
+          </div>
+          <div class="header-text">
+            <h3>{{ dialogType === 'add' ? '新建考试记录' : '编辑考试记录' }}</h3>
+            <p>完善基础信息，以便准确关联学生成绩</p>
+          </div>
         </div>
+        <el-button class="circle-close-btn" circle @click="dialogVisible = false">
+          <el-icon><Close /></el-icon>
+        </el-button>
       </div>
-      <el-form :model="formData" :rules="rules" ref="formRef" label-width="100px" class="modern-form">
-        <el-form-item label="试卷模板" prop="paperId">
-          <el-select v-model="formData.paperId" placeholder="请选择试卷模板" class="w-100" filterable>
-            <el-option
-              v-for="item in paperList"
-              :key="item.paperId"
-              :label="item.title"
-              :value="item.paperId"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="参考班级" prop="classId">
-          <el-select v-model="formData.classId" placeholder="请选择参考班级" class="w-100" filterable>
-            <el-option
-              v-for="item in classList"
-              :key="item.classId"
-              :label="item.className"
-              :value="item.classId"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="考试日期" prop="examDate">
-          <el-date-picker
-            v-model="formData.examDate"
-            type="datetime"
-            placeholder="选择考试日期和时间"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            class="w-100"
-          />
-        </el-form-item>
-        <el-form-item label="应考人数" prop="totalCandidates">
-          <el-input-number v-model="formData.totalCandidates" :min="1" :max="1000" class="w-100" />
-        </el-form-item>
-        <el-form-item label="实考人数" prop="actualExaminees">
-           <el-input-number v-model="formData.actualExaminees" :min="0" :max="formData.totalCandidates || 1000" class="w-100" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitForm" :loading="submitLoading">确定</el-button>
-        </div>
-      </template>
+
+      <div class="premium-body">
+        <el-form :model="formData" :rules="rules" ref="formRef" label-position="top" class="premium-form">
+          <div class="form-grid">
+            <div class="grid-item full-width">
+              <el-form-item label="试卷模板 :" prop="paperId">
+                <el-select v-model="formData.paperId" placeholder="搜索并选择关联的试卷模板..." class="w-100 enhanced-input" filterable>
+                  <template #prefix><el-icon><Document /></el-icon></template>
+                  <el-option
+                    v-for="item in paperList"
+                    :key="item.paperId"
+                    :label="item.title"
+                    :value="item.paperId"
+                  />
+                </el-select>
+              </el-form-item>
+            </div>
+            
+            <div class="grid-item full-width">
+              <el-form-item label="参考班级 :" prop="classId">
+                <el-select v-model="formData.classId" placeholder="选择指定的参考班级..." class="w-100 enhanced-input" filterable>
+                  <template #prefix><el-icon><User /></el-icon></template>
+                  <el-option
+                    v-for="item in classList"
+                    :key="item.classId"
+                    :label="item.className"
+                    :value="item.classId"
+                  />
+                </el-select>
+              </el-form-item>
+            </div>
+
+            <div class="grid-item full-width">
+              <el-form-item label="考试日期安排 :" prop="examDate">
+                <el-date-picker
+                  v-model="formData.examDate"
+                  type="datetime"
+                  placeholder="选择具体的考试日期与时间"
+                  format="YYYY-MM-DD HH:mm:ss"
+                  value-format="YYYY-MM-DDTHH:mm:ss"
+                  class="w-100 enhanced-input"
+                />
+              </el-form-item>
+            </div>
+
+            <div class="grid-item half-width">
+              <el-form-item label="应考人数 :" prop="totalCandidates">
+                <el-input-number v-model="formData.totalCandidates" :min="1" :max="1000" class="w-100 enhanced-input" controls-position="right" />
+              </el-form-item>
+            </div>
+            
+            <div class="grid-item half-width">
+              <el-form-item label="实考人数 :" prop="actualExaminees">
+                 <el-input-number v-model="formData.actualExaminees" :min="0" :max="formData.totalCandidates || 1000" class="w-100 enhanced-input" controls-position="right" />
+              </el-form-item>
+            </div>
+          </div>
+        </el-form>
+      </div>
+
+      <div class="premium-footer">
+        <el-button class="btn-cancel" @click="dialogVisible = false">取 消</el-button>
+        <el-button class="btn-submit" type="primary" @click="submitForm" :loading="submitLoading">确 定</el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -137,7 +167,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, Plus, Monitor } from '@element-plus/icons-vue'
+import { Search, Plus, Monitor, Close, Document, User } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { getExaminationsPage, createExamination, updateExamination, deleteExamination, getPapers, ExaminationDTO } from '@/api/exam'
@@ -372,57 +402,160 @@ const submitForm = async () => {
   border-top: 1px solid #ebeef5;
 }
 
-.custom-dialog {
-  border-radius: 12px;
+/* Premium Dialog Styling */
+:deep(.premium-dialog) {
+  border-radius: 20px;
   overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  background: white;
 }
 
-.form-header-section {
+:deep(.premium-dialog .el-dialog__header) {
+  display: none; /* Hide default header */
+}
+
+:deep(.premium-dialog .el-dialog__body) {
+  padding: 0;
+}
+
+.premium-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 30px 40px;
+  background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 24px 32px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
-  border-bottom: 1px solid #ebeef5;
-  margin: -20px -20px 24px -20px;
+  gap: 18px;
 }
 
-.form-icon {
-  font-size: 32px;
-  color: #409EFF;
-  background: #ecf5ff;
-  padding: 12px;
-  border-radius: 12px;
+.icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #409EFF, #61b1ff);
+  border-radius: 14px;
+  box-shadow: 0 8px 16px rgba(64, 158, 255, 0.25);
+  color: white;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
-.form-title-text h3 {
-  margin: 0 0 4px 0;
-  font-size: 18px;
-  color: #303133;
+.header-text h3 {
+  margin: 0 0 6px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 0.5px;
 }
 
-.form-title-text p {
+.header-text p {
   margin: 0;
   font-size: 13px;
-  color: #909399;
+  color: #8c8c8c;
 }
 
-.modern-form {
-  padding: 0 12px;
+.circle-close-btn {
+  border: none;
+  background: #f0f2f5;
+  color: #606266;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+.circle-close-btn:hover {
+  background: #ff4d4f;
+  color: white;
+  transform: rotate(90deg);
 }
 
-.w-100 {
+.premium-body {
+  padding: 30px 40px;
+}
+
+.form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+}
+
+.grid-item {
+  box-sizing: border-box;
+}
+
+.grid-item.full-width {
   width: 100%;
 }
 
-.dialog-footer {
-  padding-top: 20px;
-  border-top: 1px solid #ebeef5;
-  margin: 0 -20px -20px -20px;
-  padding: 16px 24px;
+.grid-item.half-width {
+  width: calc(50% - 10px);
+}
+
+:deep(.premium-form .el-form-item__label) {
+  font-weight: 600;
+  color: #333;
+  padding-bottom: 6px;
+  font-size: 14px;
+}
+
+:deep(.enhanced-input .el-input__wrapper),
+:deep(.enhanced-input .el-input-number) {
+  border-radius: 8px;
+  box-shadow: none;
+  background-color: #f7f9fb;
+  border: 1px solid #e4e7ed;
+  transition: all 0.3s ease;
+  height: 40px;
+}
+
+:deep(.enhanced-input .el-input__wrapper:hover),
+:deep(.enhanced-input .el-input__wrapper.is-focus) {
+  background-color: #ffffff;
+  border-color: #409EFF;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
+.premium-footer {
+  padding: 20px 40px 30px;
   background: #fafafa;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 14px;
+  border-top: 1px solid rgba(0,0,0,0.03);
+}
+
+.btn-cancel {
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 500;
+  border: 1px solid #dcdfe6;
+}
+
+.btn-submit {
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  background: linear-gradient(to right, #409eff, #53a8ff);
+  border: none;
+  transition: all 0.3s;
+}
+.btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+}
+.w-100 {
+  width: 100%;
 }
 </style>

@@ -13,7 +13,6 @@ import com.epqas.analysis.dto.QuestionAnalysisDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +30,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
     private final ExamMetricsComputeMapper computeMapper;
     private final ExaminationPaperQualityAnalysisService examAnalysisService;
     private final QuestionQualityAnalysisService questionAnalysisService;
-    private final JdbcTemplate jdbcTemplate;
 
     /**
      * 计算考试指标
@@ -46,21 +44,19 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         // ==================== 1. 加载上下文数据 ====================
         List<ComputeExamResultDTO> results = computeMapper.selectExamResults(examId);
         if (results == null || results.isEmpty()) {
-            throw new RuntimeException("No student results found for calculation.");
+            throw new RuntimeException("没有找到学生成绩数据，无法进行计算");
         }
 
         List<ComputeStudentAnswerDTO> answers = computeMapper.selectStudentAnswers(examId);
         List<ComputePaperQuestionDTO> questions = computeMapper.selectPaperQuestions(examId);
 
         if (questions == null || questions.isEmpty()) {
-            throw new RuntimeException("No questions configured for this exam paper.");
+            throw new RuntimeException("没有找到试卷题目数据，无法进行计算");
         }
 
         // ==================== 2. 基础统计 ====================
         Long paperId = questions.get(0).getPaperId();
-        Integer courseId = jdbcTemplate.queryForObject(
-                "SELECT course_id FROM examination_paper WHERE paper_id = ?",
-                Integer.class, paperId);
+        Integer courseId = computeMapper.getCourseIdByPaperId(paperId);
 
         // 计算基本统计 (平均分, 最高分, 最低分, 标准差)
         BigDecimal sumScores = BigDecimal.ZERO;
@@ -377,13 +373,13 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
      * @param alpha 信度
      * @return 评价结果
      */
-    /** 信度评价: α >= 0.8 → High, α >= 0.6 → Medium, α < 0.6 → Low */
+    /** 信度评价: α >= 0.8 → 高, α >= 0.6 → 中, α < 0.6 → 低 */
     private String evaluateReliability(double alpha) {
         if (alpha >= 0.8)
-            return "高 (结构优良，信度高)";
+            return "高";
         if (alpha >= 0.6)
-            return "中 (结构尚可)";
-        return "低 (不可靠，需重组)";
+            return "中";
+        return "低";
     }
 
     /**
@@ -392,7 +388,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
      * @param p 难度
      * @return 评价结果
      */
-    /** 难度评价: P > 0.7 → Too Easy, P >= 0.4 → Moderate, P < 0.4 → Too Hard */
+    /** 难度评价: P > 0.7 → 偏易, P >= 0.4 → 适中, P < 0.4 → 偏难 */
     private String evaluateDifficulty(double p) {
         if (p > 0.7)
             return "偏易";
@@ -408,17 +404,16 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
      * @return 评价结果
      */
     /**
-     * 区分度评价: D >= 0.4 → Excellent, D >= 0.3 → Good, D >= 0.2 → Marginal, D < 0.2 →
-     * Poor
+     * 区分度评价: D >= 0.4 → 优秀, D >= 0.3 → 良好, D >= 0.2 → 一般, D < 0.2 → 差
      */
     private String evaluateDiscrimination(double d) {
         if (d >= 0.4)
-            return "优秀 (区分度很好)";
+            return "优秀";
         if (d >= 0.3)
-            return "良好 (可接受)";
+            return "良好";
         if (d >= 0.2)
-            return "一般 (需修改)";
-        return "差 (建议淘汰)";
+            return "一般";
+        return "差";
     }
 
     /**
@@ -447,7 +442,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
      */
     // ==================== 改进建议生成 ====================
     private void generateImprovementSuggestions(Long examId) {
-        jdbcTemplate.update("DELETE FROM improvement_suggestion WHERE exam_id = ?", examId);
+        computeMapper.deleteSuggestionsByExamId(examId);
         List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByExamId(examId);
         ObjectMapper mapper = new ObjectMapper();
 
@@ -547,9 +542,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
      * @param text       建议内容
      */
     private void saveSuggestion(Long examId, Long questionId, String type, String text) {
-        jdbcTemplate.update(
-                "INSERT INTO improvement_suggestion (exam_id, question_id, suggestion_type, suggestion_text, generated_rule, is_implemented) VALUES (?, ?, ?, ?, ?, ?)",
-                examId, questionId, type, text, text, false);
+        computeMapper.insertImprovementSuggestion(examId, questionId, type, text, text, false);
     }
 
     /**
@@ -558,7 +551,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
      * @param examId 考试ID
      */
     private void deleteExistingPaperAnalysis(Long examId) {
-        jdbcTemplate.update("DELETE FROM examination_paper_quality_analysis WHERE exam_id = ?", examId);
+        computeMapper.deletePaperQualityAnalysisByExamId(examId);
     }
 
     /**
@@ -567,6 +560,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
      * @param examId 考试ID
      */
     private void deleteExistingItemAnalysis(Long examId) {
-        jdbcTemplate.update("DELETE FROM question_quality_analysis WHERE exam_id = ?", examId);
+        computeMapper.deleteQuestionQualityAnalysisByExamId(examId);
     }
 }

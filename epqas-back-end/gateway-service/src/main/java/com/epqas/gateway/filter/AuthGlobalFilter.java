@@ -69,7 +69,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 获取过滤器顺序
+     * 获取过滤器顺序，在同类过滤器里较靠前执行
      * 
      * @return 顺序
      */

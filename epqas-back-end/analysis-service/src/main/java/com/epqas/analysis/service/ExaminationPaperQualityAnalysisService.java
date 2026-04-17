@@ -15,9 +15,11 @@ public interface ExaminationPaperQualityAnalysisService extends IService<Examina
      * @param current  当前页
      * @param size     每页数量
      * @param setterId 命题人ID
+     * @param courseId 课程ID
+     * @param paperTitle 试卷名称
      * @return 分页试卷分析结果
      */
-    Page<PaperAnalysisVO> getPageBySetterId(Integer current, Integer size, Long setterId);
+    Page<PaperAnalysisVO> getPageBySetterId(Integer current, Integer size, Long setterId, Long courseId, String paperTitle);
 
     /**
      * 获取趋势分析数据

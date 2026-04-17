@@ -9,6 +9,7 @@ import com.epqas.exam.entity.ExaminationPaper;
 import com.epqas.exam.entity.ExaminationPaperQuestion;
 import com.epqas.exam.entity.StudentAnswer;
 import com.epqas.exam.entity.StudentExamResult;
+import com.epqas.exam.mapper.AnalysisDataMapper;
 import com.epqas.exam.mapper.ExaminationMapper;
 import com.epqas.exam.mapper.ExaminationPaperMapper;
 import com.epqas.exam.mapper.ExaminationPaperQuestionMapper;
@@ -16,7 +17,6 @@ import com.epqas.exam.mapper.StudentAnswerMapper;
 import com.epqas.exam.mapper.StudentExamResultMapper;
 import com.epqas.exam.service.StudentAnalysisService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -42,7 +42,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
     private ExaminationPaperMapper examinationPaperMapper;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private AnalysisDataMapper analysisDataMapper;
 
     /**
      * 获取学生知识点掌握度
@@ -86,13 +86,7 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
                 ));
 
         // 4. 追踪这些精确问题的知识点
-        String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        List<Map<String, Object>> kpRows = jdbcTemplate.queryForList(
-                "SELECT qkp.question_id, kp.point_id, kp.point_name " +
-                        "FROM question_knowledge_map qkp " +
-                        "JOIN knowledge_point kp ON qkp.point_id = kp.point_id " +
-                        "WHERE qkp.question_id IN (" + questionIdStr + ")"
-        );
+        List<Map<String, Object>> kpRows = analysisDataMapper.selectKnowledgePointsByQuestionIds(questionIds);
 
         // 映射知识点 -> 题目ID集合
         Map<Long, String> pointNames = new HashMap<>();
@@ -237,19 +231,12 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         );
         Map<Long, BigDecimal> maxScoreMap = paperQuestions.stream()
                 .collect(Collectors.toMap(
-                    ExaminationPaperQuestion::getQuestionId,
-                    ExaminationPaperQuestion::getScoreValue,
-                    (existing, replacement) -> existing
+                        ExaminationPaperQuestion::getQuestionId,
+                        ExaminationPaperQuestion::getScoreValue,
+                        (existing, replacement) -> existing
                 ));
 
-        String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        String qSql = "SELECT question_id, question_content, question_type, correct_answer, options_json " +
-                      "FROM question WHERE question_id IN (" + questionIdStr + ")";
-        if (query.getQuestionType() != null && !query.getQuestionType().isEmpty()) {
-            qSql += " AND question_type = '" + query.getQuestionType() + "'";
-        }
-
-        List<Map<String, Object>> questionRows = jdbcTemplate.queryForList(qSql);
+        List<Map<String, Object>> questionRows = analysisDataMapper.selectQuestionDetailsByIds(questionIds, query.getQuestionType());
         Map<Long, Map<String, Object>> questionMap = new HashMap<>();
         for (Map<String, Object> row : questionRows) {
             Long qId = ((Number) row.get("question_id")).longValue();
@@ -314,12 +301,8 @@ public class StudentAnalysisServiceImpl implements StudentAnalysisService {
         if (paginatedList.isEmpty()) return emptyPage;
 
         // 8. 将丰富的知识点映射到分页切片层，以节省大量的数据库连接开销！
-        String errorIdStr = paginatedList.stream().map(e -> String.valueOf(e.getQuestionId())).distinct().collect(Collectors.joining(","));
-        List<Map<String, Object>> kpRows = jdbcTemplate.queryForList(
-                "SELECT qkp.question_id, kp.point_name FROM question_knowledge_map qkp " +
-                "JOIN knowledge_point kp ON qkp.point_id = kp.point_id " +
-                "WHERE qkp.question_id IN (" + errorIdStr + ")"
-        );
+        List<Long> errorIds = paginatedList.stream().map(com.epqas.exam.dto.StudentErrorQuestionDTO::getQuestionId).distinct().collect(Collectors.toList());
+        List<Map<String, Object>> kpRows = analysisDataMapper.selectKnowledgePointsByQuestionIds(errorIds);
         Map<Long, List<String>> pointMap = new HashMap<>();
         for (Map<String, Object> row : kpRows) {
             Long qId = ((Number) row.get("question_id")).longValue();

@@ -5,6 +5,45 @@
       <p class="subtitle">{{ isAdmin ? '查看所有命题教师的试卷质量分析报告' : '查看您命题的试卷在考试后的质量分析报告' }}</p>
     </div>
 
+    <!-- Toolbar -->
+    <el-card class="toolbar-card" shadow="hover">
+      <div class="toolbar">
+        <div class="search-area">
+          <el-select 
+            v-model="searchQuery.courseId" 
+            placeholder="选择科目" 
+            clearable
+            class="search-input"
+            @change="handleSearch"
+          >
+            <el-option
+              v-for="course in courseOptions"
+              :key="course.courseId"
+              :label="course.courseName"
+              :value="course.courseId"
+            />
+          </el-select>
+          <el-input 
+            v-model="searchQuery.paperTitle" 
+            placeholder="搜索试卷标题..." 
+            clearable
+            class="search-input"
+            @keyup.enter="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon> 查询
+          </el-button>
+          <el-button @click="resetSearch">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </div>
+      </div>
+    </el-card>
+
     <!-- Table -->
     <el-card shadow="hover" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
@@ -30,6 +69,11 @@
                     <el-tag v-if="scope.row.difficultyEvaluation" size="small" :type="getDifficultyTagType(scope.row.overallDifficulty)" style="margin-left: 4px;">
                         {{ scope.row.difficultyEvaluation }}
                     </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="stdDeviation" label="标准差" width="100" align="center">
+                <template #default="scope">
+                    {{ scope.row.stdDeviation !== null && scope.row.stdDeviation !== undefined ? scope.row.stdDeviation.toFixed(2) : '-' }}
                 </template>
             </el-table-column>
             <el-table-column prop="overallDiscrimination" label="区分度" width="160" align="center">
@@ -121,7 +165,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, RefreshRight } from '@element-plus/icons-vue'
 import { getMyPaperAnalyses, calculateExamIndicators, type PaperAnalysisVO } from '../../api/analysis'
+import { getCourses } from '../../api/academic'
 import dayjs from 'dayjs'
 import PaperQuestionDiagnosis from './PaperQuestionDiagnosis.vue'
 import PaperSuggestionsDrawer from './PaperSuggestionsDrawer.vue'
@@ -134,17 +180,42 @@ const total = ref(0)
 const currentRoleId = Number(localStorage.getItem('roleId') || '1')
 const isAdmin = currentRoleId === 1
 const setterId = Number(localStorage.getItem('userId')) || 0
+const courseOptions = ref<any[]>([])
 
 const searchQuery = reactive({
   current: 1,
   size: 10,
-  setterId: isAdmin ? undefined : setterId
+  setterId: isAdmin ? undefined : setterId,
+  courseId: undefined,
+  paperTitle: undefined
 } as any)
 
 // --- Methods ---
 onMounted(async () => {
+    loadCourseOptions()
     loadData()
 })
+
+const loadCourseOptions = async () => {
+    try {
+        const res = await getCourses({ current: 1, size: 100 })
+        courseOptions.value = res.data.records || []
+    } catch (e) {
+        console.error('Failed to load courses', e)
+    }
+}
+
+const handleSearch = () => {
+  searchQuery.current = 1
+  loadData()
+}
+
+const resetSearch = () => {
+  searchQuery.courseId = undefined
+  searchQuery.paperTitle = undefined
+  searchQuery.current = 1
+  loadData()
+}
 
 const loadData = async () => {
   loading.value = true
@@ -270,6 +341,29 @@ const handleViewSuggestions = (row: PaperAnalysisVO) => {
   margin: 8px 0 0;
   color: #909399;
   font-size: 14px;
+}
+
+.toolbar-card {
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.search-area {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  width: 240px;
 }
 
 .table-card {

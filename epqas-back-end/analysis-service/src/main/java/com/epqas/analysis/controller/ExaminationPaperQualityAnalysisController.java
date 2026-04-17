@@ -115,21 +115,25 @@ public class ExaminationPaperQualityAnalysisController {
             @RequestHeader(value = "X-Role-Id", required = false) Integer roleId,
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @RequestParam(value = "setterId", required = false) Long setterId) {
+            @RequestParam(value = "setterId", required = false) Long setterId,
+            @RequestParam(value = "courseId", required = false) Long courseId,
+            @RequestParam(value = "paperTitle", required = false) String paperTitle) {
         // 管理员(roleId=1)查看所有试卷；命题教师只查看自己的试卷
         if (roleId != null && roleId == 1) {
             setterId = null;
         }
-        return Result.success(analysisService.getPageBySetterId(current, size, setterId));
+        return Result.success(analysisService.getPageBySetterId(current, size, setterId, courseId, paperTitle));
     }
 
     /**
      * 获取趋势分析
-     * 
+     * 必须同时提供 setterId 和 courseId 才能查询趋势数据，
+     * 因为一位命题教师可能为多门课程出题，一门课程也可能由多位教师出题。
+     *
      * @param roleId   角色ID
      * @param userId   用户ID
-     * @param setterId 命题教师ID
-     * @param courseId 课程ID
+     * @param setterId 命题教师ID（必填）
+     * @param courseId 课程ID（必填）
      * @return 趋势分析数据
      */
     @GetMapping("/trend")
@@ -137,7 +141,7 @@ public class ExaminationPaperQualityAnalysisController {
             @RequestHeader(value = "X-Role-Id", required = false) Integer roleId,
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestParam(value = "setterId", required = false) Long setterId,
-            @RequestParam(value = "courseId", required = false) Long courseId) {
+            @RequestParam(value = "courseId") Long courseId) {
 
         if (roleId != null && roleId == 1) {
             // 管理员可以查询任何指定的setterId
@@ -145,6 +149,12 @@ public class ExaminationPaperQualityAnalysisController {
             // 命题教师只能查询自己的setterId
             setterId = userId;
         }
+
+        // 必须同时提供 setterId 和 courseId
+        if (setterId == null || courseId == null) {
+            return Result.success(java.util.Collections.emptyList());
+        }
+
         return Result.success(analysisService.getTrendAnalysis(setterId, courseId));
     }
 }

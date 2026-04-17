@@ -9,17 +9,12 @@ import com.epqas.analysis.dto.QuestionAnalysisDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import org.springframework.jdbc.core.JdbcTemplate;
-
 @Service
 public class QuestionQualityAnalysisServiceImpl extends
         ServiceImpl<QuestionQualityAnalysisMapper, QuestionQualityAnalysis> implements QuestionQualityAnalysisService {
 
     @Autowired
     private ExamMetricsComputeMapper computeMapper;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     /**
      * 根据考试ID获取题目分析详情
@@ -32,11 +27,7 @@ public class QuestionQualityAnalysisServiceImpl extends
         List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByExamId(examId);
 
         for (QuestionAnalysisDTO dto : dtos) {
-            List<String> suggestions = jdbcTemplate.queryForList(
-                    "SELECT suggestion_text FROM improvement_suggestion WHERE exam_id = ? AND question_id = ?",
-                    String.class,
-                    examId,
-                    dto.getQuestionId());
+            List<String> suggestions = computeMapper.getSuggestionTextsByExamIdAndQuestionId(examId, dto.getQuestionId());
             dto.setSuggestions(suggestions);
         }
 

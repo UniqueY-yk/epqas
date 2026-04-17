@@ -40,7 +40,7 @@ zho<template>
             />
           </el-select>
 
-          <el-button type="primary" @click="loadTrendData" :loading="loading" :disabled="isAdmin && !selectedSetterId">
+          <el-button type="primary" @click="loadTrendData" :loading="loading" :disabled="!canLoadTrend">
             <el-icon><RefreshRight /></el-icon> 刷新趋势数据
           </el-button>
         </div>
@@ -72,7 +72,7 @@ zho<template>
             </el-alert>
           </div>
         </template>
-        <el-empty v-else-if="!loading" :description="isAdmin && !selectedSetterId ? '请在右上角选择一位命题教及其课程，查看其历史命题趋势' : '暂无历史命题分析数据，请先前往 [试卷质量诊断] 完成考试结算计算。'" />
+        <el-empty v-else-if="!loading" :description="emptyDescription" />
       </div>
     </el-card>
   </div>
@@ -115,9 +115,28 @@ const setterOptions = ref<SetterInfo[]>([])
 const selectedCourseId = ref<number | undefined>(undefined)
 const courseOptions = ref<any[]>([])
 
+// 是否可以加载趋势数据：必须同时选择命题教师和课程
+const canLoadTrend = computed(() => {
+    if (isAdmin) {
+        return !!selectedSetterId.value && !!selectedCourseId.value
+    }
+    return !!selectedCourseId.value
+})
+
+// 空状态提示语
+const emptyDescription = computed(() => {
+    if (!canLoadTrend.value) {
+        if (isAdmin) {
+            return '请先选择一位命题教师和课程，再查看历史命题趋势'
+        }
+        return '请先选择一门课程，再查看历史命题趋势'
+    }
+    return '暂无历史命题分析数据，请先前往 [试卷质量诊断] 完成考试结算计算。'
+})
+
 const loadTrendData = async () => {
-    // If admin and no setter selected, just clear data
-    if (isAdmin && !selectedSetterId.value) {
+    // 必须同时选择命题教师和课程
+    if (!canLoadTrend.value) {
         trendData.value = []
         return
     }
@@ -165,11 +184,11 @@ onMounted(async () => {
             ElMessage.error('获取初始筛选列表失败')
         }
     } else {
+        // 非管理员：加载课程列表，但不自动加载趋势数据（需要先选择课程）
         try {
             const courseRes = await getCourses({ current: 1, size: 100 })
             courseOptions.value = courseRes.data.records || []
         } catch (e) {}
-        loadTrendData()
     }
 })
 

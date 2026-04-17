@@ -8,13 +8,13 @@ import com.epqas.exam.entity.Examination;
 import com.epqas.exam.entity.ExaminationPaperQuestion;
 import com.epqas.exam.entity.StudentAnswer;
 import com.epqas.exam.entity.StudentExamResult;
+import com.epqas.exam.mapper.AnalysisDataMapper;
 import com.epqas.exam.mapper.ExaminationMapper;
 import com.epqas.exam.mapper.ExaminationPaperQuestionMapper;
 import com.epqas.exam.mapper.StudentAnswerMapper;
 import com.epqas.exam.mapper.StudentExamResultMapper;
 import com.epqas.exam.service.ClassAnalysisService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -36,7 +36,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
     private StudentAnswerMapper answerMapper;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private AnalysisDataMapper analysisDataMapper;
 
     /**
      * 获取题目统计数据
@@ -75,12 +75,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         // 5. 从 question 表获取问题详情
         List<Long> questionIds = paperQuestions.stream()
                 .map(ExaminationPaperQuestion::getQuestionId).collect(Collectors.toList());
-
-        String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        List<Map<String, Object>> questionRows = jdbcTemplate.queryForList(
-                "SELECT question_id, question_content, question_type, correct_answer, options_json " +
-                        "FROM question WHERE question_id IN (" + questionIdStr + ")"
-        );
+        List<Map<String, Object>> questionRows = analysisDataMapper.selectQuestionDetailsByIds(questionIds, null);
         Map<Long, Map<String, Object>> questionMap = new HashMap<>();
         for (Map<String, Object> row : questionRows) {
             Long qId = ((Number) row.get("question_id")).longValue();
@@ -88,11 +83,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         }
 
         // 6. 获取每一个问题的知识点
-        List<Map<String, Object>> kpRows = jdbcTemplate.queryForList(
-                "SELECT qkp.question_id, kp.point_name FROM question_knowledge_map qkp " +
-                        "JOIN knowledge_point kp ON qkp.point_id = kp.point_id " +
-                        "WHERE qkp.question_id IN (" + questionIdStr + ")"
-        );
+        List<Map<String, Object>> kpRows = analysisDataMapper.selectKnowledgePointsByQuestionIds(questionIds);
         Map<Long, List<String>> kpMap = new HashMap<>();
         for (Map<String, Object> row : kpRows) {
             Long qId = ((Number) row.get("question_id")).longValue();
@@ -169,7 +160,6 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
 
         List<Long> questionIds = paperQuestions.stream()
                 .map(ExaminationPaperQuestion::getQuestionId).collect(Collectors.toList());
-        String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
         // 3. 获取结果ID
         List<StudentExamResult> results = resultMapper.selectList(
@@ -186,13 +176,8 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         Map<Long, List<StudentAnswer>> answersByQuestion = allAnswers.stream()
                 .collect(Collectors.groupingBy(StudentAnswer::getQuestionId));
 
-        // 5. Get knowledge point mappings
-        List<Map<String, Object>> kpRows = jdbcTemplate.queryForList(
-                "SELECT qkp.question_id, kp.point_id, kp.point_name " +
-                        "FROM question_knowledge_map qkp " +
-                        "JOIN knowledge_point kp ON qkp.point_id = kp.point_id " +
-                        "WHERE qkp.question_id IN (" + questionIdStr + ")"
-        );
+        // 5. 获取对应知识点
+        List<Map<String, Object>> kpRows = analysisDataMapper.selectKnowledgePointsByQuestionIds(questionIds);
 
         // 分组: pointId -> list of questionIds
         Map<Long, String> pointNames = new HashMap<>();
@@ -295,10 +280,7 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         }
 
         // 5. 获取正确答案和问题详情
-        String questionIdStr = questionIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        List<Map<String, Object>> questionRows = jdbcTemplate.queryForList(
-                "SELECT question_id, question_content, correct_answer FROM question WHERE question_id IN (" + questionIdStr + ")"
-        );
+        List<Map<String, Object>> questionRows = analysisDataMapper.selectQuestionDetailsByIds(questionIds, null);
         Map<Long, String> correctAnswers = new HashMap<>();
         Map<Long, String> questionContents = new HashMap<>();
         for (Map<String, Object> row : questionRows) {
@@ -406,13 +388,8 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
         if (studentIds.isEmpty()) return names;
 
         try {
-            String idStr = studentIds.stream().map(String::valueOf).collect(Collectors.joining(","));
             // student.student_id 是学生表主键，student.user_id 链接到 user.user_id
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                    "SELECT s.student_id, u.real_name FROM student s " +
-                            "JOIN user u ON s.user_id = u.user_id " +
-                            "WHERE s.student_id IN (" + idStr + ")"
-            );
+            List<Map<String, Object>> rows = analysisDataMapper.selectStudentNamesByIds(studentIds);
             for (Map<String, Object> row : rows) {
                 Long sid = ((Number) row.get("student_id")).longValue();
                 String name = (String) row.get("real_name");

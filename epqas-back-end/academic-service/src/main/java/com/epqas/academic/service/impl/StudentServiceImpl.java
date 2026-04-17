@@ -1,5 +1,6 @@
 package com.epqas.academic.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.epqas.academic.entity.Student;
 import com.epqas.academic.mapper.StudentMapper;
@@ -52,7 +53,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
         Result<Long> authResult = userFeignClient.createUser(1, user);
 
         if (authResult.getCode() != 200 || authResult.getData() == null) {
-            throw new RuntimeException("Failed to create user account: " + authResult.getMessage());
+            throw new RuntimeException("创建用户失败: " + authResult.getMessage());
         }
 
         Long userId = authResult.getData();
@@ -77,7 +78,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
             EasyExcel.read(file.getInputStream(), ExcelStudentDTO.class, new StudentExcelListener(this)).sheet()
                     .doRead();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to parse Excel file", e);
+            throw new RuntimeException("解析Excel文件失败", e);
         }
     }
 
@@ -89,7 +90,6 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
      */
     @Override
     public java.util.List<Student> getStudentsByClassId(Integer classId) {
-        return this.list(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Student>().eq("class_id", classId));
+        return this.list(new QueryWrapper<Student>().eq("class_id", classId));
     }
 }
