@@ -101,3 +101,45 @@ export const getPropositionTrend = (setterId?: number, courseId?: number) => {
         params
     })
 }
+
+// Trend Prediction
+export interface TrendPredictionVO {
+    predictionId: number;
+    setterId: number;
+    courseId: number;
+    method: string;               // "WMA" or "OLS"
+    dataPointsUsed: number;
+
+    predictedDifficulty: number;
+    predictedDiscrimination: number;
+    predictedReliability: number;
+    predictedValidity: number;
+
+    difficultyLower: number;
+    difficultyUpper: number;
+    discriminationLower: number;
+    discriminationUpper: number;
+    reliabilityLower: number;
+    reliabilityUpper: number;
+    validityLower: number;
+    validityUpper: number;
+
+    difficultyTrend: string;
+    discriminationTrend: string;
+    reliabilityTrend: string;
+    validityTrend: string;
+
+    predictedAt: string;
+}
+
+export const getTrendPrediction = (setterId?: number, courseId?: number) => {
+    const params: any = {}
+    if (setterId) params.setterId = setterId
+    if (courseId) params.courseId = courseId
+
+    return request<TrendPredictionVO>({
+        url: '/analysis/paper-analysis/trend/predict',
+        method: 'get',
+        params
+    })
+}

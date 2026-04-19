@@ -3,7 +3,9 @@ package com.epqas.analysis.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.epqas.analysis.entity.ExaminationPaperQualityAnalysis;
 import com.epqas.analysis.service.ExaminationPaperQualityAnalysisService;
+import com.epqas.analysis.service.TrendPredictionService;
 import com.epqas.analysis.dto.PaperAnalysisVO;
+import com.epqas.analysis.dto.TrendPredictionVO;
 import com.epqas.common.result.Result;
 import com.epqas.analysis.service.AnalysisComputationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,9 @@ public class ExaminationPaperQualityAnalysisController {
 
     @Autowired
     private AnalysisComputationService computationService;
+
+    @Autowired
+    private TrendPredictionService trendPredictionService;
 
     /**
      * 计算试卷指标
@@ -156,5 +161,39 @@ public class ExaminationPaperQualityAnalysisController {
         }
 
         return Result.success(analysisService.getTrendAnalysis(setterId, courseId));
+    }
+
+    /**
+     * 获取趋势预测
+     * 基于历史命题数据，使用加权移动平均或线性回归预测下一套试卷的质量指标。
+     * 预测结果会被持久化到 trend_prediction 表。
+     *
+     * @param roleId   角色ID
+     * @param userId   用户ID
+     * @param setterId 命题教师ID（必填）
+     * @param courseId 课程ID（必填）
+     * @return 预测结果
+     */
+    @GetMapping("/trend/predict")
+    public Result<TrendPredictionVO> getTrendPrediction(
+            @RequestHeader(value = "X-Role-Id", required = false) Integer roleId,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestParam(value = "setterId", required = false) Long setterId,
+            @RequestParam(value = "courseId") Long courseId) {
+
+        if (roleId != null && roleId == 1) {
+            // 管理员可以查询任何指定的setterId
+        } else {
+            // 命题教师只能查询自己的setterId
+            setterId = userId;
+        }
+
+        // 必须同时提供 setterId 和 courseId
+        if (setterId == null || courseId == null) {
+            return Result.success(null);
+        }
+
+        TrendPredictionVO prediction = trendPredictionService.predictTrend(setterId, courseId);
+        return Result.success(prediction);
     }
 }
