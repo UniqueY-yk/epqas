@@ -49,11 +49,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getSuggestionsByExamId, type ImprovementSuggestion } from '../../api/analysis'
+import { getSuggestionsByPaperId, type ImprovementSuggestion } from '../../api/analysis'
 
 const drawerVisible = ref(false)
 const loading = ref(false)
-const examId = ref<number | null>(null)
+const paperId = ref<number | null>(null)
 const questionId = ref<number | null>(null)
 const suggestions = ref<ImprovementSuggestion[]>([])
 
@@ -63,8 +63,8 @@ const drawerTitle = computed(() => {
         : `试卷全局 AI 优化建议汇总（试卷加载排查中）`
 })
 
-const openDrawer = (eId: number, qId?: number) => {
-    examId.value = eId
+const openDrawer = (pId: number, qId?: number) => {
+    paperId.value = pId
     questionId.value = qId || null
     drawerVisible.value = true
 }
@@ -72,10 +72,10 @@ const openDrawer = (eId: number, qId?: number) => {
 defineExpose({ openDrawer })
 
 const loadSuggestions = async () => {
-    if (!examId.value) return
+    if (!paperId.value) return
     loading.value = true
     try {
-        const res = await getSuggestionsByExamId(examId.value, questionId.value || undefined)
+        const res = await getSuggestionsByPaperId(paperId.value, questionId.value || undefined)
         suggestions.value = res.data || []
     } catch (error: any) {
         ElMessage.error(error.message || '获取优化建议失败')

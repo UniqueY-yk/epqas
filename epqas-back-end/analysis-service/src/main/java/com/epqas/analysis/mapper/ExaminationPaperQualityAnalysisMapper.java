@@ -16,20 +16,21 @@ import java.util.List;
 public interface ExaminationPaperQualityAnalysisMapper extends BaseMapper<ExaminationPaperQualityAnalysis> {
 
     /**
-     * 分页查询试卷分析
+     * 分页查询试卷分析（按试卷维度）
      * 
      * @param page     分页参数
      * @param setterId 命题人ID
+     * @param courseId 课程ID
+     * @param paperTitle 试卷名称
      * @return 分页查询结果
      */
     @Select("<script>" +
             "SELECT " +
             "    eqa.analysis_id AS analysisId, " +
-            "    eqa.exam_id AS examId, " +
             "    ep.paper_id AS paperId, " +
             "    ep.title AS paperTitle, " +
             "    c.course_name AS courseName, " +
-            "    e.exam_date AS examDate, " +
+            "    MIN(e.exam_date) AS examDate, " +
             "    eqa.average_score AS averageScore, " +
             "    eqa.std_deviation AS stdDeviation, " +
             "    eqa.highest_score AS highestScore, " +
@@ -46,9 +47,9 @@ public interface ExaminationPaperQualityAnalysisMapper extends BaseMapper<Examin
             "    eqa.difficulty_evaluation AS difficultyEvaluation, " +
             "    eqa.discrimination_evaluation AS discriminationEvaluation " +
             "FROM examination_paper_quality_analysis eqa " +
-            "INNER JOIN examination e ON eqa.exam_id = e.exam_id " +
-            "INNER JOIN examination_paper ep ON e.paper_id = ep.paper_id " +
+            "INNER JOIN examination_paper ep ON eqa.paper_id = ep.paper_id " +
             "INNER JOIN course c ON ep.course_id = c.course_id " +
+            "LEFT JOIN examination e ON ep.paper_id = e.paper_id " +
             "<where> " +
             "    <if test='setterId != null'> " +
             "        AND ep.setter_id = #{setterId} " +
@@ -60,13 +61,19 @@ public interface ExaminationPaperQualityAnalysisMapper extends BaseMapper<Examin
             "        AND ep.title LIKE CONCAT('%', #{paperTitle}, '%') " +
             "    </if> " +
             "</where> " +
+            "GROUP BY eqa.analysis_id, ep.paper_id, ep.title, c.course_name, " +
+            "    eqa.average_score, eqa.std_deviation, eqa.highest_score, eqa.lowest_score, " +
+            "    eqa.reliability_coefficient, eqa.validity_coefficient, eqa.knowledge_coverage_rate, " +
+            "    eqa.overall_difficulty, eqa.overall_discrimination, eqa.is_abnormal, " +
+            "    eqa.skewness, eqa.kurtosis, eqa.reliability_evaluation, " +
+            "    eqa.difficulty_evaluation, eqa.discrimination_evaluation " +
             "ORDER BY eqa.calculated_at DESC" +
             "</script>")
     Page<PaperAnalysisVO> selectPageBySetterId(@Param("page") Page<PaperAnalysisVO> page,
             @Param("setterId") Long setterId, @Param("courseId") Long courseId, @Param("paperTitle") String paperTitle);
 
     /**
-     * 查询试卷分析趋势
+     * 查询试卷分析趋势（按试卷维度）
      * 
      * @param setterId 命题人ID
      * @param courseId 课程ID
@@ -75,11 +82,10 @@ public interface ExaminationPaperQualityAnalysisMapper extends BaseMapper<Examin
     @Select("<script>" +
             "SELECT " +
             "    eqa.analysis_id AS analysisId, " +
-            "    eqa.exam_id AS examId, " +
             "    ep.paper_id AS paperId, " +
             "    ep.title AS paperTitle, " +
             "    c.course_name AS courseName, " +
-            "    e.exam_date AS examDate, " +
+            "    MIN(e.exam_date) AS examDate, " +
             "    eqa.average_score AS averageScore, " +
             "    eqa.std_deviation AS stdDeviation, " +
             "    eqa.highest_score AS highestScore, " +
@@ -96,9 +102,9 @@ public interface ExaminationPaperQualityAnalysisMapper extends BaseMapper<Examin
             "    eqa.difficulty_evaluation AS difficultyEvaluation, " +
             "    eqa.discrimination_evaluation AS discriminationEvaluation " +
             "FROM examination_paper_quality_analysis eqa " +
-            "INNER JOIN examination e ON eqa.exam_id = e.exam_id " +
-            "INNER JOIN examination_paper ep ON e.paper_id = ep.paper_id " +
+            "INNER JOIN examination_paper ep ON eqa.paper_id = ep.paper_id " +
             "INNER JOIN course c ON ep.course_id = c.course_id " +
+            "LEFT JOIN examination e ON ep.paper_id = e.paper_id " +
             "<where> " +
             "    <if test='setterId != null'> " +
             "        AND ep.setter_id = #{setterId} " +
@@ -107,7 +113,13 @@ public interface ExaminationPaperQualityAnalysisMapper extends BaseMapper<Examin
             "        AND ep.course_id = #{courseId} " +
             "    </if> " +
             "</where> " +
-            "ORDER BY e.exam_date ASC" +
+            "GROUP BY eqa.analysis_id, ep.paper_id, ep.title, c.course_name, " +
+            "    eqa.average_score, eqa.std_deviation, eqa.highest_score, eqa.lowest_score, " +
+            "    eqa.reliability_coefficient, eqa.validity_coefficient, eqa.knowledge_coverage_rate, " +
+            "    eqa.overall_difficulty, eqa.overall_discrimination, eqa.is_abnormal, " +
+            "    eqa.skewness, eqa.kurtosis, eqa.reliability_evaluation, " +
+            "    eqa.difficulty_evaluation, eqa.discrimination_evaluation " +
+            "ORDER BY MIN(e.exam_date) ASC" +
             "</script>")
     List<PaperAnalysisVO> selectTrendBySetterId(@Param("setterId") Long setterId, @Param("courseId") Long courseId);
 }

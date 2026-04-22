@@ -27,14 +27,14 @@ public class ExaminationPaperQualityAnalysisController {
     private TrendPredictionService trendPredictionService;
 
     /**
-     * 计算试卷指标
+     * 计算试卷指标（按试卷维度，聚合所有使用该试卷的考试实例）
      * 
-     * @param examId 试卷ID
+     * @param paperId 试卷ID
      * @return 计算结果
      */
-    @PostMapping("/calculate/{examId}")
-    public Result<Boolean> calculateExamIndicators(@PathVariable("examId") Long examId) {
-        computationService.calculateExamIndicators(examId);
+    @PostMapping("/calculate/{paperId}")
+    public Result<Boolean> calculatePaperIndicators(@PathVariable("paperId") Long paperId) {
+        computationService.calculatePaperIndicators(paperId);
         return Result.success(true);
     }
 

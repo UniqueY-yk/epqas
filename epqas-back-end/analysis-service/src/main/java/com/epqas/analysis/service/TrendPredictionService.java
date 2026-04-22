@@ -5,12 +5,11 @@ import com.epqas.analysis.dto.TrendPredictionVO;
 public interface TrendPredictionService {
 
     /**
-     * Compute trend prediction for the given setter and course,
-     * persist the result, and return it.
+     * 计算给定教师和课程的趋势预测，持久化结果并返回。
      *
-     * @param setterId the setter (teacher) ID
-     * @param courseId the course ID
-     * @return prediction result, or null if insufficient data (< 2 records)
+     * @param setterId 教师 ID
+     * @param courseId 课程 ID
+     * @return 预测结果，或 null（数据不足）
      */
     TrendPredictionVO predictTrend(Long setterId, Long courseId);
 }

@@ -18,14 +18,14 @@ public class QuestionQualityAnalysisController {
     private QuestionQualityAnalysisService analysisService;
 
     /**
-     * 获取试卷题目分析
+     * 获取试卷题目分析（按试卷ID查询）
      * 
-     * @param examId 试卷ID
+     * @param paperId 试卷ID
      * @return 题目分析列表
      */
-    @GetMapping("/exam/{examId}")
-    public Result<List<QuestionAnalysisDTO>> getQuestionAnalysisByExamId(@PathVariable("examId") Long examId) {
-        return Result.success(analysisService.getQuestionAnalysisDetailsByExamId(examId));
+    @GetMapping("/paper/{paperId}")
+    public Result<List<QuestionAnalysisDTO>> getQuestionAnalysisByPaperId(@PathVariable("paperId") Long paperId) {
+        return Result.success(analysisService.getQuestionAnalysisDetailsByPaperId(paperId));
     }
 
     /**

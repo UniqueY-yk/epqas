@@ -77,14 +77,14 @@ public class ImprovementSuggestionController {
     /**
      * 获取建议列表
      * 
-     * @param examId     考试ID
+     * @param paperId    试卷ID
      * @param questionId 题目ID
      * @return 建议列表
      */
     @GetMapping
     public Result<List<ImprovementSuggestion>> listSuggestions(
-            @RequestParam(required = false) Long examId,
+            @RequestParam(required = false) Long paperId,
             @RequestParam(required = false) Long questionId) {
-        return Result.success(suggestionService.getSuggestionsByExamAndQuestion(examId, questionId));
+        return Result.success(suggestionService.getSuggestionsByPaperAndQuestion(paperId, questionId));
     }
 }

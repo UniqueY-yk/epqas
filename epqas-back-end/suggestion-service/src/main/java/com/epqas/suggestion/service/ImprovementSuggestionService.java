@@ -6,5 +6,5 @@ import com.epqas.suggestion.entity.ImprovementSuggestion;
 import java.util.List;
 
 public interface ImprovementSuggestionService extends IService<ImprovementSuggestion> {
-    List<ImprovementSuggestion> getSuggestionsByExamAndQuestion(Long examId, Long questionId);
+    List<ImprovementSuggestion> getSuggestionsByPaperAndQuestion(Long paperId, Long questionId);
 }

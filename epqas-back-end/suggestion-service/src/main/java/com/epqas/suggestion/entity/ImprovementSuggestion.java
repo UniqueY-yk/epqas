@@ -16,7 +16,7 @@ public class ImprovementSuggestion {
     @TableId(type = IdType.AUTO)
     private Long suggestionId; // 建议ID
 
-    private Long examId; // 考试ID
+    private Long paperId; // 试卷ID
 
     private Long questionId; // 题目ID
 

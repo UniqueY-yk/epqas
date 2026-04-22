@@ -12,15 +12,15 @@ public class TrendPredictionVO {
     private Long setterId;
     private Integer courseId;
 
-    private String method;               // "WMA" or "OLS"
-    private Integer dataPointsUsed;      // number of historical data points used
+    private String method;               // 方法："加权移动平均(WMA)" 或 "线性回归(OLS)"
+    private Integer dataPointsUsed;      // 使用的历史数据点数量
 
     private Float predictedDifficulty;
     private Float predictedDiscrimination;
     private Float predictedReliability;
     private Float predictedValidity;
 
-    // Confidence intervals (±1σ)
+    // 置信区间（±1σ）
     private Float difficultyLower;
     private Float difficultyUpper;
     private Float discriminationLower;
@@ -30,7 +30,7 @@ public class TrendPredictionVO {
     private Float validityLower;
     private Float validityUpper;
 
-    // Trend direction text descriptions
+    // 趋势方向文本描述
     private String difficultyTrend;
     private String discriminationTrend;
     private String reliabilityTrend;

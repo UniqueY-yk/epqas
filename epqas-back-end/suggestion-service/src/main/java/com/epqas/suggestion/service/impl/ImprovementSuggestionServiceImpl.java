@@ -16,15 +16,15 @@ public class ImprovementSuggestionServiceImpl extends ServiceImpl<ImprovementSug
     /**
      * 获取建议列表
      * 
-     * @param examId     考试ID
+     * @param paperId    试卷ID
      * @param questionId 题目ID
      * @return 建议列表
      */
     @Override
-    public List<ImprovementSuggestion> getSuggestionsByExamAndQuestion(Long examId, Long questionId) {
+    public List<ImprovementSuggestion> getSuggestionsByPaperAndQuestion(Long paperId, Long questionId) {
         LambdaQueryWrapper<ImprovementSuggestion> wrapper = new LambdaQueryWrapper<>();
-        if (examId != null) {
-            wrapper.eq(ImprovementSuggestion::getExamId, examId);
+        if (paperId != null) {
+            wrapper.eq(ImprovementSuggestion::getPaperId, paperId);
         }
         if (questionId != null) {
             wrapper.eq(ImprovementSuggestion::getQuestionId, questionId);

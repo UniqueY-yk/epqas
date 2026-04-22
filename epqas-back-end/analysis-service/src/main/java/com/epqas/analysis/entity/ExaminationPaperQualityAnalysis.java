@@ -19,7 +19,7 @@ public class ExaminationPaperQualityAnalysis {
     @TableId(type = IdType.AUTO)
     private Long analysisId; // 分析ID
 
-    private Long examId; // 考试ID
+    private Long paperId; // 试卷ID
 
     private BigDecimal averageScore; // 平均分
 

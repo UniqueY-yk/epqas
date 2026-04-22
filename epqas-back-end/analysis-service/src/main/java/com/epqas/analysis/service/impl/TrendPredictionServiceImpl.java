@@ -23,6 +23,13 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
     private final ExaminationPaperQualityAnalysisService analysisService;
     private final TrendPredictionMapper predictionMapper;
 
+    /**
+     * 计算给定教师和课程的趋势预测，持久化结果并返回。
+     *
+     * @param setterId 教师 ID
+     * @param courseId 课程 ID
+     * @return 预测结果，或 null（数据不足）
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public TrendPredictionVO predictTrend(Long setterId, Long courseId) {
@@ -36,6 +43,7 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
         }
 
         int n = history.size();
+        // 2. 选择预测方法：加权移动平均(WMA) 或 线性回归(OLS)
         String method = n < 5 ? "WMA" : "OLS";
 
         // 2. 提取每个指标的时间序列数据
@@ -79,6 +87,7 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
         entity.setValidityLower(valResult.lower);
         entity.setValidityUpper(valResult.upper);
 
+        // 难度趋势描述：增加、减少、无显著趋势
         entity.setDifficultyTrend(describeTrendDifficulty(diffResult.slope));
         entity.setDiscriminationTrend(describeTrendGeneral(discResult.slope, "区分度"));
         entity.setReliabilityTrend(describeTrendGeneral(relResult.slope, "信度"));
@@ -87,7 +96,7 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
         // 5. 插入或更新预测记录
         LambdaQueryWrapper<TrendPrediction> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TrendPrediction::getSetterId, setterId)
-               .eq(TrendPrediction::getCourseId, courseId.intValue());
+                .eq(TrendPrediction::getCourseId, courseId.intValue());
         predictionMapper.delete(wrapper);
         predictionMapper.insert(entity);
 
@@ -107,6 +116,7 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
 
     /**
      * 根据方法字符串选择合适的预测算法。
+     * 
      * @param series 数据序列
      * @param method 预测方法（WMA或OLS）
      * @return 预测结果
@@ -122,6 +132,9 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
     /**
      * 加权移动平均法 (WMA)。
      * 权重： [1, 2, 3, ..., n] — 更近数据的权重更高。
+     * 
+     * @param series 数据序列
+     * @return 预测结果
      */
     private PredictionResult weightedMovingAverage(float[] series) {
         int n = series.length;
@@ -150,14 +163,16 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
                 predicted,
                 clamp(predicted - sigma),
                 clamp(predicted + sigma),
-                slope
-        );
+                slope);
     }
 
     /**
      * 最小角线性回归 (OLS)。
      * X = [1, 2, ..., n], Y = 数据值。
      * 预测值：X = n+1。
+     * 
+     * @param series 数据序列
+     * @return 预测结果
      */
     private PredictionResult linearRegression(float[] series) {
         int n = series.length;
@@ -182,6 +197,7 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
             denominator += (xi - meanX) * (xi - meanX);
         }
 
+        // 普通最小二乘法计算斜率 (b)
         double b = denominator != 0 ? numerator / denominator : 0.0; // 斜率
         double a = meanY - b * meanX; // 截距
 
@@ -200,14 +216,16 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
                 predicted,
                 clamp(predicted - sigma),
                 clamp(predicted + sigma),
-                (float) b
-        );
+                (float) b);
     }
 
     // ==================== Trend Description ====================
 
     /**
      * 描述难度趋势。对于难度，越高越易。
+     * 
+     * @param slope 斜率值
+     * @return 趋势描述
      */
     private String describeTrendDifficulty(float slope) {
         if (slope > 0.02f) {
@@ -222,9 +240,13 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
     /**
      * 描述一般趋势。
      * 对于这些指标，越高越好。
-    
+     * 
      * 描述区分度、可靠性、效度趋势。
      * 对于这些指标，较高值通常更好。
+     * 
+     * @param slope         斜率值
+     * @param indicatorName 指标名称（如区分度、可靠性、效度）
+     * @return 趋势描述
      */
     private String describeTrendGeneral(float slope, String indicatorName) {
         if (slope > 0.02f) {
@@ -240,6 +262,9 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
 
     /**
      * 将值限制在 [0, 1]范围内，因为所有指标都是0-1系数。
+     * 
+     * @param value 输入值
+     * @return 限制后的值
      */
     private float clamp(float value) {
         return Math.max(0f, Math.min(1f, value));
@@ -247,6 +272,11 @@ public class TrendPredictionServiceImpl implements TrendPredictionService {
 
     /**
      * 预测结果持有者，用于存储单个指标的预测结果。
+     * 
+     * @param predicted 预测值
+     * @param lower     信信区下限
+     * @param upper     信信区上限
+     * @param slope     斜率值
      */
     private static class PredictionResult {
         final float predicted;

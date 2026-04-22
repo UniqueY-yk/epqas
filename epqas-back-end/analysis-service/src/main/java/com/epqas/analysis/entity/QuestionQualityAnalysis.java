@@ -16,7 +16,7 @@ public class QuestionQualityAnalysis {
     @TableId(type = IdType.AUTO)
     private Long qAnalysisId; // 题目分析ID
 
-    private Long examId; // 考试ID
+    private Long paperId; // 试卷ID
 
     private Long questionId; // 题目ID
 

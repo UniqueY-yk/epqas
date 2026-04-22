@@ -131,7 +131,7 @@
                     type="warning" 
                     size="small" 
                     @click="handleCalculate(scope.row)"
-                    :loading="calcLoading === scope.row.examId"
+                    :loading="calcLoading === scope.row.paperId"
                 >
                     执行重新计算
                 </el-button>
@@ -166,7 +166,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, RefreshRight } from '@element-plus/icons-vue'
-import { getMyPaperAnalyses, calculateExamIndicators, type PaperAnalysisVO } from '../../api/analysis'
+import { getMyPaperAnalyses, calculatePaperIndicators, type PaperAnalysisVO } from '../../api/analysis'
 import { getCourses } from '../../api/academic'
 import dayjs from 'dayjs'
 import PaperQuestionDiagnosis from './PaperQuestionDiagnosis.vue'
@@ -282,13 +282,13 @@ const getReliabilityTagType = (val: number) => {
 }
 
 const handleCalculate = async (row: PaperAnalysisVO) => {
-    if (!row.examId) {
-        ElMessage.warning('Exam ID is missing.')
+    if (!row.paperId) {
+        ElMessage.warning('Paper ID is missing.')
         return
     }
-    calcLoading.value = row.examId
+    calcLoading.value = row.paperId
     try {
-        await calculateExamIndicators(row.examId)
+        await calculatePaperIndicators(row.paperId)
         ElMessage.success('计算完成，指标已更新！')
         loadData()
     } catch (error: any) {
@@ -302,19 +302,19 @@ const questionDiagnosisRef = ref<InstanceType<typeof PaperQuestionDiagnosis> | n
 const suggestionsDrawerRef = ref<InstanceType<typeof PaperSuggestionsDrawer> | null>(null)
 
 const handleAnalysisDetails = (row: PaperAnalysisVO) => {
-    if (!row.examId) {
+    if (!row.paperId) {
         ElMessage.warning('正在后台计算指标中，请稍后再试。')
         return
     }
-    questionDiagnosisRef.value?.openDialog(row.examId, row.paperTitle)
+    questionDiagnosisRef.value?.openDialog(row.paperId, row.paperTitle)
 }
 
 const handleViewSuggestions = (row: PaperAnalysisVO) => {
-    if (!row.examId) {
+    if (!row.paperId) {
         ElMessage.warning('正在后台计算指标中，请稍后再试。')
         return
     }
-    suggestionsDrawerRef.value?.openDrawer(row.examId)
+    suggestionsDrawerRef.value?.openDrawer(row.paperId)
 }
 
 </script>

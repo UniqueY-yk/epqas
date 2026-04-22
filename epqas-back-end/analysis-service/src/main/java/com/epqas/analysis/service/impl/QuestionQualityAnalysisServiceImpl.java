@@ -17,17 +17,17 @@ public class QuestionQualityAnalysisServiceImpl extends
     private ExamMetricsComputeMapper computeMapper;
 
     /**
-     * 根据考试ID获取题目分析详情
+     * 根据试卷ID获取题目分析详情
      * 
-     * @param examId 考试ID
+     * @param paperId 试卷ID
      * @return 题目分析详情列表
      */
     @Override
-    public List<QuestionAnalysisDTO> getQuestionAnalysisDetailsByExamId(Long examId) {
-        List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByExamId(examId);
+    public List<QuestionAnalysisDTO> getQuestionAnalysisDetailsByPaperId(Long paperId) {
+        List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByPaperId(paperId);
 
         for (QuestionAnalysisDTO dto : dtos) {
-            List<String> suggestions = computeMapper.getSuggestionTextsByExamIdAndQuestionId(examId, dto.getQuestionId());
+            List<String> suggestions = computeMapper.getSuggestionTextsByPaperIdAndQuestionId(paperId, dto.getQuestionId());
             dto.setSuggestions(suggestions);
         }
 

@@ -32,30 +32,29 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
     private final QuestionQualityAnalysisService questionAnalysisService;
 
     /**
-     * 计算考试指标
+     * 计算试卷指标（按试卷维度，聚合所有使用该试卷的考试实例）
      * 
-     * @param examId 考试ID
+     * @param paperId 试卷ID
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void calculateExamIndicators(Long examId) {
-        log.info("Starting indicator computation for examId: {}", examId);
+    public void calculatePaperIndicators(Long paperId) {
+        log.info("Starting indicator computation for paperId: {}", paperId);
 
-        // ==================== 1. 加载上下文数据 ====================
-        List<ComputeExamResultDTO> results = computeMapper.selectExamResults(examId);
+        // ==================== 1. 加载上下文数据（聚合所有考试实例） ====================
+        List<ComputeExamResultDTO> results = computeMapper.selectExamResultsByPaperId(paperId);
         if (results == null || results.isEmpty()) {
             throw new RuntimeException("没有找到学生成绩数据，无法进行计算");
         }
 
-        List<ComputeStudentAnswerDTO> answers = computeMapper.selectStudentAnswers(examId);
-        List<ComputePaperQuestionDTO> questions = computeMapper.selectPaperQuestions(examId);
+        List<ComputeStudentAnswerDTO> answers = computeMapper.selectStudentAnswersByPaperId(paperId);
+        List<ComputePaperQuestionDTO> questions = computeMapper.selectPaperQuestions(paperId);
 
         if (questions == null || questions.isEmpty()) {
             throw new RuntimeException("没有找到试卷题目数据，无法进行计算");
         }
 
         // ==================== 2. 基础统计 ====================
-        Long paperId = questions.get(0).getPaperId();
         Integer courseId = computeMapper.getCourseIdByPaperId(paperId);
 
         // 计算基本统计 (平均分, 最高分, 最低分, 标准差)
@@ -136,7 +135,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         }
 
         // ==================== 7. 逐题指标计算 (P, D, V) ====================
-        deleteExistingItemAnalysis(examId);
+        deleteExistingItemAnalysis(paperId);
         List<QuestionQualityAnalysis> qAnalyses = new ArrayList<>();
         double sumP = 0.0; // 用于计算平均难度
         double sumD = 0.0; // 用于计算平均区分度
@@ -144,7 +143,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
 
         for (ComputePaperQuestionDTO q : questions) {
             QuestionQualityAnalysis itemQa = new QuestionQualityAnalysis();
-            itemQa.setExamId(examId);
+            itemQa.setPaperId(paperId);
             itemQa.setQuestionId(q.getQuestionId());
 
             List<ComputeStudentAnswerDTO> qAns = answersByQuestion.getOrDefault(q.getQuestionId(), new ArrayList<>());
@@ -183,7 +182,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             sumD += D;
 
             // ---- 7d. 效度 Pearson r(i,T) ----
-            // r = Σ((Xi - X̄i)(T - T̄)) / sqrt(Σ(Xi - X̄i)² * Σ(T - T̄)²)
             double validity = calculatePearsonCorrelation(qAns, studentTotalScores, N, meanTotal);
             itemQa.setValidityIndex((float) validity);
             sumV += Math.abs(validity);
@@ -239,10 +237,10 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                 || overallDiscrimination < 0.2 || reliability < 0.6;
 
         // ==================== 11. 保存试卷分析 ====================
-        deleteExistingPaperAnalysis(examId);
+        deleteExistingPaperAnalysis(paperId);
 
         ExaminationPaperQualityAnalysis examAnalysis = new ExaminationPaperQualityAnalysis();
-        examAnalysis.setExamId(examId);
+        examAnalysis.setPaperId(paperId);
         examAnalysis.setAverageScore(avgScore.setScale(2, RoundingMode.HALF_UP));
         examAnalysis.setStdDeviation(BigDecimal.valueOf(totalStdDev).setScale(2, RoundingMode.HALF_UP));
         examAnalysis.setHighestScore(maxScore);
@@ -262,21 +260,14 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         examAnalysisService.save(examAnalysis);
 
         // ==================== 12. 生成并保存改进建议 ====================
-        generateImprovementSuggestions(examId);
+        generateImprovementSuggestions(paperId);
 
-        log.info("Finished indicator computation for examId: {}", examId);
+        log.info("Finished indicator computation for paperId: {}", paperId);
     }
 
     /**
      * 计算皮尔逊相关系数
-     * 
-     * @param qAns               题目答案
-     * @param studentTotalScores 学生总分
-     * @param totalStudents      学生总数
-     * @param meanTotal          平均总分
-     * @return 皮尔逊相关系数
      */
-    // ==================== Pearson相关系数 r(i,T) ====================
     private double calculatePearsonCorrelation(List<ComputeStudentAnswerDTO> qAns,
             Map<Long, BigDecimal> studentTotalScores,
             int totalStudents, double meanTotal) {
@@ -318,15 +309,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
 
     /**
      * 计算偏度
-     * 
-     * @param data   数据
-     * @param mean   平均值
-     * @param stdDev 标准差
-     * @param n      数据数量
-     * @return 偏度
      */
-    // ==================== 偏度 (Skewness) ====================
-    // Skewness = [n / ((n-1)(n-2))] * Σ((xi - x̄) / σ)³
     private double calculateSkewness(List<BigDecimal> data, BigDecimal mean, double stdDev, int n) {
         if (n < 3 || stdDev == 0)
             return 0.0;
@@ -341,16 +324,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
 
     /**
      * 计算峰度
-     * 
-     * @param data   数据
-     * @param mean   平均值
-     * @param stdDev 标准差
-     * @param n      数据数量
-     * @return 峰度
      */
-    // ==================== 峰度 (Excess Kurtosis) ====================
-    // Kurtosis = [n(n+1) / ((n-1)(n-2)(n-3))] * Σ((xi - x̄) / σ)⁴ - [3(n-1)² /
-    // ((n-2)(n-3))]
     private double calculateKurtosis(List<BigDecimal> data, BigDecimal mean, double stdDev, int n) {
         if (n < 4 || stdDev == 0)
             return 0.0;
@@ -367,12 +341,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
 
     // ==================== 定性评价映射 ====================
 
-    /**
-     * 评价信度
-     * 
-     * @param alpha 信度
-     * @return 评价结果
-     */
     /** 信度评价: α >= 0.8 → 高, α >= 0.6 → 中, α < 0.6 → 低 */
     private String evaluateReliability(double alpha) {
         if (alpha >= 0.8)
@@ -382,12 +350,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         return "低";
     }
 
-    /**
-     * 评价难度
-     * 
-     * @param p 难度
-     * @return 评价结果
-     */
     /** 难度评价: P > 0.7 → 偏易, P >= 0.4 → 适中, P < 0.4 → 偏难 */
     private String evaluateDifficulty(double p) {
         if (p > 0.7)
@@ -397,12 +359,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         return "偏难";
     }
 
-    /**
-     * 评价区分度
-     * 
-     * @param d 区分度
-     * @return 评价结果
-     */
     /**
      * 区分度评价: D >= 0.4 → 优秀, D >= 0.3 → 良好, D >= 0.2 → 一般, D < 0.2 → 差
      */
@@ -416,13 +372,6 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         return "差";
     }
 
-    /**
-     * 计算标准差
-     * 
-     * @param data 数据
-     * @param mean 平均值
-     * @return 标准差
-     */
     // ==================== 标准差 (总体) ====================
     private double calculateStdDev(List<BigDecimal> data, BigDecimal mean) {
         if (data.size() <= 1)
@@ -435,15 +384,10 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         return Math.sqrt(sumSquareDiffs / data.size());
     }
 
-    /**
-     * 生成改进建议
-     * 
-     * @param examId 考试ID
-     */
     // ==================== 改进建议生成 ====================
-    private void generateImprovementSuggestions(Long examId) {
-        computeMapper.deleteSuggestionsByExamId(examId);
-        List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByExamId(examId);
+    private void generateImprovementSuggestions(Long paperId) {
+        computeMapper.deleteSuggestionsByPaperId(paperId);
+        List<QuestionAnalysisDTO> dtos = computeMapper.getQuestionAnalysisDetailsByPaperId(paperId);
         ObjectMapper mapper = new ObjectMapper();
 
         for (QuestionAnalysisDTO dto : dtos) {
@@ -451,18 +395,18 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             Float diffIdx = dto.getDifficultyIndex();
             if (diffIdx != null) {
                 if (diffIdx < 0.4f) {
-                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj",
+                    saveSuggestion(paperId, dto.getQuestionId(), "Difficulty_Adj",
                             "题目难度过高 (P=" + String.format("%.2f", diffIdx) + ", " + evaluateDifficulty(diffIdx)
                                     + ")，建议修改题干或干扰项。");
 
                     if (dto.getStem() != null && (dto.getStem().toUpperCase().contains("NOT") ||
                             dto.getStem().toUpperCase().contains("EXCEPT") ||
                             dto.getStem().contains("不") || dto.getStem().contains("除了"))) {
-                        saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                        saveSuggestion(paperId, dto.getQuestionId(), "Question_Content",
                                 "这是一道难度较高的否定形式题目。建议在题干中加粗或高亮否定词。");
                     }
                 } else if (diffIdx > 0.7f) {
-                    saveSuggestion(examId, dto.getQuestionId(), "Difficulty_Adj",
+                    saveSuggestion(paperId, dto.getQuestionId(), "Difficulty_Adj",
                             "题目过于简单 (P=" + String.format("%.2f", diffIdx) + ", " + evaluateDifficulty(diffIdx)
                                     + ")，请检查正确答案是否过于明显。");
                 }
@@ -470,7 +414,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
 
             // 规则2：区分度检查
             if (dto.getDiscriminationIndex() != null && dto.getDiscriminationIndex() < 0.2f) {
-                saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                saveSuggestion(paperId, dto.getQuestionId(), "Question_Content",
                         "区分度较低 (D=" + String.format("%.2f", dto.getDiscriminationIndex()) + ", "
                                 + evaluateDiscrimination(dto.getDiscriminationIndex()) + ")。建议优化选项。");
             }
@@ -499,7 +443,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                             String optText = (optionsMap != null && optionsMap.containsKey(opt))
                                     ? " ('" + optionsMap.get(opt) + "')"
                                     : "";
-                            saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                            saveSuggestion(paperId, dto.getQuestionId(), "Question_Content",
                                     "选项 " + opt + optText + " 极少或从未被选过。建议将其替换为更有迷惑性的干扰项。");
                         }
                     }
@@ -525,7 +469,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
                         }
                     }
                     if (validDistractors > 0 && isSignificantlyLonger) {
-                        saveSuggestion(examId, dto.getQuestionId(), "Question_Content",
+                        saveSuggestion(paperId, dto.getQuestionId(), "Question_Content",
                                 "潜在长度偏差：正确答案 (" + correctOptKey + ") 明显长于其他干扰项。学生可能会根据长度猜测答案。");
                     }
                 }
@@ -533,33 +477,15 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         }
     }
 
-    /**
-     * 保存改进建议
-     * 
-     * @param examId     考试ID
-     * @param questionId 题目ID
-     * @param type       建议类型
-     * @param text       建议内容
-     */
-    private void saveSuggestion(Long examId, Long questionId, String type, String text) {
-        computeMapper.insertImprovementSuggestion(examId, questionId, type, text, text, false);
+    private void saveSuggestion(Long paperId, Long questionId, String type, String text) {
+        computeMapper.insertImprovementSuggestion(paperId, questionId, type, text, text, false);
     }
 
-    /**
-     * 删除已存在的试卷分析
-     * 
-     * @param examId 考试ID
-     */
-    private void deleteExistingPaperAnalysis(Long examId) {
-        computeMapper.deletePaperQualityAnalysisByExamId(examId);
+    private void deleteExistingPaperAnalysis(Long paperId) {
+        computeMapper.deletePaperQualityAnalysisByPaperId(paperId);
     }
 
-    /**
-     * 删除已存在的题目分析
-     * 
-     * @param examId 考试ID
-     */
-    private void deleteExistingItemAnalysis(Long examId) {
-        computeMapper.deleteQuestionQualityAnalysisByExamId(examId);
+    private void deleteExistingItemAnalysis(Long paperId) {
+        computeMapper.deleteQuestionQualityAnalysisByPaperId(paperId);
     }
 }

@@ -99,7 +99,7 @@ import { ScatterChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, GridComponent, DatasetComponent, GraphicComponent, MarkAreaComponent, DataZoomComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { getQuestionAnalysisByExamId, type QuestionAnalysisVO } from '../../api/analysis'
+import { getQuestionAnalysisByPaperId, type QuestionAnalysisVO } from '../../api/analysis'
 import PaperSuggestionsDrawer from './PaperSuggestionsDrawer.vue'
 
 // Register ECharts core components
@@ -117,14 +117,14 @@ use([
 
 const dialogVisible = ref(false)
 const loading = ref(false)
-const examId = ref<number>(0)
+const paperId = ref<number>(0)
 const examTitle = ref<string>('')
 const chartData = ref<QuestionAnalysisVO[]>([])
 const suggestionsDrawerRef = ref<InstanceType<typeof PaperSuggestionsDrawer> | null>(null)
 
 // Expose open method to parent component
 const openDialog = (id: number, title: string) => {
-  examId.value = id
+  paperId.value = id
   examTitle.value = title
   dialogVisible.value = true
 }
@@ -134,7 +134,7 @@ defineExpose({ openDialog })
 const handleOpened = async () => {
     loading.value = true
     try {
-        const res = await getQuestionAnalysisByExamId(examId.value)
+        const res = await getQuestionAnalysisByPaperId(paperId.value)
         chartData.value = res.data || []
     } catch (e: any) {
         ElMessage.error(e.message || '获取分析数据失败')
@@ -377,8 +377,8 @@ const chartOption = computed(() => {
 const handleChartClick = (params: any) => {
     if (params.componentType === 'series' && params.seriesType === 'scatter') {
         const questionId = params.data?.rawData?.questionId
-        if (questionId && examId.value) {
-            suggestionsDrawerRef.value?.openDrawer(examId.value, questionId)
+        if (questionId && paperId.value) {
+            suggestionsDrawerRef.value?.openDrawer(paperId.value, questionId)
         }
     }
 }

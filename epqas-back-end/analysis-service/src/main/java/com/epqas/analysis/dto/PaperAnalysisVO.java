@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 public class PaperAnalysisVO {
     private Long analysisId; // 分析ID
 
-    private Long examId; // 考试ID
-
     private Long paperId; // 试卷ID
 
     private String paperTitle; // 试卷标题

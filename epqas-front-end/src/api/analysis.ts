@@ -2,7 +2,6 @@ import request from '../utils/request'
 
 export interface PaperAnalysisVO {
     analysisId: number;
-    examId: number;
     paperId: number;
     paperTitle: string;
     courseName: string;
@@ -32,9 +31,9 @@ export const getMyPaperAnalyses = (params: any) => {
     })
 }
 
-export const calculateExamIndicators = (examId: number) => {
+export const calculatePaperIndicators = (paperId: number) => {
     return request({
-        url: `/analysis/paper-analysis/calculate/${examId}`,
+        url: `/analysis/paper-analysis/calculate/${paperId}`,
         method: 'post'
     })
 }
@@ -58,9 +57,9 @@ export interface QuestionAnalysisVO {
     discriminationEvaluation?: string;
 }
 
-export const getQuestionAnalysisByExamId = (examId: number) => {
+export const getQuestionAnalysisByPaperId = (paperId: number) => {
     return request<QuestionAnalysisVO[]>({
-        url: `/analysis/question-analysis/exam/${examId}`,
+        url: `/analysis/question-analysis/paper/${paperId}`,
         method: 'get'
     })
 }
@@ -68,7 +67,7 @@ export const getQuestionAnalysisByExamId = (examId: number) => {
 // Improvement Suggestions
 export interface ImprovementSuggestion {
     suggestionId: number;
-    examId: number;
+    paperId: number;
     questionId: number;
     suggestionType: string;
     suggestionText: string;
@@ -78,12 +77,12 @@ export interface ImprovementSuggestion {
     updatedAt: string;
 }
 
-export const getSuggestionsByExamId = (examId: number, questionId?: number) => {
+export const getSuggestionsByPaperId = (paperId: number, questionId?: number) => {
     return request<ImprovementSuggestion[]>({
         url: '/suggestions',
         method: 'get',
         params: {
-            examId,
+            paperId,
             questionId
         }
     })

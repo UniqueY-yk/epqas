@@ -10,8 +10,8 @@ public interface QuestionQualityAnalysisService extends IService<QuestionQuality
     /**
      * 获取包含题目文本的详细题目级质量分析。
      * 
-     * @param examId 考试ID
+     * @param paperId 试卷ID
      * @return 题目分析详情列表
      */
-    List<QuestionAnalysisDTO> getQuestionAnalysisDetailsByExamId(Long examId);
+    List<QuestionAnalysisDTO> getQuestionAnalysisDetailsByPaperId(Long paperId);
 }
