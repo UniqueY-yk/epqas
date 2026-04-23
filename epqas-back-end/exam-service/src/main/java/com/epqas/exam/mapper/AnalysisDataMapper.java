@@ -52,7 +52,7 @@ public interface AnalysisDataMapper {
      * 根据学生ID列表查询学生姓名 (关联User表)
      * 
      * @param studentIds 学生ID列表
-     * @return 学生ID-真实姓名映射列表
+     * @return 学生ID-姓名映射列表
      */
     @Select("<script>" +
             "SELECT s.student_id, u.real_name FROM student s " +

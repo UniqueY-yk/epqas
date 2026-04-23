@@ -28,6 +28,11 @@ service.interceptors.request.use(
 service.interceptors.response.use(
     (response) => {
         const res = response.data
+        // If it's a blob (like a file download), just return the data directly
+        if (response.config.responseType === 'blob') {
+            return res
+        }
+        
         // Assuming backend follows Result wrapper convention
         if (res.code !== 200) {
             ElMessage.error(res.message || 'Error')

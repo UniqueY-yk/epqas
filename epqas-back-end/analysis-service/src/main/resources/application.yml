@@ -18,3 +18,8 @@ mybatis-plus:
     mapper-locations: classpath:mapper/*.xml
     configuration:
         map-underscore-to-camel-case: true
+
+encryption:
+    aes:
+        secret-key: 8e7d1cf04a923b5e06192d7cafe58031d46b972108fc5349ab721e8dc60f359b
+        iv: 3d8a1f729c0e4b652817d9f35a0c81eb

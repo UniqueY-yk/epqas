@@ -44,7 +44,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
         // 1. 调用认证服务创建用户
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setPasswordHash(dto.getPassword() != null ? dto.getPassword() : "123456"); // 默认临时密码
+        user.setPasswordHash(dto.getPassword() != null && !dto.getPassword().trim().isEmpty() ? dto.getPassword() : "123456"); // 默认临时密码
         user.setRealName(dto.getRealName());
         user.setEmail(dto.getEmail());
         user.setRoleId(4); // 4 = Student in our SQL init script
@@ -61,7 +61,6 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
         // 2. 创建学生记录
         Student student = new Student();
         student.setStudentId(userId); // 主键链接到user.user_id
-        student.setStudentNumber(dto.getStudentNumber());
         student.setClassId(dto.getClassId());
 
         this.save(student);

@@ -66,17 +66,15 @@ public class StudentExcelListener implements ReadListener<ExcelStudentDTO> {
             try {
                 StudentDTO dto = new StudentDTO();
                 dto.setUsername(excelData.getUsername());
-                dto.setPassword(excelData.getPassword());
                 dto.setRealName(excelData.getRealName());
                 dto.setEmail(excelData.getEmail());
-                dto.setStudentNumber(excelData.getStudentNumber());
                 dto.setClassId(excelData.getClassId());
 
                 // 实际应该有一个批量插入的方法，但是逐个调用
                 // 确保我们命中 UserFeignClient 以获取不同的用户 ID
                 studentService.createStudentWithUser(dto);
             } catch (Exception e) {
-                log.error("Failed to import student {}: {}", excelData.getStudentNumber(), e.getMessage());
+                log.error("Failed to import student {}: {}", excelData.getUsername(), e.getMessage());
             }
         }
         log.info("Save successful!");

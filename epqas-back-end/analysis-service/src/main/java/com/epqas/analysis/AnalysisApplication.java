@@ -6,7 +6,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = { "com.epqas.analysis", "com.epqas.common" })
 @EnableDiscoveryClient
 @EnableFeignClients
 @EnableScheduling

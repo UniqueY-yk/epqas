@@ -8,6 +8,7 @@ import com.epqas.common.result.Result;
 import com.epqas.common.utils.JwtUtils;
 import com.epqas.common.entity.Role;
 import com.epqas.auth.mapper.RoleMapper;
+import com.epqas.common.utils.AESUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Result<Map<String, Object>> login(String username, String password, Integer roleId) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", username);
+        queryWrapper.eq("username", AESUtil.encrypt(username));
         User user = userMapper.selectOne(queryWrapper);
 
         if (user == null) {

@@ -1,5 +1,22 @@
+# ============================================================
+# Generate self-signed SSL certificate (run this command ONCE):
+#
+# keytool -genkeypair -alias epqas-gateway -keyalg RSA -keysize 2048 ^
+#   -storetype PKCS12 -keystore src/main/resources/keystore.p12 ^
+#   -validity 3650 -storepass epqas2026 ^
+#   -dname "CN=localhost, OU=EPQAS, O=University, L=City, ST=Province, C=CN"
+#
+# Then place keystore.p12 in gateway-service/src/main/resources/
+# ============================================================
+
 server:
-  port: 8080
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-type: PKCS12
+    key-store-password: epqas2026
+    key-alias: epqas-gateway
 
 spring:
   application:

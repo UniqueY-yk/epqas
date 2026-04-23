@@ -8,8 +8,12 @@
 
     <el-card shadow="never" class="table-card">
       <el-table :data="studentData" v-loading="loading" stripe style="width: 100%" class="custom-table" border>
-        <el-table-column prop="studentNumber" label="学号" min-width="120" />
-        <el-table-column label="真实姓名" min-width="120">
+        <el-table-column label="工号/学号" min-width="120">
+          <template #default="{ row }">
+            {{ getUsername(row.studentId) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="姓名" min-width="120">
           <template #default="{ row }">
             {{ getUserName(row.studentId) }}
           </template>
@@ -163,6 +167,7 @@ const examId = Number(route.params.examId)
 const loading = ref(false)
 const studentData = ref<any[]>([])
 const usersMap = ref<Record<number, string>>({})
+const userUsernameMap = ref<Record<number, string>>({})
 
 const paperName = ref('')
 const className = ref('')
@@ -325,6 +330,7 @@ const fetchInitialData = async () => {
     const users = usersRes.data?.records || []
     users.forEach((u: any) => {
       usersMap.value[u.userId] = u.realName
+      userUsernameMap.value[u.userId] = u.username
     })
 
     const results = resultsRes.data || []
@@ -359,6 +365,10 @@ const fetchInitialData = async () => {
 
 const getUserName = (userId: number) => {
   return usersMap.value[userId] || `用户ID:${userId}`
+}
+
+const getUsername = (userId: number) => {
+  return userUsernameMap.value[userId] || `-`
 }
 
 const saveSingleResult = async (row: any) => {

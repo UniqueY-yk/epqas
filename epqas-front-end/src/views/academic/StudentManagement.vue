@@ -16,6 +16,7 @@
           </el-button>
         </div>
         <div class="action-area">
+          <el-button type="info" :icon="Download" plain @click="handleDownloadTemplate">下载Excel模板</el-button>
           <el-upload
             class="upload-demo"
             action="#"
@@ -38,8 +39,10 @@
           <el-empty description="暂无数据" />
         </template>
         <el-table-column prop="studentId" label="用户ID" width="80" />
-        <el-table-column prop="studentNumber" label="学号" />
+        <el-table-column prop="username" label="学号" />
+        <el-table-column prop="realName" label="姓名" />
         <el-table-column prop="classId" label="班级ID" />
+        <el-table-column prop="email" label="邮箱" />
         <el-table-column label="操作" width="180">
           <template #default="scope">
             <el-button-group>
@@ -73,7 +76,7 @@
       <el-form :model="form" label-width="100px" :rules="rules" ref="studentFormRef" class="paper-form">
         <div class="form-header-section">
         <el-divider content-position="left" style="margin-top: 0">账号信息</el-divider>
-        <el-form-item label="用户名" prop="username">
+        <el-form-item label="学号" prop="username">
           <el-input v-model="form.username" placeholder="登录账号" :disabled="form.userId !== null" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
@@ -86,10 +89,6 @@
           <el-input v-model="form.email" />
         </el-form-item>
 
-        <el-divider content-position="left">学籍信息</el-divider>
-        <el-form-item label="学号" prop="studentNumber">
-          <el-input v-model="form.studentNumber" />
-        </el-form-item>
         <el-form-item label="班级ID" prop="classId">
           <el-input v-model.number="form.classId" type="number" />
         </el-form-item>
@@ -107,9 +106,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
-import { getStudents, addStudent, updateStudent, deleteStudent, importStudents } from '@/api/student'
+import { getStudents, addStudent, updateStudent, deleteStudent, importStudents, downloadStudentTemplate } from '@/api/student'
 import { ElMessage } from 'element-plus'
-import { Search, Plus, Edit, Delete, Upload } from '@element-plus/icons-vue'
+import { Search, Plus, Edit, Delete, Upload, Download } from '@element-plus/icons-vue'
 
 const loading = ref(false)
 const importing = ref(false)
@@ -127,14 +126,12 @@ const form = reactive({
   password: '', 
   realName: '', 
   email: '', 
-  studentNumber: '', 
   classId: null as number | null 
 })
 
 const studentFormRef = ref()
 const rules = reactive({
-  realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
-  studentNumber: [{ required: true, message: '请输入学号', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入用户名/学号', trigger: 'blur' }],
   classId: [{ required: true, message: '请输入班级ID', trigger: 'blur' }]
 })
 
@@ -181,9 +178,26 @@ const handleImport = async (options: any) => {
   }
 }
 
+const handleDownloadTemplate = async () => {
+  try {
+    const res: any = await downloadStudentTemplate()
+    const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', '导入学生信息Excel模板.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('下载模板失败')
+  }
+}
+
 const handleAdd = () => {
   dialogTitle.value = '新增学生'
-  Object.assign(form, { userId: null, username: '', password: '', realName: '', email: '', studentNumber: '', classId: null })
+  Object.assign(form, { userId: null, username: '', password: '', realName: '', email: '', classId: null })
   dialogVisible.value = true
   nextTick(() => { studentFormRef.value?.clearValidate() })
 }
@@ -212,7 +226,6 @@ const submitForm = async () => {
         if (form.userId) {
           await updateStudent({
               studentId: form.userId,
-              studentNumber: form.studentNumber,
               classId: form.classId
           })
         } else {

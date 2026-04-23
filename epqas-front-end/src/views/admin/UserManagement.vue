@@ -42,8 +42,8 @@
                     <el-empty description="暂无数据" />
                 </template>
                 <el-table-column prop="userId" label="ID" width="80" align="center" />
-                <el-table-column prop="username" label="用户名" width="180" />
-                <el-table-column prop="realName" label="真实姓名" width="180" />
+                <el-table-column prop="username" label="工号/学号" width="180" />
+                <el-table-column prop="realName" label="姓名" width="180" />
                 <el-table-column prop="roleId" label="角色" width="180" align="center">
                     <template #default="scope">
                         <el-tag :type="getRoleTagType(scope.row.roleId)">{{
@@ -103,7 +103,7 @@
                 class="paper-form"
             >
                 <div class="form-header-section">
-                    <el-form-item label="用户名" prop="username">
+                    <el-form-item label="工号/学号" prop="username">
                         <el-input
                             v-model="form.username"
                             :disabled="!!form.userId"

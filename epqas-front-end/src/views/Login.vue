@@ -13,7 +13,7 @@
         <el-form-item prop="username">
           <el-input 
             v-model="loginForm.username" 
-            placeholder="用户名" 
+            placeholder="工号/学号" 
             :prefix-icon="User"
           />
         </el-form-item>
@@ -69,7 +69,7 @@ const loginForm = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入工号/学号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   roleId: [{ required: true, message: '请选择身份', trigger: 'change' }]
 }

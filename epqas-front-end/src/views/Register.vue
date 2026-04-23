@@ -13,7 +13,7 @@
         <el-form-item prop="username">
           <el-input 
             v-model="registerForm.username" 
-            placeholder="用户名" 
+            placeholder="工号/学号" 
             :prefix-icon="User"
           />
         </el-form-item>

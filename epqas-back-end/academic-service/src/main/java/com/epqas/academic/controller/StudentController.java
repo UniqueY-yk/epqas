@@ -2,6 +2,8 @@ package com.epqas.academic.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.epqas.academic.entity.Student;
+import com.epqas.academic.mapper.StudentMapper;
+import com.epqas.academic.vo.StudentVO;
 import com.epqas.academic.service.StudentService;
 import com.epqas.common.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,9 @@ public class StudentController {
     @Autowired
     private StudentService studentService;
 
+    @Autowired
+    private StudentMapper studentMapper;
+
     /**
      * 获取学生列表
      * 
@@ -24,9 +29,9 @@ public class StudentController {
      * @return 学生列表
      */
     @GetMapping
-    public Result<Page<Student>> listStudents(@RequestParam(value = "page", defaultValue = "1") Integer page,
+    public Result<Page<StudentVO>> listStudents(@RequestParam(value = "page", defaultValue = "1") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        return Result.success(studentService.page(new Page<>(page, size)));
+        return Result.success(studentMapper.selectStudentVOPage(new Page<>(page, size)));
     }
 
     /**
@@ -51,6 +56,18 @@ public class StudentController {
     public Result<Boolean> importStudents(@RequestParam("file") MultipartFile file) {
         studentService.importStudents(file);
         return Result.success(true);
+    }
+
+    /**
+     * 下载导入学生模板
+     */
+    @GetMapping("/template")
+    public void downloadTemplate(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        String fileName = java.net.URLEncoder.encode("导入学生信息Excel模板", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        com.alibaba.excel.EasyExcel.write(response.getOutputStream(), com.epqas.academic.dto.ExcelStudentDTO.class).sheet("Template").doWrite(java.util.Collections.emptyList());
     }
 
     /**

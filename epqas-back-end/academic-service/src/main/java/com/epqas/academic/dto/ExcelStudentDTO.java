@@ -9,21 +9,15 @@ import lombok.Data;
 @Data
 public class ExcelStudentDTO {
 
-    @ExcelProperty("Student Number")
-    private String studentNumber; // 学号
-
-    @ExcelProperty("Real Name")
-    private String realName; // 真实姓名
-
-    @ExcelProperty("Username")
-    private String username; // 用户名
-
-    @ExcelProperty("Email")
-    private String email; // 邮箱
-
-    @ExcelProperty("Class ID")
+    @ExcelProperty(value = "班级", index = 0)
     private Integer classId; // 班级ID
 
-    @ExcelProperty("Password")
-    private String password; // 密码
+    @ExcelProperty(value = "学号", index = 1)
+    private String username; // 学号
+
+    @ExcelProperty(value = "姓名", index = 2)
+    private String realName; // 姓名
+
+    @ExcelProperty(value = "邮箱", index = 3)
+    private String email; // 邮箱
 }

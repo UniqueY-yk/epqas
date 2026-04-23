@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import mkcert from 'vite-plugin-mkcert'
 
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [
+        vue(),
+        mkcert()
+    ],
     resolve: {
         alias: {
             '@': '/src'
@@ -12,8 +16,9 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:8080',
+                target: 'https://localhost:8443',
                 changeOrigin: true,
+                secure: false, // Accept self-signed SSL certificate in dev
                 rewrite: (path) => path.replace(/^\/api/, '')
             }
         }

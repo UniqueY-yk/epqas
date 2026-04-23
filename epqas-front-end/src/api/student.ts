@@ -27,6 +27,14 @@ export function importStudents(formData: FormData) {
     })
 }
 
+export function downloadStudentTemplate() {
+    return request({
+        url: '/academic/students/template',
+        method: 'get',
+        responseType: 'blob'
+    })
+}
+
 export function updateStudent(data: any) {
     return request({
         url: '/academic/students',

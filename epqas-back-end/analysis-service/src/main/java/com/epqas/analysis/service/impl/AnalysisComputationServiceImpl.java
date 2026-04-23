@@ -1,5 +1,7 @@
 package com.epqas.analysis.service.impl;
 
+import com.epqas.common.utils.AESUtil;
+
 import com.epqas.analysis.dto.compute.ComputeExamResultDTO;
 import com.epqas.analysis.dto.compute.ComputePaperQuestionDTO;
 import com.epqas.analysis.dto.compute.ComputeStudentAnswerDTO;
@@ -189,7 +191,17 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             // ---- 7e. 选项分布 ----
             Map<String, Integer> choiceCounts = new HashMap<>();
             for (ComputeStudentAnswerDTO a : qAns) {
-                String choice = a.getStudentChoice();
+                // student_choice is encrypted in DB; raw SQL bypasses TypeHandler, so decrypt here
+                String rawChoice = a.getStudentChoice();
+                String choice = null;
+                if (rawChoice != null && !rawChoice.trim().isEmpty()) {
+                    try {
+                        choice = AESUtil.decrypt(rawChoice);
+                    } catch (Exception e) {
+                        // Fallback: if decryption fails, use raw value (might be unencrypted legacy data)
+                        choice = rawChoice;
+                    }
+                }
                 if (choice != null && !choice.trim().isEmpty()) {
                     choiceCounts.put(choice, choiceCounts.getOrDefault(choice, 0) + 1);
                 }

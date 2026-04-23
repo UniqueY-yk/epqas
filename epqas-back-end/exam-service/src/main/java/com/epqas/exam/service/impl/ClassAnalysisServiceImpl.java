@@ -339,8 +339,10 @@ public class ClassAnalysisServiceImpl implements ClassAnalysisService {
                 int identicalWrongCount = identicalWrongDetails.size();
                 double similarityRate = totalQuestions == 0 ? 0.0 : (double) identicalWrongCount / totalQuestions;
 
-                // 仅当满足阈值时标记：>= 3 个相同的错误答案或 >= 50% 的相似度
-                if (identicalWrongCount >= 3 || similarityRate >= 0.5) {
+                // 仅当满足严格的阈值时标记（避免误报过多）：
+                // 1. 相同的错误答案数量 >= 5 且 相同错误率 >= 30%
+                // 2. 或者绝对相同错误答案数量 >= 10
+                if ((identicalWrongCount >= 5 && similarityRate >= 0.45) || identicalWrongCount >= 10) {
                     AbnormalDetectionDTO dto = new AbnormalDetectionDTO();
                     dto.setStudentIdA(studentA);
                     dto.setStudentNameA(studentNames.getOrDefault(studentA, "学生" + studentA));

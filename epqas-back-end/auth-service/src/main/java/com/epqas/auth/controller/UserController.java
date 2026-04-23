@@ -86,6 +86,10 @@ public class UserController {
     public Result<Boolean> deleteUser(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable("id") Long id) {
         if (roleId == null || roleId != 1)
             return Result.error(403, "Access Denied");
-        return Result.success(userService.removeById(id));
+        try {
+            return Result.success(userService.removeById(id));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return Result.error(400, "该用户有关联的学生或成绩数据，无法直接删除。请先在相关模块解除关联。");
+        }
     }
 }

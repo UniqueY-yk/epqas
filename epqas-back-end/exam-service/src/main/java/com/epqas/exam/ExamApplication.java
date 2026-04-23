@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = { "com.epqas.exam", "com.epqas.common" })
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.epqas.common.feign")
 @MapperScan("com.epqas.exam.mapper")

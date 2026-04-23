@@ -61,7 +61,7 @@
         </el-table-column>
         <el-table-column label="建议" min-width="200">
           <template #default="{ row }">
-            <span v-if="row.level === 'weak'" style="color: #f56c6c; font-weight: 600;">⚠️ 需要重点复习和重教</span>
+            <span v-if="row.level === 'weak'" style="color: #f56c6c; font-weight: 600;">⚠️ 需要重点复习和教学</span>
             <span v-else-if="row.level === 'good'" style="color: #e6a23c;">📝 建议适当强化练习</span>
             <span v-else style="color: #67c23a;">✅ 掌握良好，可继续推进</span>
           </template>
