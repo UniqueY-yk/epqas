@@ -27,6 +27,18 @@ const router = createRouter({
                     meta: { roles: [1] }
                 },
                 {
+                    path: 'admin/audit-logs',
+                    name: '审计日志',
+                    component: () => import('../views/admin/AuditLogManagement.vue'),
+                    meta: { roles: [1] }
+                },
+                {
+                    path: 'admin/data-backup',
+                    name: '数据备份',
+                    component: () => import('../views/admin/DataBackupManagement.vue'),
+                    meta: { roles: [1] }
+                },
+                {
                     path: 'academic/classes',
                     name: '班级管理',
                     component: () => import('../views/academic/ClassManagement.vue'),

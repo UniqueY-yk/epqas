@@ -18,6 +18,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>provided</scope> <!-- Only needed for compilation of common web utils -->
         </dependency>
+        <!-- AOP 切面支持（用于 @SystemLog 审计日志切面） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>

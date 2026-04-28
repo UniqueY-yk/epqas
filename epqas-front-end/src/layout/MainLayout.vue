@@ -29,6 +29,16 @@
                     <template #title>角色管理</template>
                 </el-menu-item>
 
+                <el-menu-item index="/admin/audit-logs" v-if="isAdmin">
+                    <el-icon><Notebook /></el-icon>
+                    <template #title>审计日志</template>
+                </el-menu-item>
+
+                <el-menu-item index="/admin/data-backup" v-if="isAdmin">
+                    <el-icon><FolderOpened /></el-icon>
+                    <template #title>数据备份</template>
+                </el-menu-item>
+
                 <el-sub-menu index="/academic" v-if="isAdmin">
                     <template #title>
                         <el-icon><School /></el-icon>
@@ -165,7 +175,8 @@ import {
     Filter,
     Document,
     Monitor,
-    Notebook
+    Notebook,
+    FolderOpened
 } from "@element-plus/icons-vue";
 
 const route = useRoute();

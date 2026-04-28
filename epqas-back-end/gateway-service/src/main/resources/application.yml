@@ -62,6 +62,16 @@ spring:
             - Path=/analysis/**
           filters:
             - StripPrefix=1
+        - id: audit-service
+          uri: lb://audit-service
+          predicates:
+            - Path=/audit/**
+          filters:
+            - StripPrefix=1
+        - id: backup-service
+          uri: lb://audit-service
+          predicates:
+            - Path=/backup/**
         - id: suggestion-service
           uri: lb://suggestion-service
           predicates:
