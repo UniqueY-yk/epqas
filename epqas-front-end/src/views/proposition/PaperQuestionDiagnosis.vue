@@ -185,7 +185,7 @@ const applyJitter = (items: QuestionAnalysisVO[]) => {
             
             // Clamp to chart bounds
             displayX = Math.max(0, Math.min(1.0, displayX))
-            displayY = Math.max(-1.0, Math.min(1.0, displayY))
+            displayY = Math.max(0, Math.min(1.0, displayY))
             
             result.push({
                 value: [displayX, displayY],
@@ -287,7 +287,7 @@ const chartOption = computed(() => {
             name: '区分度D',
             nameLocation: 'middle',
             nameGap: 35,
-            min: -1.0,
+            min: 0,
             max: 1.0,
             interval: 0.2,
             splitLine: { lineStyle: { type: 'dashed', color: '#e8e8e8' } }
@@ -338,7 +338,7 @@ const chartOption = computed(() => {
                         ],
                         // Red zone: low discrimination
                         [
-                            { xAxis: 0, yAxis: -1.0, itemStyle: { color: 'rgba(245, 108, 108, 0.06)' } },
+                            { xAxis: 0, yAxis: 0, itemStyle: { color: 'rgba(245, 108, 108, 0.06)' } },
                             { xAxis: 1.0, yAxis: 0.2 }
                         ]
                     ]
