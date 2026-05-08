@@ -2,13 +2,28 @@
   <div class="quality-diagnosis">
     <div class="page-header">
       <h2>试卷质量诊断</h2>
-      <p class="subtitle">{{ isAdmin ? '查看所有命题教师的试卷质量分析报告' : '查看您命题的试卷在考试后的质量分析报告' }}</p>
+      <p class="subtitle">{{ hasFullAccess ? '查看所有命题教师的试卷质量分析报告' : '查看您命题的试卷在考试后的质量分析报告' }}</p>
     </div>
 
     <!-- Toolbar -->
     <el-card class="toolbar-card" shadow="hover">
       <div class="toolbar">
         <div class="search-area">
+          <el-select 
+            v-if="hasFullAccess" 
+            v-model="searchQuery.setterId" 
+            placeholder="请选择命题教师" 
+            clearable
+            class="search-input"
+            @change="handleSearch"
+          >
+            <el-option
+              v-for="setter in setterOptions"
+              :key="setter.userId"
+              :label="setter.username + (setter.realName ? ' (' + setter.realName + ')' : '')"
+              :value="setter.userId"
+            />
+          </el-select>
           <el-select 
             v-model="searchQuery.courseId" 
             placeholder="选择科目" 
@@ -157,7 +172,7 @@
     <!-- Question Analysis Scatter Plot Dialog -->
     <PaperQuestionDiagnosis ref="questionDiagnosisRef" />
     
-    <!-- AI Suggestions Drawer -->
+    <!-- Suggestions Drawer -->
     <PaperSuggestionsDrawer ref="suggestionsDrawerRef" />
   </div>
 </template>
@@ -179,13 +194,15 @@ const tableData = ref<PaperAnalysisVO[]>([])
 const total = ref(0)
 const currentRoleId = Number(localStorage.getItem('roleId') || '1')
 const isAdmin = currentRoleId === 1
-const setterId = Number(localStorage.getItem('userId')) || 0
+const hasFullAccess = [1, 3, 4].includes(currentRoleId)
+const currentUserId = Number(localStorage.getItem('userId')) || 0
 const courseOptions = ref<any[]>([])
+const setterOptions = ref<any[]>([])
 
 const searchQuery = reactive({
   current: 1,
   size: 10,
-  setterId: isAdmin ? undefined : setterId,
+  setterId: hasFullAccess ? undefined : currentUserId,
   courseId: undefined,
   paperTitle: undefined
 } as any)
@@ -193,6 +210,9 @@ const searchQuery = reactive({
 // --- Methods ---
 onMounted(async () => {
     loadCourseOptions()
+    if (hasFullAccess) {
+        loadSetterOptions()
+    }
     loadData()
 })
 
@@ -205,12 +225,23 @@ const loadCourseOptions = async () => {
     }
 }
 
+const loadSetterOptions = async () => {
+    try {
+        const { getSetters } = await import('../../api/exam')
+        const res = await getSetters()
+        setterOptions.value = res.data || []
+    } catch (e) {
+        console.error('Failed to load setters', e)
+    }
+}
+
 const handleSearch = () => {
   searchQuery.current = 1
   loadData()
 }
 
 const resetSearch = () => {
+  searchQuery.setterId = hasFullAccess ? undefined : currentUserId
   searchQuery.courseId = undefined
   searchQuery.paperTitle = undefined
   searchQuery.current = 1

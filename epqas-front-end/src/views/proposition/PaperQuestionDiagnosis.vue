@@ -222,7 +222,7 @@ const chartOption = computed(() => {
                 if (data.suggestions && data.suggestions.length > 0) {
                     suggestionHtml = `
                         <hr style="margin: 8px 0; border: 0; border-top: 1px dashed #e4e7ed;" />
-                        <div style="color: #E6A23C; font-weight: bold; margin-bottom: 4px;">💡 AI 教学优化建议:</div>
+                        <div style="color: #E6A23C; font-weight: bold; margin-bottom: 4px;">💡 教学优化建议:</div>
                         <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #E6A23C; line-height: 1.5;">
                             ${data.suggestions.map((s: string) => `<li style="margin-bottom: 2px;">${s}</li>`).join('')}
                         </ul>

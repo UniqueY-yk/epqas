@@ -59,8 +59,8 @@ const suggestions = ref<ImprovementSuggestion[]>([])
 
 const drawerTitle = computed(() => {
     return questionId.value 
-        ? `试题 AI 智能优化建议` 
-        : `试卷全局 AI 优化建议汇总（试卷加载排查中）`
+        ? `试题优化建议` 
+        : `试卷全局优化建议汇总（试卷加载排查中）`
 })
 
 const openDrawer = (pId: number, qId?: number) => {

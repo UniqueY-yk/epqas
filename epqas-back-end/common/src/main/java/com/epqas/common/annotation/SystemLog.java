@@ -9,7 +9,6 @@ import java.lang.annotation.*;
  * 自动采集操作信息并通过 Feign 异步发送至 audit-service 进行持久化存储。
  * </p>
  *
- * @author EPQAS
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

@@ -33,7 +33,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
  * 使用 @ConditionalOnClass 确保仅在 Servlet 环境（非 WebFlux 网关）中加载。
  * </p>
  *
- * @author EPQAS
  */
 @Slf4j
 @Aspect
@@ -47,13 +46,12 @@ public class SystemLogAspect {
     @Autowired(required = false)
     private JwtUtils jwtUtils;
 
-
-
     /**
      * 切入点：所有标注了 @SystemLog 注解的方法
      */
     @Pointcut("@annotation(com.epqas.common.annotation.SystemLog)")
-    public void systemLogPointcut() {}
+    public void systemLogPointcut() {
+    }
 
     /**
      * 环绕通知：采集请求信息、执行耗时、操作结果等，异步发送审计日志
@@ -187,7 +185,8 @@ public class SystemLogAspect {
      * 根据 HTTP 请求方法自动推断操作类型
      */
     private String inferActionType(HttpServletRequest request) {
-        if (request == null) return "UNKNOWN";
+        if (request == null)
+            return "UNKNOWN";
         return switch (request.getMethod().toUpperCase()) {
             case "POST" -> "CREATE";
             case "PUT", "PATCH" -> "UPDATE";

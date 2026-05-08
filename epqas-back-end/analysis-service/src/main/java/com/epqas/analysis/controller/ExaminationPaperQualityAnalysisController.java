@@ -123,8 +123,8 @@ public class ExaminationPaperQualityAnalysisController {
             @RequestParam(value = "setterId", required = false) Long setterId,
             @RequestParam(value = "courseId", required = false) Long courseId,
             @RequestParam(value = "paperTitle", required = false) String paperTitle) {
-        // 管理员(roleId=1)查看所有试卷；命题教师只查看自己的试卷
-        if (roleId != null && roleId == 1) {
+        // 管理员(roleId=1)、任课教师(roleId=3)和学生(roleId=4)查看所有试卷；命题教师只查看自己的试卷
+        if (roleId != null && (roleId == 1 || roleId == 3 || roleId == 4)) {
             setterId = null;
         }
         return Result.success(analysisService.getPageBySetterId(current, size, setterId, courseId, paperTitle));
@@ -148,8 +148,8 @@ public class ExaminationPaperQualityAnalysisController {
             @RequestParam(value = "setterId", required = false) Long setterId,
             @RequestParam(value = "courseId") Long courseId) {
 
-        if (roleId != null && roleId == 1) {
-            // 管理员可以查询任何指定的setterId
+        if (roleId != null && (roleId == 1 || roleId == 3 || roleId == 4)) {
+            // 管理员、任课教师和学生可以查询任何指定的setterId
         } else {
             // 命题教师只能查询自己的setterId
             setterId = userId;
@@ -181,8 +181,8 @@ public class ExaminationPaperQualityAnalysisController {
             @RequestParam(value = "setterId", required = false) Long setterId,
             @RequestParam(value = "courseId") Long courseId) {
 
-        if (roleId != null && roleId == 1) {
-            // 管理员可以查询任何指定的setterId
+        if (roleId != null && (roleId == 1 || roleId == 3 || roleId == 4)) {
+            // 管理员、任课教师和学生可以查询任何指定的setterId
         } else {
             // 命题教师只能查询自己的setterId
             setterId = userId;

@@ -13,7 +13,6 @@ import java.util.Map;
  * 用于从其他微服务异步发送审计日志到 audit-service 进行持久化。
  * </p>
  *
- * @author EPQAS
  */
 @FeignClient(name = "audit-service")
 public interface AuditFeignClient {

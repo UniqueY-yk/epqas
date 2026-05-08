@@ -1,8 +1,8 @@
 <template>
   <div class="knowledge-point-management examination-paper-management">
     <div class="page-header">
-      <h2>知识点管理</h2>
-      <p class="subtitle">管理系统中的所有知识点及其所属课程映射</p>
+      <h2>{{ isStudent ? '知识点查询' : '知识点管理' }}</h2>
+      <p class="subtitle">{{ isStudent ? '查看系统中的所有知识点及其所属课程映射' : '管理系统中的所有知识点及其所属课程映射' }}</p>
     </div>
 
     <el-card class="toolbar-card" shadow="hover">
@@ -23,7 +23,7 @@
             <el-icon><Search /></el-icon> 搜索
           </el-button>
         </div>
-        <div class="action-area">
+        <div class="action-area" v-if="!isStudent">
           <el-button type="success" @click="handleAdd">
             <el-icon><Plus /></el-icon> 新增知识点
           </el-button>
@@ -45,7 +45,7 @@
         </el-table-column>
         <el-table-column prop="description" label="详细描述" show-overflow-tooltip />
 
-        <el-table-column label="操作" width="180">
+        <el-table-column label="操作" width="180" v-if="!isStudent">
           <template #default="scope">
             <el-button-group>
               <el-button size="small" type="primary" plain :icon="Edit" @click="handleEdit(scope.row)" />
@@ -111,6 +111,9 @@ import { getKnowledgePoints, addKnowledgePoint, updateKnowledgePoint, deleteKnow
 import { getCourses } from '@/api/academic'
 import { ElMessage } from 'element-plus'
 import { Search, Plus, Edit, Delete } from '@element-plus/icons-vue'
+
+const roleId = Number(localStorage.getItem('roleId') || '0');
+const isStudent = roleId === 4;
 
 const loading = ref(false)
 const tableData = ref([])

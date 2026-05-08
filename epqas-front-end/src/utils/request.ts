@@ -32,7 +32,7 @@ service.interceptors.response.use(
         if (response.config.responseType === 'blob') {
             return res
         }
-        
+
         // Assuming backend follows Result wrapper convention
         if (res.code !== 200) {
             ElMessage.error(res.message || 'Error')

@@ -28,7 +28,6 @@ import java.util.List;
  * 存储在指定的备份目录中。
  * </p>
  *
- * @author EPQAS
  */
 @Slf4j
 @Service
@@ -221,7 +220,7 @@ public class DatabaseBackupServiceImpl implements DatabaseBackupService {
     }
 
     /**
-     * 将字节数格式化为人类可读的文件大小
+     * 将字节数格式化为可读的文件大小
      */
     private String formatFileSize(long size) {
         if (size <= 0) return "0 B";

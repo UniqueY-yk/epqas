@@ -10,7 +10,7 @@ zho<template>
       <div class="toolbar" style="justify-content: flex-start;">
         <div class="search-area">
           <el-select 
-            v-if="isAdmin" 
+            v-if="hasFullAccess" 
             v-model="selectedSetterId" 
             placeholder="请选择命题教师" 
             clearable
@@ -145,7 +145,7 @@ zho<template>
               <template #default>
                 <ul>
                   <li><strong>整体难度 (Difficulty):</strong> 理想值通常在 0.5 - 0.7 之间。持续走低（难）或走高（易）说明命题标尺可能发生了偏移。</li>
-                  <li><strong>区分度 (Discrimination):</strong> 越高越好，推荐保持在 0.3 以上。若持续降低，请重视 AI 的优化建议。</li>
+                  <li><strong>区分度 (Discrimination):</strong> 越高越好，推荐保持在 0.3 以上。若持续降低，请重视优化建议。</li>
                   <li><strong>信度系数 (Reliability - Cronbach's Alpha):</strong> 反映试卷稳定性，推荐 > 0.7。</li>
                   <li><strong>效度 (Validity):</strong> 反映考试是否真正测量了预定要测考的知识和能力，推荐 > 0.4。</li>
                 </ul>
@@ -193,6 +193,7 @@ const trendData = ref<PaperAnalysisVO[]>([])
 const prediction = ref<TrendPredictionVO | null>(null)
 const currentRoleId = Number(localStorage.getItem('roleId') || '1')
 const isAdmin = currentRoleId === 1
+const hasFullAccess = [1, 3, 4].includes(currentRoleId)
 
 const selectedSetterId = ref<number | undefined>(undefined)
 const setterOptions = ref<SetterInfo[]>([])
@@ -201,7 +202,7 @@ const courseOptions = ref<any[]>([])
 
 // 是否可以加载趋势数据：必须同时选择命题教师和课程
 const canLoadTrend = computed(() => {
-    if (isAdmin) {
+    if (hasFullAccess) {
         return !!selectedSetterId.value && !!selectedCourseId.value
     }
     return !!selectedCourseId.value
@@ -210,7 +211,7 @@ const canLoadTrend = computed(() => {
 // 空状态提示语
 const emptyDescription = computed(() => {
     if (!canLoadTrend.value) {
-        if (isAdmin) {
+        if (hasFullAccess) {
             return '请先选择一位命题教师和课程，再查看历史命题趋势'
         }
         return '请先选择一门课程，再查看历史命题趋势'
@@ -291,7 +292,7 @@ const loadTrendData = async () => {
     prediction.value = null
     try {
         let setterId: number | undefined
-        if (!isAdmin) {
+        if (!hasFullAccess) {
             const userIdStr = localStorage.getItem('userId')
             setterId = userIdStr ? Number(userIdStr) : 0
 
@@ -330,7 +331,7 @@ const handleFilterChange = () => {
 }
 
 onMounted(async () => {
-    if (isAdmin) {
+    if (hasFullAccess) {
         try {
             const [setterRes, courseRes] = await Promise.all([
                 getSetters(),
@@ -342,7 +343,7 @@ onMounted(async () => {
             ElMessage.error('获取初始筛选列表失败')
         }
     } else {
-        // 非管理员：加载课程列表，但不自动加载趋势数据（需要先选择课程）
+        // 非管理员且非授权用户：加载课程列表，但不自动加载趋势数据（需要先选择课程）
         try {
             const courseRes = await getCourses({ current: 1, size: 100 })
             courseOptions.value = courseRes.data.records || []

@@ -39,18 +39,18 @@
                     <template #title>数据备份</template>
                 </el-menu-item>
 
-                <el-sub-menu index="/academic" v-if="isAdmin">
+                <el-sub-menu index="/academic" v-if="isAdmin || isSetter">
                     <template #title>
                         <el-icon><School /></el-icon>
                         <span>教务管理</span>
                     </template>
-                    <el-menu-item index="/academic/students"
+                    <el-menu-item index="/academic/students" v-if="isAdmin"
                         >学生管理</el-menu-item
                     >
-                    <el-menu-item index="/academic/classes"
+                    <el-menu-item index="/academic/classes" v-if="isAdmin"
                         >班级管理</el-menu-item
                     >
-                    <el-menu-item index="/academic/courses"
+                    <el-menu-item index="/academic/courses" v-if="isAdmin"
                         >课程管理</el-menu-item
                     >
                     <el-menu-item index="/academic/knowledge-points"
@@ -58,15 +58,15 @@
                     >
                 </el-sub-menu>
 
-                <el-sub-menu index="/proposition" v-if="isAdmin || isSetter">
+                <el-sub-menu index="/proposition" v-if="isAdmin || isSetter || isInstructor">
                     <template #title>
                         <el-icon><Document /></el-icon>
                         <span>命题管理</span>
                     </template>
-                    <el-menu-item index="/question/bank"
+                    <el-menu-item index="/question/bank" v-if="isAdmin || isSetter"
                         >题库管理</el-menu-item
                     >
-                    <el-menu-item index="/proposition/papers"
+                    <el-menu-item index="/proposition/papers" v-if="isAdmin || isSetter"
                         >试卷模板管理</el-menu-item
                     >
                     <el-menu-item index="/proposition/diagnosis"
@@ -95,6 +95,21 @@
                         >异常答题检测</el-menu-item
                     >
                 </el-sub-menu>
+
+                <el-menu-item index="/academic/knowledge-points" v-if="isStudent">
+                    <el-icon><Collection /></el-icon>
+                    <template #title>知识点查询</template>
+                </el-menu-item>
+
+                <el-menu-item index="/proposition/diagnosis" v-if="isStudent">
+                    <el-icon><DataAnalysis /></el-icon>
+                    <template #title>试卷质量诊断</template>
+                </el-menu-item>
+
+                <el-menu-item index="/proposition/trend" v-if="isStudent">
+                    <el-icon><TrendCharts /></el-icon>
+                    <template #title>历史命题趋势</template>
+                </el-menu-item>
 
                 <el-menu-item index="/student/scores" v-if="isStudent">
                     <el-icon><Notebook /></el-icon>
@@ -176,7 +191,10 @@ import {
     Document,
     Monitor,
     Notebook,
-    FolderOpened
+    FolderOpened,
+    Collection,
+    DataAnalysis,
+    TrendCharts
 } from "@element-plus/icons-vue";
 
 const route = useRoute();

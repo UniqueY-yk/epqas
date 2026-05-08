@@ -60,7 +60,7 @@ const router = createRouter({
                     path: 'academic/knowledge-points',
                     name: '知识点管理',
                     component: () => import('../views/academic/KnowledgePointManagement.vue'),
-                    meta: { roles: [1] }
+                    meta: { roles: [1, 2, 4] }
                 },
                 {
                     path: 'question/bank',
@@ -72,13 +72,13 @@ const router = createRouter({
                     path: 'proposition/diagnosis',
                     name: '试卷质量诊断',
                     component: () => import('../views/proposition/PaperQualityDiagnosis.vue'),
-                    meta: { roles: [1, 2] }
+                    meta: { roles: [1, 2, 3, 4] }
                 },
                 {
                     path: 'proposition/trend',
                     name: '历史命题趋势',
                     component: () => import('../views/proposition/PropositionTrendAnalysis.vue'),
-                    meta: { roles: [1, 2] }
+                    meta: { roles: [1, 2, 3, 4] }
                 },
                 {
                     path: 'proposition/papers',
@@ -157,7 +157,7 @@ router.beforeEach((to, _from, next) => {
     if (to.meta.requiresAuth && !token) {
         next('/login')
     } else if (to.meta.roles && !(to.meta.roles as number[]).includes(roleId)) {
-        ElMessage.error('Access Denied. Insufficient privileges.')
+        ElMessage.error('访问失败，权限不足')
         next('/')
     } else if (to.path === '/login' && token) {
         next('/')

@@ -68,9 +68,9 @@
                 
                 <div class="item-ai-feedback">
                   <el-icon><ChatLineRound /></el-icon>
-                  <span v-if="item.level === 'weak'">AI 建议：该知识点失分严重。强烈建议重新复习教材相关章节，并进行专项强化训练。</span>
-                  <span v-else-if="item.level === 'good'">AI 建议：基本掌握，但熟练度不足。建议复习错题本，查漏补缺。</span>
-                  <span v-else>AI 建议：掌握非常扎实。继续保持！</span>
+                  <span v-if="item.level === 'weak'">建议：该知识点失分严重。强烈建议重新复习教材相关章节，并进行专项强化训练。</span>
+                  <span v-else-if="item.level === 'good'">建议：基本掌握，但熟练度不足。建议复习错题本，查漏补缺。</span>
+                  <span v-else>建议：掌握非常扎实。继续保持！</span>
                 </div>
               </div>
 
