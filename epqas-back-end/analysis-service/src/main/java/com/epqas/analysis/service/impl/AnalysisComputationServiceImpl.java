@@ -77,11 +77,11 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
 
         int N = results.size(); // 总学生数
         BigDecimal avgScore = sumScores.divide(BigDecimal.valueOf(N), 4, RoundingMode.HALF_UP);
-        double totalStdDev = calculateStdDev(scoreList, avgScore); // σ_T
+        double totalScoreVariance = calculateVariance(scoreList, avgScore); // S_X²
 
-        // ==================== 3. 极端组分组 (25%) ====================
+        // ==================== 3. 极端组分组 (27%) ====================
         results.sort((a, b) -> b.getTotalScore().compareTo(a.getTotalScore())); // 降序
-        int groupSize = (int) Math.floor(N * 0.25); // 取25%，向下取整
+        int groupSize = (int) Math.round(N * 0.27); // 取27%，四舍五入
         if (groupSize < 1)
             groupSize = 1;
 
@@ -110,37 +110,13 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             coverageRate = (double) paperPoints / totalCoursePoints;
         }
 
-        // ==================== 6. 信度 Cronbach's Alpha ====================
-        // α = (K / K-1) * (1 - Σ(S_i²) / S_T²)
+        // ==================== 6. 信度计算准备 ====================
+        // 整体试卷信度将在逐题 r_i 计算后，通过 calculatePaperReliability 方法得到
         int K = questions.size();
-        double sumItemVariances = 0.0;
-        double reliability = 0.0;
 
-        if (K > 1 && totalStdDev > 0) {
-            for (ComputePaperQuestionDTO q : questions) {
-                List<ComputeStudentAnswerDTO> qAnswers = answersByQuestion.getOrDefault(q.getQuestionId(),
-                        new ArrayList<>());
-                List<BigDecimal> itemScores = qAnswers.stream()
-                        .map(a -> a.getScoreObtained() != null ? a.getScoreObtained() : BigDecimal.ZERO)
-                        .collect(Collectors.toList());
-                // 填充缺失的答题记录为0分
-                while (itemScores.size() < N) {
-                    itemScores.add(BigDecimal.ZERO);
-                }
-                BigDecimal sumItem = itemScores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal avgItem = sumItem.divide(BigDecimal.valueOf(N), 4, RoundingMode.HALF_UP);
-                double itemVar = Math.pow(calculateStdDev(itemScores, avgItem), 2);
-                sumItemVariances += itemVar;
-            }
-            reliability = ((double) K / (K - 1)) * (1.0 - (sumItemVariances / Math.pow(totalStdDev, 2)));
-            reliability = Math.max(0.0, Math.min(1.0, reliability));
-        }
-
-        // ==================== 7. 逐题指标计算 (P, D, V) ====================
+        // ==================== 7. 逐题指标计算 (q_i, P, d_i, V) ====================
         deleteExistingItemAnalysis(paperId);
         List<QuestionQualityAnalysis> qAnalyses = new ArrayList<>();
-        double sumP = 0.0; // 用于计算平均难度
-        double sumD = 0.0; // 用于计算平均区分度
         double sumV = 0.0; // 用于计算平均效度
 
         for (ComputePaperQuestionDTO q : questions) {
@@ -153,10 +129,9 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             if (H == null || H.compareTo(BigDecimal.ZERO) == 0)
                 H = BigDecimal.ONE;
 
-            // ---- 7a. 正确反应率 (保留向后兼容) ----
-            long correctCount = qAns.stream().filter(a -> Boolean.TRUE.equals(a.getIsCorrect())).count();
-            float correctRate = N > 0 ? (float) correctCount / N : 0f;
-            itemQa.setCorrectResponseRate(correctRate);
+            // ---- 7a. CTT单题难度 q_i = 1 - (该题平均得分 / 该题满分) ----
+            float questionDifficulty = calculateQuestionDifficulty(qAns, H, N);
+            itemQa.setCorrectResponseRate(questionDifficulty);
 
             // ---- 7b. 极端组法难度 P = (X_H + X_L) / (2 * groupSize * H) ----
             BigDecimal xH = BigDecimal.ZERO; // 高分组该题得分总和
@@ -174,16 +149,16 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
             double P = denomP > 0 ? (xH.doubleValue() + xL.doubleValue()) / denomP : 0.0;
             P = Math.max(0.0, Math.min(1.0, P));
             itemQa.setDifficultyIndex((float) P);
-            sumP += P;
 
-            // ---- 7c. 极端组法区分度 D = (X_H - X_L) / (groupSize * H) ----
-            double denomD = groupSize * H.doubleValue();
-            double D = denomD > 0 ? (xH.doubleValue() - xL.doubleValue()) / denomD : 0.0;
-            D = Math.max(-1.0, Math.min(1.0, D));
-            itemQa.setDiscriminationIndex((float) D);
-            sumD += D;
+            // ---- 7c. CTT区分度 d_i = (H_i - L_i) / W_i ----
+            float di = calculateQuestionDiscrimination(qAns, highGroupIds, lowGroupIds, H);
+            itemQa.setDiscriminationIndex(di);
 
-            // ---- 7d. 效度 Pearson r(i,T) ----
+            // ---- 7d. CTT单题信度 r_i (Cronbach's Alpha) ----
+            float ri = calculateQuestionReliability(questions, answersByQuestion, N, totalScoreVariance);
+            itemQa.setReliabilityCoefficient(ri);
+
+            // ---- 7e. 效度 Pearson r(i,T) ----
             double validity = calculatePearsonCorrelation(qAns, studentTotalScores, N, meanTotal);
             itemQa.setValidityIndex((float) validity);
             sumV += Math.abs(validity);
@@ -215,11 +190,11 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
 
             // ---- 7f. 定性评价 ----
             itemQa.setDifficultyEvaluation(evaluateDifficulty(P));
-            itemQa.setDiscriminationEvaluation(evaluateDiscrimination(D));
+            itemQa.setDiscriminationEvaluation(evaluateDiscrimination(di));
 
             // ---- 7g. 异常标记 ----
             itemQa.setIsTooEasy(P > 0.7);
-            itemQa.setIsLowDiscrimination(D < 0.2);
+            itemQa.setIsLowDiscrimination(di < 0.2f);
             if (itemQa.getIsTooEasy() && itemQa.getIsLowDiscrimination()) {
                 itemQa.setDiagnosisTag("题目过于简单且无区分度");
             } else if (itemQa.getIsLowDiscrimination()) {
@@ -236,11 +211,16 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         }
 
         // ==================== 8. 整体试卷指标 ====================
-        double overallDifficulty = K > 0 ? sumP / K : 0.0;
-        double overallDiscrimination = K > 0 ? sumD / K : 0.0;
+        // CTT整体难度 Q = (1/100) × Σ(满分_i × q_i)
+        double overallDifficulty = calculatePaperDifficulty(questions, qAnalyses);
+        // CTT整体区分度 D = (1/100) × Σ(W_i × d_i)
+        double overallDiscrimination = calculatePaperDiscrimination(questions, qAnalyses);
+        // CTT整体信度 R = (1/100) × Σ(W_i × r_i)
+        double reliability = calculatePaperReliability(questions, qAnalyses);
         double overallValidity = K > 0 ? sumV / K : 0.0;
 
         // ==================== 9. 正态分布指标 (偏度 & 峰度) ====================
+        double totalStdDev = Math.sqrt(totalScoreVariance);
         double skewness = calculateSkewness(scoreList, avgScore, totalStdDev, N);
         double kurtosis = calculateKurtosis(scoreList, avgScore, totalStdDev, N);
 
@@ -254,7 +234,7 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         ExaminationPaperQualityAnalysis examAnalysis = new ExaminationPaperQualityAnalysis();
         examAnalysis.setPaperId(paperId);
         examAnalysis.setAverageScore(avgScore.setScale(2, RoundingMode.HALF_UP));
-        examAnalysis.setStdDeviation(BigDecimal.valueOf(totalStdDev).setScale(2, RoundingMode.HALF_UP));
+        examAnalysis.setStdDeviation(BigDecimal.valueOf(Math.sqrt(totalScoreVariance)).setScale(2, RoundingMode.HALF_UP));
         examAnalysis.setHighestScore(maxScore);
         examAnalysis.setLowestScore(minScore);
         examAnalysis.setReliabilityCoefficient((float) reliability);
@@ -384,16 +364,305 @@ public class AnalysisComputationServiceImpl implements AnalysisComputationServic
         return "差";
     }
 
-    // ==================== 标准差 (总体) ====================
-    private double calculateStdDev(List<BigDecimal> data, BigDecimal mean) {
-        if (data.size() <= 1)
+    // ==================== 方差计算 (CTT) ====================
+
+    /**
+     * 计算样本方差 (基于经典测量理论 CTT)
+     * 公式: S² = (1 / (N-1)) × Σ(X_j - Mean)²
+     * 当 N ≤ 1 时返回 0.0，避免除零异常
+     *
+     * @param data 数据列表
+     * @param mean 平均值
+     * @return 样本方差 S²
+     */
+    private double calculateVariance(List<BigDecimal> data, BigDecimal mean) {
+        if (data == null || data.size() <= 1) {
             return 0.0;
+        }
+        double meanVal = mean.doubleValue();
         double sumSquareDiffs = 0.0;
         for (BigDecimal val : data) {
-            double diff = val.doubleValue() - mean.doubleValue();
+            double diff = val.doubleValue() - meanVal;
             sumSquareDiffs += diff * diff;
         }
-        return Math.sqrt(sumSquareDiffs / data.size());
+        return sumSquareDiffs / (data.size() - 1);
+    }
+
+    // ==================== CTT 难度计算方法 ====================
+
+    /**
+     * 计算单题难度 (基于经典测量理论 CTT)
+     * 公式: q_i = 1 - (该题平均得分 / 该题满分)
+     * 难度范围 [0, 1]，值越大表示题目越难
+     *
+     * @param qAns           该题所有学生的答题记录
+     * @param fullScore      该题满分
+     * @param totalStudents  有效样本数量 N
+     * @return 单题难度系数 q_i
+     */
+    private float calculateQuestionDifficulty(List<ComputeStudentAnswerDTO> qAns,
+                                              BigDecimal fullScore, int totalStudents) {
+        // 边界保护：无学生作答或满分为0时，返回默认难度
+        if (qAns == null || qAns.isEmpty() || totalStudents <= 0) {
+            return 0.5f; // 默认中等难度
+        }
+        if (fullScore == null || fullScore.compareTo(BigDecimal.ZERO) <= 0) {
+            return 0.5f; // 满分为0时无法计算，返回默认值
+        }
+
+        // 计算该题所有学生的平均得分
+        BigDecimal sumScores = BigDecimal.ZERO;
+        for (ComputeStudentAnswerDTO a : qAns) {
+            BigDecimal score = a.getScoreObtained() != null ? a.getScoreObtained() : BigDecimal.ZERO;
+            sumScores = sumScores.add(score);
+        }
+        // 注意：部分学生可能未作答（不在 qAns 中），仍以 totalStudents 为分母
+        BigDecimal avgScore = sumScores.divide(BigDecimal.valueOf(totalStudents), 6, RoundingMode.HALF_UP);
+
+        // q_i = 1 - (平均得分 / 满分)
+        double qi = 1.0 - avgScore.divide(fullScore, 6, RoundingMode.HALF_UP).doubleValue();
+
+        // 限定在 [0, 1] 范围内
+        qi = Math.max(0.0, Math.min(1.0, qi));
+        return (float) qi;
+    }
+
+    /**
+     * 计算整体试卷难度 (基于经典测量理论 CTT)
+     * 公式: Q = (1/100) × Σ(满分_i × q_i)
+     * 其中 q_i 为每道题目的 CTT 难度系数
+     *
+     * @param paperQuestions 试卷题目列表（含满分信息）
+     * @param qAnalyses      各题已计算的质量分析结果（含 q_i）
+     * @return 整体试卷难度 Q
+     */
+    private double calculatePaperDifficulty(List<ComputePaperQuestionDTO> paperQuestions,
+                                            List<QuestionQualityAnalysis> qAnalyses) {
+        if (paperQuestions == null || paperQuestions.isEmpty() || qAnalyses == null || qAnalyses.isEmpty()) {
+            return 0.0;
+        }
+
+        // 建立 questionId -> q_i 的映射，方便查找
+        Map<Long, Float> difficultyMap = new HashMap<>();
+        for (QuestionQualityAnalysis qa : qAnalyses) {
+            // correctResponseRate 字段此时存储的是 CTT 难度 q_i
+            difficultyMap.put(qa.getQuestionId(), qa.getCorrectResponseRate());
+        }
+
+        // Q = (1/100) × Σ(满分_i × q_i)
+        double weightedSum = 0.0;
+        for (ComputePaperQuestionDTO q : paperQuestions) {
+            BigDecimal fullScore = q.getScoreValue();
+            if (fullScore == null || fullScore.compareTo(BigDecimal.ZERO) <= 0) {
+                continue; // 跳过满分无效的题目
+            }
+            Float qi = difficultyMap.get(q.getQuestionId());
+            if (qi == null) {
+                continue; // 跳过没有分析结果的题目
+            }
+            weightedSum += fullScore.doubleValue() * qi;
+        }
+
+        double Q = weightedSum / 100.0;
+        // 限定在 [0, 1] 范围内
+        return Math.max(0.0, Math.min(1.0, Q));
+    }
+
+    // ==================== CTT 信度计算方法 ====================
+
+    /**
+     * 计算单题信度系数 r_i (Cronbach's Alpha)
+     * 公式: r_i = (K / (K-1)) × (1 - Σ(S_i²) / S_X²)
+     * K:    试卷总题数
+     * S_i²: 第 i 题得分的方差
+     * S_X²: 所有学生总分的方差
+     *
+     * @param questions          试卷题目列表
+     * @param answersByQuestion  按题目ID分组的学生答题记录
+     * @param totalStudents      有效学生数量 N
+     * @param totalScoreVariance 总分方差 S_X²
+     * @return 单题信度系数 r_i
+     */
+    private float calculateQuestionReliability(List<ComputePaperQuestionDTO> questions,
+                                                Map<Long, List<ComputeStudentAnswerDTO>> answersByQuestion,
+                                                int totalStudents,
+                                                double totalScoreVariance) {
+        int K = questions.size();
+
+        // 防御性编程：题数不足或总分方差为0时无法计算信度
+        if (K <= 1 || totalScoreVariance <= 0.0 || totalStudents <= 1) {
+            return 0.0f;
+        }
+
+        // 计算各题得分方差之和 Σ(S_i²)
+        double sumItemVariances = 0.0;
+        for (ComputePaperQuestionDTO q : questions) {
+            List<ComputeStudentAnswerDTO> qAnswers = answersByQuestion.getOrDefault(
+                    q.getQuestionId(), new ArrayList<>());
+
+            // 收集该题所有学生的得分
+            List<BigDecimal> itemScores = qAnswers.stream()
+                    .map(a -> a.getScoreObtained() != null ? a.getScoreObtained() : BigDecimal.ZERO)
+                    .collect(Collectors.toList());
+
+            // 填充缺失的答题记录为0分（未作答的学生视为0分）
+            while (itemScores.size() < totalStudents) {
+                itemScores.add(BigDecimal.ZERO);
+            }
+
+            // 计算该题得分的平均值和方差 S_i²
+            BigDecimal sumItem = itemScores.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal avgItem = sumItem.divide(BigDecimal.valueOf(totalStudents), 4, RoundingMode.HALF_UP);
+            double itemVariance = calculateVariance(itemScores, avgItem);
+            sumItemVariances += itemVariance;
+        }
+
+        // r_i = (K / (K-1)) × (1 - Σ(S_i²) / S_X²)
+        double ri = ((double) K / (K - 1)) * (1.0 - (sumItemVariances / totalScoreVariance));
+
+        // 限定在 [0, 1] 范围内
+        ri = Math.max(0.0, Math.min(1.0, ri));
+        return (float) ri;
+    }
+
+    /**
+     * 计算整体试卷信度 (基于经典测量理论 CTT)
+     * 公式: R = (1/100) × Σ(W_i × r_i)
+     * 其中 W_i 为每道题的满分，r_i 为每道题的信度系数
+     *
+     * @param paperQuestions 试卷题目列表（含满分信息）
+     * @param qAnalyses      各题已计算的质量分析结果（含 r_i）
+     * @return 整体试卷信度 R
+     */
+    private double calculatePaperReliability(List<ComputePaperQuestionDTO> paperQuestions,
+                                              List<QuestionQualityAnalysis> qAnalyses) {
+        if (paperQuestions == null || paperQuestions.isEmpty() || qAnalyses == null || qAnalyses.isEmpty()) {
+            return 0.0;
+        }
+
+        // 建立 questionId -> r_i 的映射
+        Map<Long, Float> reliabilityMap = new HashMap<>();
+        for (QuestionQualityAnalysis qa : qAnalyses) {
+            if (qa.getReliabilityCoefficient() != null) {
+                reliabilityMap.put(qa.getQuestionId(), qa.getReliabilityCoefficient());
+            }
+        }
+
+        // R = (1/100) × Σ(W_i × r_i)
+        double weightedSum = 0.0;
+        for (ComputePaperQuestionDTO q : paperQuestions) {
+            BigDecimal fullScore = q.getScoreValue();
+            if (fullScore == null || fullScore.compareTo(BigDecimal.ZERO) <= 0) {
+                continue; // 跳过满分无效的题目
+            }
+            Float ri = reliabilityMap.get(q.getQuestionId());
+            if (ri == null) {
+                continue; // 跳过没有信度结果的题目
+            }
+            weightedSum += fullScore.doubleValue() * ri;
+        }
+
+        double R = weightedSum / 100.0;
+        // 限定在 [0, 1] 范围内
+        return Math.max(0.0, Math.min(1.0, R));
+    }
+
+    // ==================== CTT 区分度计算方法 ====================
+
+    /**
+     * 计算单题区分度 (基于经典测量理论 CTT)
+     * 公式: d_i = (H_i - L_i) / W_i
+     * H_i: 高分组在该题的平均得分
+     * L_i: 低分组在该题的平均得分
+     * W_i: 该题满分
+     *
+     * @param qAns          该题所有学生的答题记录
+     * @param highGroupIds  高分组学生 ID 集合
+     * @param lowGroupIds   低分组学生 ID 集合
+     * @param fullScore     该题满分 W_i
+     * @return 单题区分度系数 d_i
+     */
+    private float calculateQuestionDiscrimination(List<ComputeStudentAnswerDTO> qAns,
+                                                   Set<Long> highGroupIds,
+                                                   Set<Long> lowGroupIds,
+                                                   BigDecimal fullScore) {
+        // 防御性编程：满分为0时无法计算区分度
+        if (fullScore == null || fullScore.compareTo(BigDecimal.ZERO) <= 0) {
+            return 0.0f;
+        }
+
+        // 统计高分组和低分组在该题的得分总和及人数
+        BigDecimal highSum = BigDecimal.ZERO;
+        int highCount = 0;
+        BigDecimal lowSum = BigDecimal.ZERO;
+        int lowCount = 0;
+
+        for (ComputeStudentAnswerDTO a : qAns) {
+            BigDecimal score = a.getScoreObtained() != null ? a.getScoreObtained() : BigDecimal.ZERO;
+            if (highGroupIds.contains(a.getStudentId())) {
+                highSum = highSum.add(score);
+                highCount++;
+            }
+            if (lowGroupIds.contains(a.getStudentId())) {
+                lowSum = lowSum.add(score);
+                lowCount++;
+            }
+        }
+
+        // 防御性编程：某组无样本时设该组平均分为0
+        double Hi = highCount > 0
+                ? highSum.divide(BigDecimal.valueOf(highCount), 6, RoundingMode.HALF_UP).doubleValue()
+                : 0.0;
+        double Li = lowCount > 0
+                ? lowSum.divide(BigDecimal.valueOf(lowCount), 6, RoundingMode.HALF_UP).doubleValue()
+                : 0.0;
+
+        // d_i = (H_i - L_i) / W_i
+        double di = (Hi - Li) / fullScore.doubleValue();
+
+        // 限定在 [-1, 1] 范围内
+        di = Math.max(-1.0, Math.min(1.0, di));
+        return (float) di;
+    }
+
+    /**
+     * 计算整体试卷区分度 (基于经典测量理论 CTT)
+     * 公式: D = (1/100) × Σ(W_i × d_i)
+     * 其中 W_i 为每道题的满分，d_i 为每道题的区分度
+     *
+     * @param paperQuestions 试卷题目列表（含满分信息）
+     * @param qAnalyses      各题已计算的质量分析结果（含 d_i）
+     * @return 整体试卷区分度 D
+     */
+    private double calculatePaperDiscrimination(List<ComputePaperQuestionDTO> paperQuestions,
+                                                 List<QuestionQualityAnalysis> qAnalyses) {
+        if (paperQuestions == null || paperQuestions.isEmpty() || qAnalyses == null || qAnalyses.isEmpty()) {
+            return 0.0;
+        }
+
+        // 建立 questionId -> d_i 的映射
+        Map<Long, Float> discriminationMap = new HashMap<>();
+        for (QuestionQualityAnalysis qa : qAnalyses) {
+            discriminationMap.put(qa.getQuestionId(), qa.getDiscriminationIndex());
+        }
+
+        // D = (1/100) × Σ(W_i × d_i)
+        double weightedSum = 0.0;
+        for (ComputePaperQuestionDTO q : paperQuestions) {
+            BigDecimal fullScore = q.getScoreValue();
+            if (fullScore == null || fullScore.compareTo(BigDecimal.ZERO) <= 0) {
+                continue; // 跳过满分无效的题目
+            }
+            Float di = discriminationMap.get(q.getQuestionId());
+            if (di == null) {
+                continue; // 跳过没有分析结果的题目
+            }
+            weightedSum += fullScore.doubleValue() * di;
+        }
+
+        double D = weightedSum / 100.0;
+        // 限定在 [-1, 1] 范围内
+        return Math.max(-1.0, Math.min(1.0, D));
     }
 
     // ==================== 改进建议生成 ====================

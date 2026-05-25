@@ -28,6 +28,8 @@ public class QuestionQualityAnalysis {
 
     private Float validityIndex; // 效度 (Pearson r)
 
+    private Float reliabilityCoefficient; // 信度系数 r_i (Cronbach's Alpha)
+
     @Column(columnDefinition = "JSON")
     private String selectionDistributionJson; // 选项分布
 

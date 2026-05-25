@@ -3,9 +3,7 @@ package com.epqas.common.feign;
 import com.epqas.common.entity.User;
 import com.epqas.common.result.Result;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "auth-service")
 public interface UserFeignClient {
@@ -23,13 +21,12 @@ public interface UserFeignClient {
     /**
      * 从认证服务通过ID获取现有用户。
      * 
-     * @param roleId 系统/管理员角色ID（例如1）
+     * @param roleId 角色ID
      * @param id     用户ID
      * @return 包含用户信息的列表
      */
-    @org.springframework.web.bind.annotation.GetMapping("/users/{id}")
-    Result<User> getUserById(@RequestHeader("X-Role-Id") Integer roleId,
-            @org.springframework.web.bind.annotation.PathVariable("id") Long id);
+    @GetMapping("/users/{id}")
+    Result<User> getUserById(@RequestHeader("X-Role-Id") Integer roleId, @PathVariable("id") Long id);
 
     /**
      * 从认证服务获取分页用户列表。

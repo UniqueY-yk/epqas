@@ -1,3 +1,4 @@
 *.md
 resolved/
 backups/
+*.sql
